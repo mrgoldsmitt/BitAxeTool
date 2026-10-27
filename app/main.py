@@ -10,8 +10,21 @@ import threading
 import webbrowser
 import subprocess
 
-# Ensure project root is in sys.path
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Ensure project root is in sys.path and set working directory
+if getattr(sys, "frozen", False):
+    APP_DIR = os.path.dirname(sys.executable)
+    INTERNAL_DIR = getattr(sys, "_MEIPASS", APP_DIR)
+    if INTERNAL_DIR not in sys.path:
+        sys.path.insert(0, INTERNAL_DIR)
+    PROJECT_ROOT = APP_DIR
+else:
+    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+try:
+    os.chdir(PROJECT_ROOT)
+except Exception:
+    pass
+
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
@@ -69,47 +82,22 @@ def get_lan_ip() -> str:
         return "127.0.0.1"
 
 
-def find_available_port(preferred_port: int = 21420) -> int:
+def find_available_port(preferred_port: int = 21420, host: str = "0.0.0.0") -> int:
     """Test if preferred_port is open. If occupied, scan upwards to find a free port."""
+    test_host = "127.0.0.1" if host == "0.0.0.0" else host
     for p in range(preferred_port, preferred_port + 50):
         try:
-            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            s.bind(("::", p))
-            s.close()
-            return p
-        except Exception:
-            try:
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s4:
-                    s4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    s4.bind(("0.0.0.0", p))
-                    return p
-            except OSError:
-                logger.warning(f"Port {p} ist bereits in Benutzung (Kollisionsschutz aktiv). Prüfe nächsten Port...")
-                continue
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind((test_host, p))
+                return p
+        except OSError:
+            logger.warning(f"Port {p} ist bereits in Benutzung (Kollisionsschutz aktiv). Prüfe nächsten Port...")
+            continue
 
-    return preferred_port
-
-
-def create_dual_stack_socket(port: int) -> socket.socket:
-    """Create a dual-stack TCP listening socket supporting IPv4 and IPv6 simultaneously."""
-    try:
-        s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # Enable dual-stack: listen on both IPv4 (0.0.0.0, 127.0.0.1, LAN IP) and IPv6 (::, ::1)
-        s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-        s.bind(("::", port))
-        s.listen(128)
-        logger.info(f"Dual-Stack Webserver aktiv auf Port {port} (IPv4 + IPv6 localhost/LAN)")
-        return s
-    except Exception as e:
-        logger.warning(f"Dual-Stack IPv6 Socket nicht verfügbar ({e}), weiche auf IPv4 aus...")
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(("0.0.0.0", port))
-        s.listen(128)
-        return s
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((test_host, 0))
+        return s.getsockname()[1]
 
 
 def print_banner(lan_ip: str, port: int, headless: bool = False):
@@ -134,12 +122,13 @@ def print_banner(lan_ip: str, port: int, headless: bool = False):
     print(banner)
 
 
-def run_web_server(sock: socket.socket):
-    """Run Uvicorn ASGI server hosting FastAPI on the bound socket."""
-    from app.server import app
-    config = uvicorn.Config(app, log_level="warning", access_log=False)
-    server = uvicorn.Server(config)
-    server.run(sockets=[sock])
+def run_web_server(host: str, port: int):
+    """Run Uvicorn ASGI server hosting FastAPI."""
+    try:
+        from app.server import app
+        uvicorn.run(app, host=host, port=port, log_level="warning")
+    except Exception as e:
+        logger.error(f"Fehler beim Starten des Uvicorn-Webservers: {e}", exc_info=True)
 
 
 def main():
@@ -151,10 +140,11 @@ def main():
     args = parser.parse_args()
 
     cfg = load_config()
+    host = args.host or cfg.host or "0.0.0.0"
     requested_port = args.port or cfg.web_port or 21420
 
     # Ensure port is not colliding with other programs (like vulkan / dev servers)
-    port = find_available_port(requested_port)
+    port = find_available_port(requested_port, host)
     set_active_port(port)
 
     lan_ip = get_lan_ip()
@@ -162,11 +152,8 @@ def main():
 
     print_banner(lan_ip, port, headless=headless)
 
-    # Bind dual-stack socket before launching thread
-    server_socket = create_dual_stack_socket(port)
-
     # Start FastAPI server in background thread
-    server_thread = threading.Thread(target=run_web_server, args=(server_socket,), daemon=True)
+    server_thread = threading.Thread(target=run_web_server, args=(host, port), daemon=True)
     server_thread.start()
 
     # Wait briefly for server startup

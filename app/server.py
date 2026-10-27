@@ -1,6 +1,7 @@
 """FastAPI REST API, WebSocket live streaming, persistent disk logger, and static asset server for BitAxeTool."""
 
 import os
+import sys
 import asyncio
 import io
 import time
@@ -36,7 +37,13 @@ def get_active_port() -> int:
     return ACTIVE_PORT
 
 # Persistent disk logging
-LOG_DIR = os.path.abspath("logs")
+def _get_base_dir() -> str:
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+BASE_DIR = _get_base_dir()
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 LOG_FILE = os.path.join(LOG_DIR, "bitaxe_monitor.log")
 
 def write_log_to_disk(entry: LogEntry) -> None:

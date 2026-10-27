@@ -9,8 +9,16 @@ from app.models import AppConfig, MinerConfig
 from app.hardware_profiles import get_profile_for_model
 
 logger = logging.getLogger("BitAxeTool.config")
-CONFIG_PATH = os.path.abspath("config.json")
-CONFIG_BACKUP_PATH = os.path.abspath("config.json.bak")
+
+def _get_base_dir() -> str:
+    import sys
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+BASE_DIR = _get_base_dir()
+CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
+CONFIG_BACKUP_PATH = os.path.join(BASE_DIR, "config.json.bak")
 
 
 def load_config() -> AppConfig:
