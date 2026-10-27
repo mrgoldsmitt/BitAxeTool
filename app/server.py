@@ -333,12 +333,14 @@ async def get_network_info():
 
     port = get_active_port()
     lan_url = f"http://{local_ip}:{port}"
-    local_url = f"http://localhost:{port}"
+    local_url = f"http://127.0.0.1:{port}"
+    localhost_url = f"http://localhost:{port}"
 
     return {
         "local_ip": local_ip,
         "lan_url": lan_url,
         "local_url": local_url,
+        "localhost_url": localhost_url,
         "port": port,
         "subnet": get_local_ip_and_subnet(),
         "version": APP_VERSION
@@ -413,6 +415,14 @@ async def websocket_live_stream(websocket: WebSocket):
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/favicon.ico")
+async def serve_favicon():
+    ico_path = os.path.join(os.path.dirname(__file__), "..", "assets", "bitaxe_icon.ico")
+    if os.path.exists(ico_path):
+        return FileResponse(ico_path, media_type="image/x-icon")
+    return HTMLResponse("", status_code=204)
 
 
 @app.get("/", response_class=HTMLResponse)

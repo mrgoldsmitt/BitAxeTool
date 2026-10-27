@@ -42,10 +42,12 @@ Name: "autostart"; Description: "BitAxeTool beim Start von Windows automatisch a
 Source: "dist\BitAxeTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "assets\bitaxe_icon.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Freigabe_Firewall.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\bitaxe_icon.ico"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\assets\bitaxe_icon.ico"; Tasks: desktopicon
+Name: "{autoprograms}\BitAxeTool Firewall Freigeben"; Filename: "{app}\Freigabe_Firewall.bat"
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#MyAppName}"; ValueData: """{app}\{#MyAppExeName}"" --headless"; Flags: uninsdeletevalue; Tasks: autostart
