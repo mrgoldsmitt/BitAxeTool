@@ -2,8 +2,9 @@
 ; Produces a modern installer with desktop shortcut, start menu entry, and uninstaller.
 
 #define MyAppName "BitAxeTool"
-#define MyAppVersion "2.1.0"
+#define MyAppVersion "2.2.0"
 #define MyAppPublisher "mrgoldsmitt"
+#define MyAppPublisherURL "https://mrgoldsmitt.work"
 #define MyAppURL "https://github.com/mrgoldsmitt/BitAxeTool"
 #define MyAppExeName "BitAxeTool.exe"
 
@@ -12,7 +13,7 @@ AppId={{E68F99E5-7B81-4C55-A9D4-9C7881682B12}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-AppPublisherURL={#MyAppURL}
+AppPublisherURL={#MyAppPublisherURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
@@ -42,6 +43,7 @@ Name: "autostart"; Description: "BitAxeTool beim Start von Windows automatisch a
 Source: "dist\BitAxeTool\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "assets\bitaxe_icon.ico"; DestDir: "{app}\assets"; Flags: ignoreversion
 Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Freigabe_Firewall.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "Start_Hintergrunddienst.vbs"; DestDir: "{app}"; Flags: ignoreversion
 

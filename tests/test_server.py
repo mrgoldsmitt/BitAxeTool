@@ -68,16 +68,25 @@ def test_api_qrcode_generation():
 
 
 def test_api_version_and_changelog():
-    """Verify version endpoint and changelog retrieval."""
+    """Verify version endpoint, metadata, changelog and license retrieval."""
     ver_res = client.get("/api/version")
     assert ver_res.status_code == 200
     ver_data = ver_res.json()
-    assert ver_data["version"] == "2.1.0"
+    assert ver_data["version"] == "2.2.0"
     assert ver_data["appName"] == "BitAxeTool"
+    assert ver_data["author"] == "mrgoldsmitt"
+    assert ver_data["website"] == "https://mrgoldsmitt.work"
+    assert "CC BY-NC 4.0" in ver_data["license"]
 
     cl_res = client.get("/api/changelog")
     assert cl_res.status_code == 200
-    assert "2.1.0" in cl_res.text
+    assert "2.2.0" in cl_res.text
+    assert "mrgoldsmitt" in cl_res.text
+
+    lic_res = client.get("/api/license")
+    assert lic_res.status_code == 200
+    assert "Creative Commons" in lic_res.text
+    assert "mrgoldsmitt" in lic_res.text
 
 
 def test_api_logs_download_and_clear():

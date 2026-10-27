@@ -1,33 +1,37 @@
-# BitAxeTool v2.1.0 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.2.0 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
-Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone 13 Mini**, **iPhone 17 Pro**) und Tablet (**iPad**).
+Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
 
 ---
 
-## ⚡ Neu in Version 2.1.0
+## ⚡ Neu in Version 2.2.0
 
+- ⚙️ **Changelog, CC-Lizenz & Urheberrecht direkt in Settings:**
+  - Vollständige Integration von Versionsverlauf, Lizenzdetails (CC BY-NC 4.0) und Entwickler-Attribution (`mrgoldsmitt`) mit Direktlink zu [mrgoldsmitt.work](https://mrgoldsmitt.work).
+  - Übersichtliche Reiter-Navigation (Changelog, Lizenz, Über das Projekt) im Informationsdialog.
+  - Ausfallsichere API-Endpunkte (`/api/changelog`, `/api/license`, `/api/version`).
+- 📈 **24-Stunden-Verlaufsdiagramme als Interaktives Popup:**
+  - Jede der 6 Kachel-Kennzahlen (Hashrate, Leistung, ASIC-Temp, VR-Temp, Effizienz, Miner-Anzahl) öffnet per Klick ein modales Verlaufsdiagramm mit echten historischen Daten.
+  - Dynamischer Zeitfilter (`1 Std`, `6 Std`, `24 Std`) und Live-Statistikleiste (Aktuell, Min, Ø, Max).
+- 📱 **Mobil-optimierte Miner-Kartenbreite & Best-Difficulty:**
+  - 100% responsive Miner-Karten ohne Überlaufen oder horizontales Scrollen auf Smartphones.
+  - Best Difficulty (`All-Time` & `Session / Boot`) direkt mit goldenem Stern auf jeder Miner-Karte integriert.
+- ⚓ **Dauerhaft fixierte Navigationsleiste (iOS Bottom Dock):**
+  - Schwebendes Liquid-Glass-Dock bleibt beim Scrollen fest am unteren Bildschirmrand verankert (`translateZ(0)` Hardwarebeschleunigung).
+- 🔔 **Progressive Web App (PWA) & Smartphone-Alarme:**
+  - Installierbar als native Web-App auf iOS und Android mit Offline-Shell.
+  - Push- & Audio-Alarme bei Überhitzung, VRM-Limit, Offline-Status und Watchdog-Events.
 - 🪟 **Nativer Windows-Betrieb ohne Terminal:**
   - Standalone kompiliert mit PyInstaller (`dist/BitAxeTool/BitAxeTool.exe`).
   - Kein schwarzes Terminalfenster mehr (`--windowed`).
   - Startbar per Doppelklick über `Start_BitAxeTool.vbs` oder direkt als `.exe`.
 - 🛡️ **Kollisionsfreier Port:**
-  - Standardport **`21420`** (vermeidet Port-Konflikte mit Port 8080 oder Vulkansimulationen).
+  - Standardport **`21420`** (vermeidet Port-Konflikte mit Port 8080).
   - Automatischer Ausweich-Portfinder bei bestehenden Belegungen.
-- 🌡️ **Thermisches Headroom-Tuning:**
-  - Zielkorridor (`target_temp ± tolerance`), kein vorzeitiges Drosseln mehr bei gesundem Silizium.
-  - Kalibrierte Standardwerte (Ziel 62°C, Notdrosselung 70°C, Power-Limit für BM1370 auf 26W angehoben).
-- 📜 **Echtzeit-Live-Protokoll & Persistentes Logging:**
-  - Sofortiges Streaming über WebSockets ohne Neuladen der Seite.
-  - Automatische Protokollierung aller Warnungen, Fehler und Miner-Snapshots in `logs/bitaxe_monitor.log`.
-  - Filter für Tuning, Warnungen & Telemetrie sowie 1-Klick-Download des Logs.
-- 🎨 **Schlichteres, aufgeräumtes Design:**
-  - 4 übersichtliche Kacheln pro Miner (Hashrate, Temperatur, Takt & Spannung, Leistung & Effizienz).
-  - Einstellungsmenü mit sauber gruppierten Feldern.
-  - Integrierter Versions- und Changelog-Dialog.
 
 ---
 
@@ -54,7 +58,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.1.0.exe`
+  `installer_output\BitAxeTool_Setup_v2.2.0.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten
@@ -92,3 +96,15 @@ Zur Überprüfung aller Komponenten (Regelung, Interpolation, Sicherheitsschwell
 ```bash
 python -m pytest tests/
 ```
+
+---
+
+## ⚖️ Urheberrecht & Creative Commons Lizenz
+
+Copyright (c) 2026 **[mrgoldsmitt](https://mrgoldsmitt.work)**
+
+Dieses Projekt ist unter der **Creative Commons Attribution-NonCommercial 4.0 International Public License (CC BY-NC 4.0)** lizenziert.
+
+- **Namensnennung (Attribution):** Der Urheber **mrgoldsmitt** ist stets mit Verweis auf seine Webseite ([mrgoldsmitt.work](https://mrgoldsmitt.work)) anzugeben.
+- **Nicht-kommerziell (NonCommercial):** Eine kommerzielle Nutzung der Software und abgeleiteter Werke ist ohne gesonderte Genehmigung untersagt.
+- Vollständiger Lizenztext: Siehe [LICENSE](LICENSE) oder [creativecommons.org/licenses/by-nc/4.0](https://creativecommons.org/licenses/by-nc/4.0/).

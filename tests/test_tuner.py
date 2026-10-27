@@ -47,10 +47,10 @@ def test_miner_config_defaults():
     assert cfg.ip == "192.168.1.100"
     assert cfg.nickname == "TestGamma"
     assert cfg.target_temp == 62.0
-    assert cfg.max_temp == 70.0
+    assert cfg.max_temp == 72.0
     assert cfg.max_vr_temp == 88.0
     assert cfg.min_freq == 450
-    assert cfg.max_freq == 750
+    assert cfg.max_freq == 950
 
 
 @pytest.mark.asyncio

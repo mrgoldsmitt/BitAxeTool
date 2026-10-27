@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
-    <title>BitAxeTool v2.1.0 - Multi-AutoTuner & Safety Governor</title>
+    <title>BitAxeTool v2.2.0 - Multi-AutoTuner & Safety Governor</title>
     
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
@@ -27,7 +27,7 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openChangelogModal()" title="Changelog ansehen">v2.1.0</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.2.0</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
@@ -251,6 +251,20 @@
             </div>
         </section>
 
+        <!-- Bottom Page Footer with Author Copyright & CC License -->
+        <footer class="ios-page-footer">
+            <div class="ios-footer-content">
+                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.2.0</strong></span>
+                <span class="ios-footer-sep">&bull;</span>
+                <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
+                <span class="ios-footer-sep">&bull;</span>
+                <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" class="ios-license-badge">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: text-bottom; margin-right: 3px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+                    CC BY-NC 4.0
+                </a>
+            </div>
+        </footer>
+
     </main>
 
     <!-- Floating Bottom iOS Liquid Glass Dock (Pinned securely to screen bottom) -->
@@ -392,15 +406,56 @@
                     </div>
                 </button>
 
-                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openChangelogModal();">
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openAboutModal('changelog');">
                     <div class="ios-menu-icon icon-amber">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
                     </div>
                     <div class="ios-menu-text">
-                        <div class="ios-menu-title">Changelog &amp; Info</div>
-                        <div class="ios-menu-sub">Version 2.1.0 Neuerungen &amp; Entwickler-Info</div>
+                        <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
+                        <div class="ios-menu-sub">Version 2.2.0 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
+
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openAboutModal('license');">
+                    <div class="ios-menu-icon icon-cyan">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="m9 12 2 2 4-4"></path>
+                        </svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Creative Commons Lizenz (CC BY-NC 4.0)</div>
+                        <div class="ios-menu-sub">Nutzungsrechte, Attribution &amp; Lizenzbedingungen</div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Integrated Settings Footer Card with Author Copyright & Links -->
+            <div class="ios-menu-footer-card">
+                <div class="footer-card-row">
+                    <div class="footer-card-info">
+                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.2.0</span></div>
+                        <div class="footer-author-text">
+                            &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
+                        </div>
+                    </div>
+                    <div class="footer-card-links">
+                        <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" class="badge-pill cc-pill" title="Creative Commons Attribution-NonCommercial 4.0">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                            CC BY-NC 4.0
+                        </a>
+                        <a href="https://github.com/mrgoldsmitt/BitAxeTool" target="_blank" rel="noopener noreferrer" class="badge-pill gh-pill" title="GitHub Repository">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                            GitHub
+                        </a>
+                    </div>
+                </div>
             </div>
             <div style="margin-top: 16px; text-align: center;">
                 <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="closeModal('modal-menu')">Schließen</button>
@@ -627,18 +682,126 @@
         </div>
     </div>
 
-    <!-- Modal: Changelog & Info -->
+    <!-- Modal: Über BitAxeTool, Changelog & CC-Lizenz -->
     <div class="modal-overlay" id="modal-changelog">
         <div class="modal-box ios-glass-modal" style="max-width: 680px;">
             <div class="modal-header">
-                <div class="modal-title">Über BitAxeTool &amp; Changelog</div>
+                <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <svg class="ios-inline-icon accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Über BitAxeTool &amp; Lizenz
+                </div>
                 <button class="modal-close" onclick="closeModal('modal-changelog')">&times;</button>
             </div>
-            <div id="changelog-content" class="changelog-body">
-                <p style="color: var(--text-muted);">Lade Changelog...</p>
+
+            <!-- Tab Switcher Navigation -->
+            <div class="about-tab-nav">
+                <button class="about-tab-btn active" id="tabbtn-changelog" onclick="switchAboutTab('changelog')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    Changelog
+                </button>
+                <button class="about-tab-btn" id="tabbtn-license" onclick="switchAboutTab('license')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        <path d="m9 12 2 2 4-4"></path>
+                    </svg>
+                    CC-Lizenz (CC BY-NC 4.0)
+                </button>
+                <button class="about-tab-btn" id="tabbtn-about" onclick="switchAboutTab('about')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Autor &amp; Projekt
+                </button>
             </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px;">
-                <span style="font-size: 0.8rem; color: var(--text-muted);">Version 2.1.0 • mrgoldsmitt</span>
+
+            <!-- Tab 1: Changelog Content -->
+            <div class="about-tab-pane active" id="tabpane-changelog">
+                <div id="changelog-content" class="changelog-body">
+                    <p style="color: var(--text-muted);">Lade Changelog...</p>
+                </div>
+            </div>
+
+            <!-- Tab 2: CC-Lizenz (CC BY-NC 4.0) Content -->
+            <div class="about-tab-pane" id="tabpane-license" style="display: none;">
+                <div class="license-modal-container">
+                    <div class="license-summary-card">
+                        <div class="license-badge-header">
+                            <span class="cc-license-title">Creative Commons Attribution-NonCommercial 4.0 International</span>
+                            <span class="cc-license-code">CC BY-NC 4.0</span>
+                        </div>
+                        <p class="license-summary-text">
+                            Dieses Werk ist urheberrechtlich geschützt. Sie dürfen die Software vervielfältigen, verbreiten, öffentlich zugänglich machen und bearbeiten unter folgenden Bedingungen:
+                        </p>
+                        <div class="license-terms-grid">
+                            <div class="license-term-item">
+                                <strong style="color: var(--accent-cyan); display: block; margin-bottom: 2px;">Namensnennung (Attribution):</strong>
+                                Sie müssen den Urheber <strong style="color: #fff;">mrgoldsmitt</strong> mit Verweis auf seine Webseite <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">mrgoldsmitt.work</a> stets angemessen nennen.
+                            </div>
+                            <div class="license-term-item">
+                                <strong style="color: var(--accent-orange); display: block; margin-bottom: 2px;">Nicht-kommerziell (NonCommercial):</strong>
+                                Sie dürfen dieses Material <strong>nicht für kommerzielle Zwecke</strong> nutzen, weiterverkaufen oder gewerblich betreiben.
+                            </div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                Offizielle Creative Commons Lizenzurkunde öffnen
+                            </a>
+                        </div>
+                    </div>
+                    <div class="license-legal-text-wrapper">
+                        <div class="legal-text-title">Vollständiger Lizenztext (LICENSE):</div>
+                        <pre id="license-full-text" class="license-pre">Lade Lizenztext...</pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Autor & Projekt Content -->
+            <div class="about-tab-pane" id="tabpane-about" style="display: none;">
+                <div class="author-modal-container">
+                    <div class="author-card">
+                        <div class="author-avatar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <div class="author-details">
+                            <h3 class="author-name">mrgoldsmitt</h3>
+                            <div class="author-role">Entwickler &amp; Maintainer von BitAxeTool</div>
+                            <p class="author-bio">
+                                Entwicklung und Pflege von BitAxeTool – der automatisierten Temperatur-, Takt- und Sicherheitsregelung für Bitaxe Solo-Miner.
+                            </p>
+                            <div class="author-links-row">
+                                <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                    mrgoldsmitt.work besuchen
+                                </a>
+                                <a href="https://github.com/mrgoldsmitt/BitAxeTool" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                    GitHub Projekt
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">
+                    Version 2.2.0 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
+                </span>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
             </div>
         </div>

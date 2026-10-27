@@ -19,6 +19,7 @@ def build():
     static_path = os.path.abspath(os.path.join("app", "static"))
     assets_path = os.path.abspath("assets")
     changelog_path = os.path.abspath("CHANGELOG.md")
+    license_path = os.path.abspath("LICENSE")
 
     # Separator for PyInstaller --add-data (';' on Windows, ':' on Unix)
     sep = ";" if sys.platform.startswith("win") else ":"
@@ -33,6 +34,7 @@ def build():
         f"--add-data={static_path}{sep}app/static",
         f"--add-data={assets_path}{sep}assets",
         f"--add-data={changelog_path}{sep}.",
+        f"--add-data={license_path}{sep}.",
         "--collect-all=zeroconf",
         "--collect-all=uvicorn",
         "--collect-all=fastapi",

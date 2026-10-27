@@ -23,7 +23,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -267,27 +267,79 @@ async def broadcast_telemetry_loop():
         await asyncio.sleep(1.0)
 
 
+def get_resource_file_content(filename: str) -> str:
+    """Safely locate and read a text resource file (CHANGELOG.md, LICENSE, etc.) across dev & compiled environments."""
+    candidates = [
+        os.path.join(os.path.dirname(__file__), "..", filename),
+        os.path.join(getattr(sys, "_MEIPASS", ""), filename),
+        os.path.join(os.path.dirname(sys.executable), filename),
+        os.path.abspath(filename),
+    ]
+    for p in candidates:
+        if p and os.path.exists(p) and os.path.isfile(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                    if content:
+                        return content
+            except Exception as e:
+                logger.warning(f"Fehler beim Lesen von {p}: {e}")
+    return ""
+
+
 # --- REST API Endpoints ---
 
 @app.get("/api/version")
 async def get_version_info():
-    """Return application version and metadata."""
+    """Return application version, copyright and metadata."""
     return {
         "version": APP_VERSION,
         "appName": "BitAxeTool",
         "author": "mrgoldsmitt",
+        "website": "https://mrgoldsmitt.work",
+        "copyright": "Copyright (c) 2026 mrgoldsmitt (https://mrgoldsmitt.work)",
+        "license": "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)",
+        "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
         "description": "Multi-AutoTuner & Safety Governor for Bitaxe Solo Miners"
     }
 
 
 @app.get("/api/changelog", response_class=PlainTextResponse)
 async def get_changelog():
-    """Return CHANGELOG.md contents."""
-    changelog_path = os.path.abspath("CHANGELOG.md")
-    if os.path.exists(changelog_path):
-        with open(changelog_path, "r", encoding="utf-8") as f:
-            return f.read()
-    return "# Changelog\n\nKein Changelog gefunden."
+    """Return CHANGELOG.md contents with reliable embedded fallback."""
+    content = get_resource_file_content("CHANGELOG.md")
+    if content:
+        return content
+    return (
+        "# Changelog - BitAxeTool\n\n"
+        "## [2.2.0] - 2026-10-27\n\n"
+        "### 🚀 Neuerungen & Verbesserungen\n"
+        "- **Changelog & CC-Lizenz in Settings:** Vollständige Integration des Versionsverlaufs, der Creative Commons Lizenz (CC BY-NC 4.0) und des Copyrights von mrgoldsmitt (https://mrgoldsmitt.work) direkt im Einstellungsmenü.\n"
+        "- **24-Stunden-Verlaufsdiagramme:** Interaktives Liquid-Glass-Popup beim Antippen jeder Kennzahl (1h / 6h / 24h Filter, Min / Ø / Max).\n"
+        "- **Best Difficulty direkt auf Miner-Karten:** All-Time- und Session-Bestwerte mit goldenem Stern integriert.\n"
+        "- **Mobil-Optimierung:** 100% responsive Miner-Kartenbreite ohne horizontales Scrollen.\n"
+        "- **Fixierte Navigationsleiste:** Dauerhaft am unteren Bildschirmrand verankertes iOS Liquid Glass Dock.\n"
+        "- **PWA & Benachrichtigungen:** Vollständige Smartphone-App-Unterstützung mit Alarmen für Temperatur, Offline und Watchdog-Events."
+    )
+
+
+@app.get("/api/license", response_class=PlainTextResponse)
+async def get_license():
+    """Return LICENSE contents (Creative Commons Attribution-NonCommercial 4.0 International)."""
+    content = get_resource_file_content("LICENSE")
+    if content:
+        return content
+    return (
+        "Creative Commons Attribution-NonCommercial 4.0 International Public License\n\n"
+        "Copyright (c) 2026 mrgoldsmitt (https://mrgoldsmitt.work)\n\n"
+        "Offizielle Lizenz-URL: https://creativecommons.org/licenses/by-nc/4.0/\n\n"
+        "Zusammenfassung der Rechte und Pflichten:\n"
+        "- Teilen: Das Material in jedwedem Format oder Medium vervielfältigen und weiterverbreiten.\n"
+        "- Bearbeiten: Das Material remixen, verändern und darauf aufbauen.\n\n"
+        "Unter folgenden Bedingungen:\n"
+        "- Namensnennung (Attribution): Sie müssen angemessene Urheberangaben zu 'mrgoldsmitt' (https://mrgoldsmitt.work) machen, einen Link zur Lizenz beifügen und angeben, ob Änderungen vorgenommen wurden.\n"
+        "- Nicht-kommerziell (NonCommercial): Sie dürfen das Material NICHT für kommerzielle Zwecke nutzen.\n"
+    )
 
 
 @app.get("/api/config", response_model=AppConfig)

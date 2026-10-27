@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('C:/Projekte/BitAxeTool/app/static', 'app/static'), ('C:/Projekte/BitAxeTool/assets', 'assets'), ('C:/Projekte/BitAxeTool/CHANGELOG.md', '.')]
+datas = [('C:/Projekte/BitAxeTool/app/static', 'app/static'), ('C:/Projekte/BitAxeTool/assets', 'assets'), ('C:/Projekte/BitAxeTool/CHANGELOG.md', '.'), ('C:/Projekte/BitAxeTool/LICENSE', '.')]
 binaries = []
 hiddenimports = ['uvicorn.logging', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.websockets', 'uvicorn.protocols.websockets.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'zeroconf._utils.ipaddress', 'zeroconf._handlers.answers']
 tmp_ret = collect_all('zeroconf')

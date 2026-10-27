@@ -1,5 +1,5 @@
 /**
- * BitAxeTool v2.1.0 - Modern iOS Liquid Glass Controller & Reactive Dashboard
+ * BitAxeTool v2.2.0 - Modern iOS Liquid Glass Controller & Reactive Dashboard
  */
 
 let socket = null;
@@ -1179,21 +1179,69 @@ function openQrModal() {
     openModal("modal-qr");
 }
 
-// --- Changelog Modal ---
+// --- About, Changelog & License Modal ---
 
-async function openChangelogModal() {
-    const content = document.getElementById("changelog-content");
+let isLicenseLoaded = false;
+let isChangelogLoaded = false;
+
+function switchAboutTab(tabName) {
+    const tabs = ["changelog", "license", "about"];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tabbtn-${t}`);
+        const pane = document.getElementById(`tabpane-${t}`);
+        if (btn) btn.classList.toggle("active", t === tabName);
+        if (pane) pane.style.display = (t === tabName) ? "block" : "none";
+    });
+
+    if (tabName === "license" && !isLicenseLoaded) {
+        loadLicenseText();
+    } else if (tabName === "changelog" && !isChangelogLoaded) {
+        loadChangelogText();
+    }
+}
+
+async function openAboutModal(initialTab = "changelog") {
     openModal("modal-changelog");
+    switchAboutTab(initialTab);
+    if (!isChangelogLoaded) {
+        await loadChangelogText();
+    }
+}
+
+function openChangelogModal() {
+    openAboutModal("changelog");
+}
+
+async function loadChangelogText() {
+    const content = document.getElementById("changelog-content");
+    if (!content) return;
     try {
         const res = await fetch("/api/changelog");
         if (res.ok) {
             const text = await res.text();
             content.innerHTML = parseSimpleMarkdown(text);
+            isChangelogLoaded = true;
         } else {
-            content.innerHTML = "<p>Changelog konnte nicht geladen werden.</p>";
+            content.innerHTML = "<p style='color: var(--accent-orange);'>Changelog konnte nicht geladen werden.</p>";
         }
     } catch (e) {
-        content.innerHTML = "<p>Fehler beim Abrufen des Changelogs.</p>";
+        content.innerHTML = "<p style='color: var(--accent-red);'>Fehler beim Abrufen des Changelogs.</p>";
+    }
+}
+
+async function loadLicenseText() {
+    const licBox = document.getElementById("license-full-text");
+    if (!licBox) return;
+    try {
+        const res = await fetch("/api/license");
+        if (res.ok) {
+            licBox.textContent = await res.text();
+            isLicenseLoaded = true;
+        } else {
+            licBox.textContent = "Creative Commons Lizenztext (CC BY-NC 4.0) konnte nicht geladen werden.";
+        }
+    } catch (e) {
+        licBox.textContent = "Netzwerkfehler beim Laden des Lizenztexts.";
     }
 }
 
@@ -1204,6 +1252,7 @@ function parseSimpleMarkdown(md) {
     html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>");
     html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
     html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
     html = html.replace(/^\- (.*$)/gim, "<li>$1</li>");
     html = html.replace(/(<li>.*<\/li>)/gim, "<ul>$1</ul>");
     html = html.replace(/\n\n/g, "<br><br>");

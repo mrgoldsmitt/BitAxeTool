@@ -4,6 +4,31 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.2.0] - 2026-10-27
+
+### 🚀 Highlights & Neuerungen
+- **Changelog, CC-Lizenz & Urheberrecht direkt in den Einstellungen:**
+  - **Einstellungsmenü (Settings):** Vollständige Integration von Changelog, Lizenzbedingungen und Urheberrechtsangaben im Hauptmenü.
+  - **Autor & Webseite:** Offizieller Copyright-Vermerk von `mrgoldsmitt` mit direkter Verlinkung zur Homepage [mrgoldsmitt.work](https://mrgoldsmitt.work).
+  - **Creative Commons Lizenz (CC BY-NC 4.0):** Vollständige Einbindung der Creative Commons Attribution-NonCommercial 4.0 International Lizenz (sowohl als verständliche Übersicht als auch als vollständiger Rechtstext).
+  - **Reiter-Navigation:** Das Informationsfenster bietet nun drei übersichtliche Tabs: *Changelog*, *CC-Lizenz (CC BY-NC 4.0)* und *Über das Projekt & Autor*.
+  - **Ausfallsichere API:** Die Endpunkte `/api/changelog` und `/api/license` ermitteln Pfade nun dynamisch über Entwicklungs-, Release- und PyInstaller-Umgebungen hinweg und besitzen integrierte Fallbacks, damit Dokumentationen niemals leer bleiben.
+
+- **24-Stunden-Verlaufsdiagramme als Popup:**
+  - Durch Klick auf eine der 6 KPI-Karten im oberen Bereich öffnet sich ein interaktives Liquid-Glass-Diagramm mit dem 24h-Verlauf der jeweiligen Metrik (Hashrate, Leistung, ASIC-Temperatur, VRM-Temperatur, Effizienz oder Miner-Anzahl).
+  - Zeitbereich umschaltbar zwischen `1 Std`, `6 Std` und `24 Std`.
+  - Direkte Anzeige von aktuellen Werten sowie Minimum, Durchschnitt und Maximum über den gewählten Zeitraum.
+
+- **Optimierte Miner-Kartenbreite & Best-Difficulty-Integration:**
+  - Die Miner-Karten passen sich nun 100% responsive und ohne horizontales Überlaufen an mobile Bildschirme an.
+  - Die separate "Best Difficulty"-Karte wurde entfernt; die Bestwerte (`All-Time` und `Session / Boot`) sind jetzt direkt mit goldenem Stern auf jeder Miner-Statuskarte integriert.
+
+- **Dauerhaft fixierte Menüleiste (iOS Bottom Dock):**
+  - Das schwebende Liquid-Glass-Dock bleibt beim Scrollen fest am unteren Bildschirmrand verankert (`translateZ(0)` Hardwarebeschleunigung).
+  - Vertikales Icon-Layout verhindert jegliches Überlaufen auf schmalen Smartphone-Displays.
+
+---
+
 ## [2.1.0] - 2026-10-27
 
 ### 🚀 Highlights & Neuerungen
