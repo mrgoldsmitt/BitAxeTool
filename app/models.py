@@ -58,6 +58,8 @@ class MinerTelemetry(BaseModel):
     error_percentage: Optional[float] = 0.0
     uptime_seconds: Optional[int] = 0
     overheat_mode: Optional[int] = 0
+    best_diff: Optional[int] = 0
+    best_session_diff: Optional[int] = 0
 
     # Governor state
     governor_status: str = "IDLE"   # "OPTIMAL", "RAMPING_UP", "COOLING_DOWN", "EMERGENCY_THROTTLE", "STABILIZING", "OFFLINE"

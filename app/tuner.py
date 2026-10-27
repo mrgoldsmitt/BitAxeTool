@@ -244,6 +244,8 @@ class MinerWorker:
         self.telemetry.error_percentage = float(info.get("errorPercentage", 0.0))
         self.telemetry.uptime_seconds = int(info.get("uptimeSeconds", 0))
         self.telemetry.overheat_mode = int(info.get("overheat_mode", 0))
+        self.telemetry.best_diff = int(info.get("bestDiff", 0))
+        self.telemetry.best_session_diff = int(info.get("bestSessionDiff", 0))
 
         # Efficiency in Joules / Terahash: (Power Watts / (Hashrate GH/s / 1000))
         if self.telemetry.power and self.telemetry.hash_rate and self.telemetry.hash_rate > 10:

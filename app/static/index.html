@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#0B0F17">
+    <meta name="theme-color" content="#000000">
+    <meta name="color-scheme" content="dark">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
@@ -20,108 +21,202 @@
 </head>
 <body>
 
-    <!-- Header Navigation Bar -->
-    <header class="app-header">
-        <div class="brand" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-            <div class="brand-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
-                </svg>
+    <!-- iOS Liquid Glass Top Header -->
+    <header class="ios-header">
+        <div class="ios-header-main">
+            <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
+            <div class="ios-header-subtitle">
+                <span id="connection-badge" class="ios-status-pill live">LIVE</span>
+                <span class="ios-header-ver" onclick="openChangelogModal()" title="Changelog ansehen">v2.1.0</span>
+                <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
-            <div>
-                <div class="brand-title">BitAxeTool</div>
-            </div>
-            <button onclick="openChangelogModal()" class="version-badge" title="Changelog & Version ansehen">v2.1.0</button>
-            <span id="connection-badge" class="brand-badge">VERBINDEN...</span>
-            <span id="port-badge" class="port-badge" style="display: none;">Port: --</span>
         </div>
 
-        <div class="header-actions">
-            <button onclick="openScanModal()" class="btn btn-secondary">
-                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                Netzwerk-Scan
-            </button>
-            <button onclick="openAddMinerModal()" class="btn btn-secondary">
-                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                Miner hinzufügen
-            </button>
-            <button onclick="openChangelogModal()" class="btn btn-secondary" title="Changelog anzeigen">
-                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Changelog
-            </button>
-            <button id="btn-notifications" onclick="openNotificationModal()" class="btn btn-secondary" title="Benachrichtigungen & PWA einrichten">
-                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        <div class="ios-header-actions">
+            <!-- Unmissable Circular Frosted Glass Notification Bell Button -->
+            <button id="btn-notifications" class="ios-circle-btn" onclick="openNotificationModal()" title="Benachrichtigungen & PWA Alarm einrichten">
+                <svg class="ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
-                <span class="btn-text-hide-mobile">Alarm</span>
                 <span class="notification-badge-dot" id="notif-badge-dot" style="display: none;"></span>
             </button>
-            <button onclick="openQrModal()" class="btn btn-primary" title="Mobil auf iPhone oder iPad öffnen">
-                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                Mobil
+
+            <!-- Network Scan / Miner Hinzufügen Button -->
+            <button id="btn-header-add" class="ios-circle-btn" onclick="openScanModal()" title="Netzwerk-Scan nach Bitaxe-Minern">
+                <svg class="ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <!-- Smartphone QR-Code Button -->
+            <button id="btn-mobile" class="ios-circle-btn" onclick="openQrModal()" title="Auf Smartphone / Tablet öffnen (QR-Code)">
+                <svg class="ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                    <line x1="10" y1="3" x2="10" y2="7"></line>
+                    <line x1="3" y1="10" x2="7" y2="10"></line>
+                    <line x1="10" y1="14" x2="10" y2="18"></line>
+                    <line x1="17" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </button>
+
+            <!-- Refresh Button matching Screenshot top-right -->
+            <button id="btn-refresh" class="ios-circle-btn" onclick="refreshDashboard()" title="Dashboard neu laden">
+                <svg class="ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6"></path>
+                    <path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
             </button>
         </div>
     </header>
 
-    <!-- Main Dashboard -->
-    <main class="dashboard-container">
+    <!-- Main Content Container -->
+    <main class="ios-dashboard-container">
 
-        <!-- Global Summary KPI Row -->
-        <section class="summary-bar">
-            <div class="kpi-card gold">
-                <span class="kpi-label">Gesamthashrate</span>
-                <span id="kpi-total-hashrate" class="kpi-value">-- GH/s</span>
-                <span class="kpi-sub">Echtzeit-Summe aller Miner</span>
+        <!-- 6 Metric Cards Grid matching the Screenshot -->
+        <section class="ios-metric-grid" id="section-kpis">
+            
+            <!-- Card 1: Total Hash Rate (Electric Blue Lightning) -->
+            <div class="ios-metric-card" id="card-hashrate">
+                <div class="ios-metric-top">
+                    <div class="ios-metric-icon icon-cyan">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ios-metric-val" id="kpi-total-hashrate">-- TH/s</div>
+                <div class="ios-metric-lbl">Total Hash Rate</div>
             </div>
-            <div class="kpi-card blue">
-                <span class="kpi-label">Gesamtleistung</span>
-                <span id="kpi-total-watts" class="kpi-value">-- W</span>
-                <span class="kpi-sub">Aktueller Stromverbrauch</span>
+
+            <!-- Card 2: Total Power (Bright Orange Power) -->
+            <div class="ios-metric-card" id="card-power">
+                <div class="ios-metric-top">
+                    <div class="ios-metric-icon icon-orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                            <path d="M12 2v10M18.36 6.64a9 9 0 11-12.73 0"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ios-metric-val" id="kpi-total-watts">-- W</div>
+                <div class="ios-metric-lbl">Total Power</div>
             </div>
-            <div class="kpi-card red">
-                <span class="kpi-label">Höchsttemperatur</span>
-                <span id="kpi-max-temp" class="kpi-value">-- °C</span>
-                <span class="kpi-sub">Wärmster ASIC-Kern</span>
+
+            <!-- Card 3: Avg ASIC Temp (Coral Red Thermometer) -->
+            <div class="ios-metric-card" id="card-temp-asic">
+                <div class="ios-metric-top">
+                    <div class="ios-metric-icon icon-red">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0zM11.5 3.5a1 1 0 0 1 2 0v7h-2V3.5z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ios-metric-val" id="kpi-max-temp">--°C</div>
+                <div class="ios-metric-lbl">Avg ASIC Temp</div>
             </div>
-            <div class="kpi-card green">
-                <span class="kpi-label">Effizienz</span>
-                <span id="kpi-total-efficiency" class="kpi-value">-- J/TH</span>
-                <span class="kpi-sub">Energie pro Terahash</span>
+
+            <!-- Card 4: Avg VR Temp (Amber Orange Thermometer) -->
+            <div class="ios-metric-card" id="card-temp-vr">
+                <div class="ios-metric-top">
+                    <div class="ios-metric-icon icon-amber">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0zM11.5 3.5a1 1 0 0 1 2 0v7h-2V3.5z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ios-metric-val" id="kpi-avg-vr-temp">--°C</div>
+                <div class="ios-metric-lbl">Avg VR Temp</div>
             </div>
-            <div class="kpi-card purple">
-                <span class="kpi-label">Miner Status</span>
-                <span id="kpi-miner-count" class="kpi-value">0 / 0</span>
-                <span class="kpi-sub">Online & Gesteuert</span>
+
+            <!-- Card 5: Avg Efficiency (Magenta / Purple Gauge) -->
+            <div class="ios-metric-card" id="card-efficiency">
+                <div class="ios-metric-top">
+                    <div class="ios-metric-icon icon-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 14l3-3m5.2 2.8A9 9 0 103.8 13.8M12 7v1"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ios-metric-val" id="kpi-total-efficiency">-- J/TH</div>
+                <div class="ios-metric-lbl">Avg Efficiency</div>
+            </div>
+
+            <!-- Card 6: Online Miners (Neon Green Microchip) -->
+            <div class="ios-metric-card" id="card-miners-count">
+                <div class="ios-metric-top">
+                    <div class="ios-metric-icon icon-green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                            <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ios-metric-val" id="kpi-miner-count">0/0</div>
+                <div class="ios-metric-lbl">Online Miners</div>
+            </div>
+
+        </section>
+
+        <!-- Best Difficulty Card matching Screenshot -->
+        <section class="ios-best-diff-card" id="section-best-diff">
+            <div class="ios-best-diff-header">
+                <div>
+                    <div class="ios-best-diff-title">Best Difficulty</div>
+                    <div class="ios-best-diff-miner" id="best-diff-miner-name">Lade Miner...</div>
+                </div>
+                <div class="ios-best-diff-star">
+                    <svg viewBox="0 0 24 24" fill="#FFD60A">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ios-best-diff-body">
+                <div class="ios-best-diff-col">
+                    <div class="ios-best-diff-val" id="best-diff-all-time">--</div>
+                    <div class="ios-best-diff-sub">All Time Best</div>
+                </div>
+                <div class="ios-best-diff-col">
+                    <div class="ios-best-diff-val" id="best-diff-session">--</div>
+                    <div class="ios-best-diff-sub">Since System Boot</div>
+                </div>
+            </div>
+            <div class="ios-best-diff-dots" id="best-diff-pagination">
+                <span class="dot active"></span>
             </div>
         </section>
 
-        <!-- Miner Grid Section (Prominent Cockpit) -->
+        <!-- Miners Status Cockpit Section -->
         <section id="section-miners">
-            <div class="miners-section-header">
-                <div class="section-title">
-                    <svg width="20" height="20" fill="none" stroke="var(--accent-gold)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                    Bitaxe-Miner Cockpit
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="toggleChartSection()" id="btn-toggle-chart" class="btn btn-secondary btn-sm">
-                        📊 Diagramm ausblenden
-                    </button>
-                </div>
+            <div class="ios-section-header">
+                <h2 class="ios-section-title">Miners Status</h2>
+                <div class="ios-updated-timer" id="last-updated-text">Updated just now</div>
             </div>
 
             <div class="miners-grid" id="miners-grid">
-                <!-- Dynamically generated miner cards -->
+                <!-- Dynamically populated miner cards in liquid glass style -->
             </div>
         </section>
 
-        <!-- Live Telemetry Line Chart (Collapsible) -->
-        <section class="telemetry-chart-card" id="section-charts">
-            <div class="chart-header">
-                <div class="section-title" style="font-size: 1rem;">
-                    <svg width="18" height="18" fill="none" stroke="var(--accent-gold)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    Live-Verlauf (Hashrate & Temperatur)
+        <!-- Live Telemetry Line Chart (Collapsible / Tab-Switched) -->
+        <section class="ios-glass-card" id="section-charts">
+            <div class="ios-card-header">
+                <div class="ios-section-title" style="font-size: 1.05rem;">
+                    <svg class="ios-inline-icon accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18"></path>
+                        <path d="M18 9l-5 5-4-4-6 6"></path>
+                    </svg>
+                    Live-Verlauf (Hashrate &amp; Temperatur)
                 </div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Echtzeit-Aktualisierung: 1s</div>
+                <button onclick="toggleChartSection()" id="btn-toggle-chart" class="ios-glass-btn-sm">
+                    <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 15l-6-6-6 6"></path>
+                    </svg>
+                    Ausblenden
+                </button>
             </div>
             <div class="chart-container">
                 <canvas id="telemetryChart"></canvas>
@@ -129,25 +224,34 @@
         </section>
 
         <!-- Live Event Logs with Realtime Streaming & Filters -->
-        <section class="logs-card" id="section-logs">
-            <div class="logs-header">
-                <div class="section-title" style="font-size: 1rem;">
-                    <span class="live-dot" title="Echtzeit-Stream aktiv"></span>
+        <section class="ios-glass-card" id="section-logs">
+            <div class="ios-card-header">
+                <div class="ios-section-title" style="font-size: 1.05rem;">
+                    <span class="live-pulse-dot" title="Echtzeit-Stream aktiv"></span>
                     Live-Systemprotokoll
                 </div>
                 <div class="log-toolbar">
                     <div class="log-filters">
                         <button class="log-filter-btn active" data-filter="all" onclick="setLogFilter('all')">Alle</button>
                         <button class="log-filter-btn" data-filter="governor" onclick="setLogFilter('governor')">Tuning</button>
-                        <button class="log-filter-btn" data-filter="warning" onclick="setLogFilter('warning')">Warnungen & Fehler</button>
+                        <button class="log-filter-btn" data-filter="warning" onclick="setLogFilter('warning')">Warnungen</button>
                         <button class="log-filter-btn" data-filter="telemetry" onclick="setLogFilter('telemetry')">Telemetrie</button>
                     </div>
                     <div style="display: flex; gap: 6px;">
-                        <button onclick="downloadLogFile()" class="btn btn-secondary btn-sm" title="Gesamte Logdatei als Text herunterladen">
-                            📥 Download (.log)
+                        <button onclick="downloadLogFile()" class="ios-glass-btn-sm" title="Gesamte Logdatei als Text herunterladen">
+                            <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Log (.txt)
                         </button>
-                        <button onclick="clearLogs()" class="btn btn-secondary btn-sm" title="Protokollfenster leeren">
-                            🗑️ Leeren
+                        <button onclick="clearLogs()" class="ios-glass-btn-sm" title="Protokollfenster leeren">
+                            <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Leeren
                         </button>
                     </div>
                 </div>
@@ -159,48 +263,139 @@
 
     </main>
 
-    <!-- Mobile Navigation Bar -->
-    <nav class="mobile-nav-bar">
-        <button class="mobile-nav-item active" onclick="document.getElementById('section-miners').scrollIntoView({behavior: 'smooth'})">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-            Miner
+    <!-- Floating Bottom iOS Liquid Glass Dock (Tab Bar) -->
+    <nav class="ios-dock" id="ios-bottom-dock">
+        <!-- Tab 1: Dashboard -->
+        <button class="ios-dock-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+            <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 14l3-3m5.2 2.8A9 9 0 103.8 13.8M12 7v1"></path>
+            </svg>
+            <span>Dashboard</span>
         </button>
-        <button class="mobile-nav-item" onclick="document.getElementById('section-charts').scrollIntoView({behavior: 'smooth'})">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-            Diagramm
+
+        <!-- Tab 2: Charts -->
+        <button class="ios-dock-item" data-tab="charts" onclick="switchTab('charts')">
+            <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"></path>
+                <path d="M18 9l-5 5-4-4-6 6"></path>
+            </svg>
+            <span>Charts</span>
         </button>
-        <button class="mobile-nav-item" onclick="document.getElementById('section-logs').scrollIntoView({behavior: 'smooth'})">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            Logs
+
+        <!-- Tab 3: Miners -->
+        <button class="ios-dock-item" data-tab="miners" onclick="switchTab('miners')">
+            <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="5" width="14" height="14" rx="2"></rect>
+                <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path>
+            </svg>
+            <span>Miners</span>
         </button>
-        <button class="mobile-nav-item" onclick="openScanModal()">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            Scan
+
+        <!-- Tab 4: Alarm / Benachrichtigungen (Prominent in Dock!) -->
+        <button class="ios-dock-item" data-tab="alarm" onclick="openNotificationModal()" title="Benachrichtigungen & PWA Alarm einrichten">
+            <div class="dock-icon-wrapper">
+                <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="dock-badge-dot" id="dock-notif-dot" style="display: none;"></span>
+            </div>
+            <span>Alarm</span>
         </button>
-        <button class="mobile-nav-item" onclick="openQrModal()">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-            Mobil
+
+        <!-- Tab 5: Settings Menu -->
+        <button class="ios-dock-item" data-tab="settings" onclick="openSettingsMenuModal()">
+            <svg class="dock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Settings</span>
         </button>
     </nav>
 
+    <!-- Modal: Settings & Action Sheet Menu -->
+    <div class="modal-overlay" id="modal-menu">
+        <div class="modal-box ios-glass-modal">
+            <div class="modal-header">
+                <div class="modal-title">Einstellungen &amp; Werkzeuge</div>
+                <button class="modal-close" onclick="closeModal('modal-menu')">&times;</button>
+            </div>
+            <div class="ios-menu-grid">
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openScanModal();">
+                    <div class="ios-menu-icon icon-blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Netzwerk-Scan</div>
+                        <div class="ios-menu-sub">Lokales Subnetz nach Bitaxe-Minern scannen</div>
+                    </div>
+                </button>
+
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openAddMinerModal();">
+                    <div class="ios-menu-icon icon-green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Miner manuell hinzufügen</div>
+                        <div class="ios-menu-sub">IP-Adresse und Modell manuell eintragen</div>
+                    </div>
+                </button>
+
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openQrModal();">
+                    <div class="ios-menu-icon icon-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Mobil verbinden (QR-Code)</div>
+                        <div class="ios-menu-sub">Auf Smartphone oder iPad im selben WLAN öffnen</div>
+                    </div>
+                </button>
+
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openNotificationModal();">
+                    <div class="ios-menu-icon icon-orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Alarme &amp; PWA Push</div>
+                        <div class="ios-menu-sub">Temperaturwarnungen, Offline-Alerts &amp; Sound</div>
+                    </div>
+                </button>
+
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openChangelogModal();">
+                    <div class="ios-menu-icon icon-amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Changelog &amp; Info</div>
+                        <div class="ios-menu-sub">Version 2.1.0 Neuerungen &amp; Entwickler-Info</div>
+                    </div>
+                </button>
+            </div>
+            <div style="margin-top: 16px; text-align: center;">
+                <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="closeModal('modal-menu')">Schließen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Netzwerk-Scan -->
     <div class="modal-overlay" id="modal-scan">
-        <div class="modal-box">
+        <div class="modal-box ios-glass-modal">
             <div class="modal-header">
                 <div class="modal-title">Bitaxe-Miner im Netzwerk suchen</div>
                 <button class="modal-close" onclick="closeModal('modal-scan')">&times;</button>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
                 Durchsucht das lokale Subnetz parallel per asynchronem HTTP-Scan und mDNS nach erreichbaren AxeOS-Geräten.
             </p>
             <div style="display: flex; gap: 10px; margin-top: 4px;">
                 <button id="btn-start-scan" onclick="startNetworkScan()" class="btn btn-primary" style="flex: 1;">
+                    <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     Scan starten
                 </button>
             </div>
             <div id="scan-spinner" style="display: none; align-items: center; justify-content: center; gap: 10px; padding: 20px 0;">
-                <div style="width: 22px; height: 22px; border: 3px solid var(--border-color); border-top-color: var(--accent-gold); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-                <span style="font-size: 0.88rem; color: var(--accent-gold);">Subnetz wird durchsucht...</span>
+                <div style="width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent-cyan); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                <span style="font-size: 0.88rem; color: var(--accent-cyan);">Subnetz wird durchsucht...</span>
             </div>
             <div class="discovered-list" id="scan-results"></div>
         </div>
@@ -208,7 +403,7 @@
 
     <!-- Modal: Miner Hinzufügen (Manuell) -->
     <div class="modal-overlay" id="modal-add-miner">
-        <div class="modal-box">
+        <div class="modal-box ios-glass-modal">
             <div class="modal-header">
                 <div class="modal-title">Miner manuell hinzufügen</div>
                 <button class="modal-close" onclick="closeModal('modal-add-miner')">&times;</button>
@@ -242,27 +437,36 @@
 
     <!-- Modal: Miner Parameter & Regelung konfigurieren -->
     <div class="modal-overlay" id="modal-edit-miner">
-        <div class="modal-box">
+        <div class="modal-box ios-glass-modal">
             <div class="modal-header">
                 <div>
                     <div class="modal-title">Regelungsparameter anpassen</div>
-                    <div id="edit-ip-display" style="font-size: 0.8rem; color: var(--accent-gold); font-family: monospace;"></div>
+                    <div id="edit-ip-display" style="font-size: 0.8rem; color: var(--accent-cyan); font-family: monospace;"></div>
                 </div>
                 <button class="modal-close" onclick="closeModal('modal-edit-miner')">&times;</button>
             </div>
 
-            <!-- Schnell-Profile Presets -->
+            <!-- Schnell-Profile Presets mit SVG Icons -->
             <div>
-                <label style="display: block; margin-bottom: 6px; font-size: 0.82rem; color: var(--text-muted);">Schnellvorlagen:</label>
+                <label style="display: block; margin-bottom: 8px; font-size: 0.82rem; color: var(--text-muted);">Schnellvorlagen:</label>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" onclick="applyPreset('eco')" class="btn btn-secondary btn-sm">🌱 Eco (56°C / Leise)</button>
-                    <button type="button" onclick="applyPreset('balanced')" class="btn btn-secondary btn-sm">⚖️ Ausgewogen (62°C / Empfohlen)</button>
-                    <button type="button" onclick="applyPreset('oc')" class="btn btn-secondary btn-sm">⚡ Performance (66°C / OC)</button>
+                    <button type="button" onclick="applyPreset('eco')" class="btn btn-secondary btn-sm">
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path></svg>
+                        Eco (56°C / Leise)
+                    </button>
+                    <button type="button" onclick="applyPreset('balanced')" class="btn btn-secondary btn-sm">
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+                        Ausgewogen (62°C)
+                    </button>
+                    <button type="button" onclick="applyPreset('oc')" class="btn btn-secondary btn-sm">
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                        Performance (66°C)
+                    </button>
                 </div>
             </div>
 
             <form id="form-edit-miner">
-                <div class="settings-group-title">Thermische Grenzen & Zielwerte</div>
+                <div class="settings-group-title">Thermische Grenzen &amp; Zielwerte</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Zieltemperatur (°C)</label>
@@ -292,10 +496,10 @@
                 <div class="form-group">
                     <label>Max. Leistungsaufnahme (Watts)</label>
                     <input type="number" step="0.5" id="edit-max-watts" required>
-                    <span class="helper-text">Schützt Netzteil & VR vor Überlast (Gamma: 26W)</span>
+                    <span class="helper-text">Schützt Netzteil &amp; VR vor Überlast (Gamma: 26W)</span>
                 </div>
 
-                <div class="settings-group-title">Takt- & Spannungsbereich</div>
+                <div class="settings-group-title">Takt- &amp; Spannungsbereich</div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Min. Takt (MHz)</label>
@@ -338,7 +542,7 @@
                 <div class="settings-group-title">Schutzfunktionen</div>
                 <div class="form-group">
                     <label class="switch-label">
-                        <span>Flatline-Watchdog (Reboot bei echtem 0 GH/s Freeze)</span>
+                        <span>Flatline-Watchdog (Reboot bei 0 GH/s Freeze)</span>
                         <input type="checkbox" id="edit-flatline-toggle" class="switch-input">
                         <span class="switch-slider"></span>
                     </label>
@@ -365,13 +569,13 @@
 
     <!-- Modal: Manueller Takt / Schnelltest -->
     <div class="modal-overlay" id="modal-manual-tune">
-        <div class="modal-box">
+        <div class="modal-box ios-glass-modal">
             <div class="modal-header">
-                <div class="modal-title">Manueller Takt- & Spannungstest</div>
+                <div class="modal-title">Manueller Takt- &amp; Spannungstest</div>
                 <button class="modal-close" onclick="closeModal('modal-manual-tune')">&times;</button>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted);">
-                Testet sofort eine bestimmte Frequenz und Spannung auf <span id="manual-tune-ip" style="color: var(--accent-gold); font-family: monospace;"></span>.
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                Testet sofort eine bestimmte Frequenz und Spannung auf <span id="manual-tune-ip" style="color: var(--accent-cyan); font-family: monospace;"></span>.
             </p>
             <form id="form-manual-tune">
                 <div class="form-row">
@@ -394,9 +598,9 @@
 
     <!-- Modal: Changelog & Info -->
     <div class="modal-overlay" id="modal-changelog">
-        <div class="modal-box" style="max-width: 680px;">
+        <div class="modal-box ios-glass-modal" style="max-width: 680px;">
             <div class="modal-header">
-                <div class="modal-title">Über BitAxeTool & Changelog</div>
+                <div class="modal-title">Über BitAxeTool &amp; Changelog</div>
                 <button class="modal-close" onclick="closeModal('modal-changelog')">&times;</button>
             </div>
             <div id="changelog-content" class="changelog-body">
@@ -411,7 +615,7 @@
 
     <!-- Modal: Mobil Verbinden (QR-Code) -->
     <div class="modal-overlay" id="modal-qr">
-        <div class="modal-box">
+        <div class="modal-box ios-glass-modal">
             <div class="modal-header">
                 <div class="modal-title">Auf Smartphone / Tablet öffnen</div>
                 <button class="modal-close" onclick="closeModal('modal-qr')">&times;</button>
@@ -420,7 +624,7 @@
                 <div class="qr-image-wrapper">
                     <img id="qr-code-img" src="/api/qrcode" alt="QR-Code zur Verbindung">
                 </div>
-                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center;">
                     Scanne diesen QR-Code mit der Kamera deines <strong>Smartphones oder Tablets</strong> im selben WLAN:
                 </p>
                 <div id="qr-lan-url" class="qr-url-pill">http://...</div>
@@ -430,10 +634,13 @@
 
     <!-- Modal: Benachrichtigungen & PWA App Installation -->
     <div class="modal-overlay" id="modal-notifications">
-        <div class="modal-box">
+        <div class="modal-box ios-glass-modal">
             <div class="modal-header">
                 <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <svg class="ios-inline-icon accent-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
                     Smartphone-Alarme &amp; PWA
                 </div>
                 <button class="modal-close" onclick="closeModal('modal-notifications')">&times;</button>
@@ -444,7 +651,11 @@
                         <span>Browser-Berechtigung:</span> <strong id="notif-perm-text">Wird ermittelt...</strong>
                     </div>
                     <button type="button" id="btn-request-notif" class="btn btn-primary btn-sm" onclick="requestNotificationPermission()">
-                        🔔 Benachrichtigungen im Browser erlauben
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        Benachrichtigungen im Browser erlauben
                     </button>
                 </div>
 
@@ -452,32 +663,53 @@
                 <div class="notif-checkbox-group">
                     <label class="notif-label">
                         <input type="checkbox" id="notif-opt-overheat" checked>
-                        <span><strong>🔥 Überhitzung &amp; Notdrosselung</strong> (Chip &gt; Max-Temp oder Notfall)</span>
+                        <span>
+                            <svg class="ios-mini-icon accent-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                            <strong>Überhitzung &amp; Notdrosselung</strong> (Chip &gt; Max-Temp)
+                        </span>
                     </label>
                     <label class="notif-label">
                         <input type="checkbox" id="notif-opt-vr" checked>
-                        <span><strong>⚡ VR-Spannungswandler Warnung</strong> (Spulentemperatur kritisch)</span>
+                        <span>
+                            <svg class="ios-mini-icon accent-amber" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                            <strong>VR-Spannungswandler Warnung</strong> (Spulentemperatur kritisch)
+                        </span>
                     </label>
                     <label class="notif-label">
                         <input type="checkbox" id="notif-opt-offline" checked>
-                        <span><strong>🔴 Miner-Ausfall / Offline</strong> (Verbindungsabbruch im LAN)</span>
+                        <span>
+                            <svg class="ios-mini-icon accent-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                            <strong>Miner-Ausfall / Offline</strong> (Verbindungsabbruch im LAN)
+                        </span>
                     </label>
                     <label class="notif-label">
                         <input type="checkbox" id="notif-opt-reboot" checked>
-                        <span><strong>🔄 Watchdog Reboot</strong> (Automatischer Neustart bei 0 GH/s Freeze)</span>
+                        <span>
+                            <svg class="ios-mini-icon accent-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                            <strong>Watchdog Reboot</strong> (Neustart bei 0 GH/s Freeze)
+                        </span>
                     </label>
                     <label class="notif-label">
                         <input type="checkbox" id="notif-opt-tuning" checked>
-                        <span><strong>🚀 Auto-Tuning Fortschritt</strong> (Erfolgreiche Taktsteigerung)</span>
+                        <span>
+                            <svg class="ios-mini-icon accent-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path></svg>
+                            <strong>Auto-Tuning Fortschritt</strong> (Erfolgreiche Taktsteigerung)
+                        </span>
                     </label>
                     <label class="notif-label">
                         <input type="checkbox" id="notif-opt-sound" checked>
-                        <span><strong>🔊 Akustischer Alarmton &amp; Smartphone-Vibration</strong></span>
+                        <span>
+                            <svg class="ios-mini-icon accent-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                            <strong>Akustischer Alarmton &amp; Smartphone-Vibration</strong>
+                        </span>
                     </label>
                 </div>
 
                 <div class="notif-pwa-guide">
-                    <div class="pwa-guide-title">📱 Als native App auf dem Smartphone installieren:</div>
+                    <div class="pwa-guide-title">
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                        Als native App auf dem Smartphone installieren:
+                    </div>
                     <div class="pwa-guide-steps">
                         <div><strong>iOS (iPhone / iPad):</strong> In Safari auf das <em>Teilen-Symbol</em> (unten) tippen &rarr; <em>"Zum Home-Bildschirm"</em> auswählen.</div>
                         <div><strong>Android:</strong> Im Menü (drei Punkte) auf <em>"App installieren"</em> bzw. <em>"Zum Startbildschirm"</em> tippen.</div>
@@ -486,7 +718,8 @@
 
                 <div class="modal-footer" style="padding: 16px 0 0 0; display: flex; justify-content: space-between; gap: 8px;">
                     <button type="button" class="btn btn-secondary" onclick="sendTestNotification()">
-                        🧪 Test-Alarm senden
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path><path d="M8.5 2h7"></path><path d="M7 16h10"></path></svg>
+                        Test-Alarm senden
                     </button>
                     <button type="button" class="btn btn-primary" onclick="closeModal('modal-notifications')">
                         Fertig

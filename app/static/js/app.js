@@ -1,5 +1,5 @@
 /**
- * BitAxeTool v2.1.0 - Reactive Dashboard, Realtime Log Streaming & Governor Controller
+ * BitAxeTool v2.1.0 - Modern iOS Liquid Glass Controller & Reactive Dashboard
  */
 
 let socket = null;
@@ -11,6 +11,9 @@ let allLogs = [];
 let currentLogFilter = "all";
 let isMouseOverLogs = false;
 let isChartVisible = true;
+let currentTelemetry = [];
+let selectedDiffMinerIndex = 0;
+let lastTelemetryTimestamp = Date.now();
 
 // Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setupEventListeners();
     loadNotificationSettings();
     registerServiceWorker();
+
+    // Start live relative timer ("Updated X secs ago")
+    setInterval(updateRelativeTime, 1000);
 });
 
 // --- WebSocket Connection & Real-Time Streaming ---
@@ -77,75 +83,153 @@ function updateConnectionStatus(connected) {
     if (!badge) return;
     if (connected) {
         badge.textContent = "LIVE";
+        badge.className = "ios-status-pill live";
         badge.title = "Echtzeit-Verbindung aktiv";
-        badge.style.color = "var(--accent-green)";
-        badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
-        badge.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
     } else {
         badge.textContent = "OFFLINE";
+        badge.className = "ios-status-pill offline";
         badge.title = "Verbindung getrennt - verbinde neu...";
-        badge.style.color = "var(--accent-red)";
-        badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
-        badge.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
     }
 }
 
-// --- Live Telemetry Rendering ---
+// --- Live Telemetry Rendering & iOS Liquid Glass Grid ---
 
 function renderTelemetry(telemetryList) {
     if (!telemetryList || !Array.isArray(telemetryList)) return;
+    currentTelemetry = telemetryList;
+    lastTelemetryTimestamp = Date.now();
+    updateRelativeTime();
 
     // 1. Compute Global Aggregates
     let totalHashrate = 0;
     let totalWatts = 0;
-    let maxTemp = 0;
+    let sumAsicTemp = 0;
+    let countAsicTemp = 0;
+    let sumVrTemp = 0;
+    let countVrTemp = 0;
     let onlineCount = 0;
 
     telemetryList.forEach(t => {
         if (t.connected) {
             onlineCount++;
-            if (t.hash_rate) totalHashrate += t.hash_rate;
-            if (t.power) totalWatts += t.power;
-            if (t.temp && t.temp > maxTemp) maxTemp = t.temp;
+            if (t.hash_rate && t.hash_rate > 0) totalHashrate += t.hash_rate;
+            if (t.power && t.power > 0) totalWatts += t.power;
+            if (t.temp && t.temp > 0) {
+                sumAsicTemp += t.temp;
+                countAsicTemp++;
+            }
+            if (t.vr_temp && t.vr_temp > 0) {
+                sumVrTemp += t.vr_temp;
+                countVrTemp++;
+            }
         }
     });
 
+    const avgAsicTemp = countAsicTemp > 0 ? (sumAsicTemp / countAsicTemp) : 0;
+    const avgVrTemp = countVrTemp > 0 ? (sumVrTemp / countVrTemp) : 0;
+
+    // 2. Populate 6 Metric Cards
     const elHash = document.getElementById("kpi-total-hashrate");
     const elWatts = document.getElementById("kpi-total-watts");
-    const elTemp = document.getElementById("kpi-max-temp");
+    const elAsicTemp = document.getElementById("kpi-max-temp");
+    const elVrTemp = document.getElementById("kpi-avg-vr-temp");
     const elEff = document.getElementById("kpi-total-efficiency");
     const elCount = document.getElementById("kpi-miner-count");
 
     if (elHash) {
         elHash.textContent = (totalHashrate >= 1000) 
-            ? (totalHashrate / 1000).toFixed(2) + " TH/s" 
+            ? (totalHashrate / 1000).toFixed(3) + " TH/s" 
             : Math.round(totalHashrate) + " GH/s";
     }
     if (elWatts) elWatts.textContent = totalWatts.toFixed(1) + " W";
-    if (elTemp) elTemp.textContent = (maxTemp > 0 ? maxTemp.toFixed(1) : "--") + " °C";
-    if (elCount) elCount.textContent = `${onlineCount} / ${telemetryList.length}`;
+    if (elAsicTemp) elAsicTemp.textContent = (avgAsicTemp > 0 ? avgAsicTemp.toFixed(1) : "--") + "°C";
+    if (elVrTemp) elVrTemp.textContent = (avgVrTemp > 0 ? avgVrTemp.toFixed(1) : "--") + "°C";
+    if (elCount) elCount.textContent = `${onlineCount}/${telemetryList.length}`;
 
     if (elEff) {
         if (totalHashrate > 50 && totalWatts > 0) {
             const eff = totalWatts / (totalHashrate / 1000.0);
-            elEff.textContent = eff.toFixed(1) + " J/TH";
+            elEff.textContent = eff.toFixed(2) + " J/TH";
         } else {
             elEff.textContent = "-- J/TH";
         }
     }
 
-    // 2. Update Live Line Chart
+    // 3. Render Best Difficulty Card
+    renderBestDifficultyCard(telemetryList);
+
+    // 4. Update Live Line Chart
     if (isChartVisible) {
-        updateChartData(totalHashrate, maxTemp);
+        updateChartData(totalHashrate, avgAsicTemp);
     }
 
-    // 3. Update Miner Cards
+    // 5. Update Miner Cards
     telemetryList.forEach(t => {
         updateMinerCard(t);
     });
 
-    // 4. Smart Notification Triggers
+    // 6. Smart Notification Triggers
     checkNotificationTriggers(telemetryList);
+}
+
+// Format difficulty hashes (e.g. 25020000000 -> 25.02 G)
+function formatDifficulty(diff) {
+    if (!diff || diff <= 0) return "--";
+    if (typeof diff === "string") {
+        if (diff.includes("G") || diff.includes("M") || diff.includes("T") || diff.includes("K")) return diff;
+        diff = parseFloat(diff);
+        if (isNaN(diff)) return "--";
+    }
+    if (diff >= 1e12) return (diff / 1e12).toFixed(2) + " T";
+    if (diff >= 1e9) return (diff / 1e9).toFixed(2) + " G";
+    if (diff >= 1e6) return (diff / 1e6).toFixed(2) + " M";
+    if (diff >= 1e3) return (diff / 1e3).toFixed(2) + " K";
+    return diff.toString();
+}
+
+function renderBestDifficultyCard(telemetryList) {
+    if (!telemetryList || telemetryList.length === 0) return;
+
+    if (selectedDiffMinerIndex >= telemetryList.length) {
+        selectedDiffMinerIndex = 0;
+    }
+
+    const currentMiner = telemetryList[selectedDiffMinerIndex];
+    const minerCfg = knownMiners.find(m => m.ip === currentMiner.ip);
+    const minerName = (minerCfg && minerCfg.nickname) ? minerCfg.nickname : (currentMiner.ip || "Bitaxe");
+
+    const elName = document.getElementById("best-diff-miner-name");
+    const elAllTime = document.getElementById("best-diff-all-time");
+    const elSession = document.getElementById("best-diff-session");
+    const elDots = document.getElementById("best-diff-pagination");
+
+    if (elName) elName.textContent = minerName;
+    if (elAllTime) elAllTime.textContent = formatDifficulty(currentMiner.best_diff);
+    if (elSession) elSession.textContent = formatDifficulty(currentMiner.best_session_diff);
+
+    if (elDots && telemetryList.length > 1) {
+        elDots.innerHTML = telemetryList.map((_, idx) => `
+            <span class="dot ${idx === selectedDiffMinerIndex ? 'active' : ''}" onclick="selectBestDiffMiner(${idx})" title="Miner wechseln"></span>
+        `).join("");
+    }
+}
+
+function selectBestDiffMiner(index) {
+    selectedDiffMinerIndex = index;
+    if (currentTelemetry.length > 0) {
+        renderBestDifficultyCard(currentTelemetry);
+    }
+}
+
+function updateRelativeTime() {
+    const el = document.getElementById("last-updated-text");
+    if (!el) return;
+    const diffSecs = Math.max(0, Math.floor((Date.now() - lastTelemetryTimestamp) / 1000));
+    if (diffSecs <= 1) {
+        el.textContent = "Updated just now";
+    } else {
+        el.textContent = `Updated ${diffSecs} secs ago`;
+    }
 }
 
 function updateMinerCard(telemetry) {
@@ -202,7 +286,7 @@ function updateMinerCard(telemetry) {
     const tempSub = card.querySelector(".card-sub-temp");
     if (tempVal) {
         if (telemetry.temp !== null && telemetry.temp !== undefined) {
-            tempVal.textContent = `${telemetry.temp.toFixed(1)} °C`;
+            tempVal.textContent = `${telemetry.temp.toFixed(1)}°C`;
             tempVal.className = `metric-quad-value ${getTempColorClass(telemetry.temp)}`;
         } else {
             tempVal.textContent = "--";
@@ -262,17 +346,17 @@ function initChart() {
                 {
                     label: "Gesamthashrate (GH/s)",
                     data: hashrateData,
-                    borderColor: "#F59E0B",
-                    backgroundColor: "rgba(245, 158, 11, 0.08)",
+                    borderColor: "#2997ff",
+                    backgroundColor: "rgba(41, 151, 255, 0.08)",
                     borderWidth: 2.2,
                     tension: 0.35,
                     fill: true,
                     yAxisID: "y-hash"
                 },
                 {
-                    label: "Höchsttemperatur (°C)",
+                    label: "Durchschnittstemperatur (°C)",
                     data: tempData,
-                    borderColor: "#EF4444",
+                    borderColor: "#ff453a",
                     backgroundColor: "transparent",
                     borderWidth: 1.8,
                     borderDash: [4, 4],
@@ -292,8 +376,8 @@ function initChart() {
                 "y-hash": {
                     type: "linear",
                     position: "left",
-                    grid: { color: "#1F2937" },
-                    ticks: { color: "#9CA3AF", font: { size: 10 } }
+                    grid: { color: "rgba(255, 255, 255, 0.06)" },
+                    ticks: { color: "#8e8e93", font: { size: 10 } }
                 },
                 "y-temp": {
                     type: "linear",
@@ -301,12 +385,12 @@ function initChart() {
                     grid: { display: false },
                     min: 30,
                     max: 85,
-                    ticks: { color: "#EF4444", font: { size: 10 } }
+                    ticks: { color: "#ff453a", font: { size: 10 } }
                 }
             },
             plugins: {
                 legend: {
-                    labels: { color: "#E5E7EB", boxWidth: 12, font: { size: 11, weight: "bold" } }
+                    labels: { color: "#ffffff", boxWidth: 12, font: { size: 11, weight: "bold" } }
                 }
             }
         }
@@ -338,10 +422,16 @@ function toggleChartSection() {
     isChartVisible = !isChartVisible;
     if (isChartVisible) {
         sec.style.display = "flex";
-        btn.textContent = "📊 Diagramm ausblenden";
+        btn.innerHTML = `
+            <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"></path></svg>
+            Ausblenden
+        `;
     } else {
         sec.style.display = "none";
-        btn.textContent = "📊 Diagramm einblenden";
+        btn.innerHTML = `
+            <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+            Einblenden
+        `;
     }
 }
 
@@ -353,7 +443,6 @@ function handleIncomingLog(logEntry) {
         allLogs.shift();
     }
 
-    // Check if entry passes active filter
     if (logMatchesFilter(logEntry, currentLogFilter)) {
         const win = document.getElementById("log-window");
         if (win) {
@@ -448,9 +537,12 @@ function renderMinerCards(miners) {
 
     if (miners.length === 0) {
         container.innerHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px 20px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px dashed var(--border-glass-bright);">
                 <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 14px;">Noch keine Bitaxe-Miner eingerichtet.</p>
-                <button onclick="openScanModal()" class="btn btn-primary">Netzwerk automatisch nach Bitaxe-Geräten durchsuchen</button>
+                <button onclick="openScanModal()" class="btn btn-primary">
+                    <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Netzwerk automatisch scannen
+                </button>
             </div>
         `;
         return;
@@ -485,11 +577,14 @@ function createMinerCardHtml(miner) {
             <span class="gov-msg">Warte auf erste Telemetrie-Messung...</span>
         </div>
 
-        <!-- 4 Clean Tiles Layout -->
+        <!-- 4 Clean Metric Tiles with Pure Inline SVGs -->
         <div class="metrics-quad">
             <div class="metric-quad-item">
                 <div class="metric-quad-header">
-                    <span class="metric-quad-title">⚡ Hashrate</span>
+                    <span class="metric-quad-title">
+                        <svg class="ios-mini-icon accent-cyan" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                        Hashrate
+                    </span>
                 </div>
                 <div class="metric-quad-value card-val-hash">--</div>
                 <div class="metric-quad-sub card-sub-hash">Warte auf Messung...</div>
@@ -497,7 +592,10 @@ function createMinerCardHtml(miner) {
 
             <div class="metric-quad-item">
                 <div class="metric-quad-header">
-                    <span class="metric-quad-title">🌡️ Temperatur</span>
+                    <span class="metric-quad-title">
+                        <svg class="ios-mini-icon accent-red" viewBox="0 0 24 24" fill="currentColor"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0zM11.5 3.5a1 1 0 0 1 2 0v7h-2V3.5z"></path></svg>
+                        Temperatur
+                    </span>
                 </div>
                 <div class="metric-quad-value card-val-temp">--</div>
                 <div class="metric-quad-sub card-sub-temp">Ziel: ${miner.target_temp}°C (±${miner.temp_tolerance}°C)</div>
@@ -505,7 +603,10 @@ function createMinerCardHtml(miner) {
 
             <div class="metric-quad-item">
                 <div class="metric-quad-header">
-                    <span class="metric-quad-title">⚙️ Takt & Kern</span>
+                    <span class="metric-quad-title">
+                        <svg class="ios-mini-icon accent-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+                        Takt &amp; Kern
+                    </span>
                 </div>
                 <div class="metric-quad-value card-val-freq">--</div>
                 <div class="metric-quad-sub card-sub-freq">Bereich: ${miner.min_freq} - ${miner.max_freq} MHz</div>
@@ -513,26 +614,33 @@ function createMinerCardHtml(miner) {
 
             <div class="metric-quad-item">
                 <div class="metric-quad-header">
-                    <span class="metric-quad-title">🔋 Leistung & Effizienz</span>
+                    <span class="metric-quad-title">
+                        <svg class="ios-mini-icon accent-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l3-3m5.2 2.8A9 9 0 103.8 13.8M12 7v1"></path></svg>
+                        Leistung &amp; Effizienz
+                    </span>
                 </div>
                 <div class="metric-quad-value card-val-power">--</div>
                 <div class="metric-quad-sub card-sub-power">Max: ${miner.max_watts} W</div>
             </div>
         </div>
 
-        <!-- Sleek Responsive 2x2/4x1 Action Toolbar -->
+        <!-- Sleek Responsive Action Toolbar with Pure Inline SVGs -->
         <div class="card-actions">
-            <button onclick="openEditModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Regelungsparameter & Schwellen anpassen">
-                ⚙️ Einstellungen
+            <button onclick="openEditModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Regelungsparameter &amp; Schwellen anpassen">
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Optionen
             </button>
             <button onclick="openManualTuneModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Manuellen Frequenz- und Spannungstest ausführen">
-                ⚡ Schnelltest
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                Takt-Test
             </button>
-            <button onclick="restartMiner('${miner.ip}')" class="btn btn-secondary btn-sm text-rose-400" title="Miner neu starten">
-                🔄 Reboot
+            <button onclick="restartMiner('${miner.ip}')" class="btn btn-secondary btn-sm" title="Miner neu starten">
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                Reboot
             </button>
             <button onclick="openMinerWebUI('${miner.ip}')" class="btn btn-secondary btn-sm" title="AxeOS Weboberfläche im Browser öffnen">
-                🌐 Web-UI
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                AxeOS
             </button>
         </div>
     </div>
@@ -553,6 +661,61 @@ async function toggleMinerAutotune(ip, enabled) {
         await loadMiners();
     } catch (e) {
         console.error("Fehler beim Umschalten des Autotuners:", e);
+    }
+}
+
+// --- Tab Switching & Navigation ---
+
+function switchTab(tab) {
+    document.querySelectorAll(".ios-dock-item").forEach(item => {
+        if (item.getAttribute("data-tab") === tab) {
+            item.classList.add("active");
+        } else {
+            item.classList.remove("active");
+        }
+    });
+
+    const secKpis = document.getElementById("section-kpis");
+    const secBestDiff = document.getElementById("section-best-diff");
+    const secMiners = document.getElementById("section-miners");
+    const secCharts = document.getElementById("section-charts");
+    const secLogs = document.getElementById("section-logs");
+
+    if (tab === "dashboard") {
+        if (secKpis) secKpis.style.display = "grid";
+        if (secBestDiff) secBestDiff.style.display = "flex";
+        if (secMiners) secMiners.style.display = "block";
+        if (secCharts) secCharts.style.display = "none";
+        if (secLogs) secLogs.style.display = "none";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (tab === "charts") {
+        if (secCharts) {
+            secCharts.style.display = "flex";
+            secCharts.scrollIntoView({ behavior: "smooth" });
+        }
+    } else if (tab === "miners") {
+        if (secMiners) {
+            secMiners.style.display = "block";
+            secMiners.scrollIntoView({ behavior: "smooth" });
+        }
+    } else if (tab === "alarm") {
+        openNotificationModal();
+    } else if (tab === "settings") {
+        openSettingsMenuModal();
+    }
+}
+
+function openSettingsMenuModal() {
+    openModal("modal-menu");
+}
+
+function refreshDashboard() {
+    loadMiners();
+    loadNetworkInfo();
+    const btn = document.getElementById("btn-refresh");
+    if (btn) {
+        btn.style.transform = "rotate(360deg)";
+        setTimeout(() => { btn.style.transform = ""; }, 500);
     }
 }
 
@@ -680,7 +843,7 @@ async function deleteActiveMiner() {
     }
 }
 
-// Preset Handlers (Calibrated for real headroom)
+// Preset Handlers
 function applyPreset(name) {
     if (name === "eco") {
         document.getElementById("edit-target-temp").value = 56.0;
@@ -780,11 +943,11 @@ async function startNetworkScan() {
 
         if (data.miners && data.miners.length > 0) {
             resultsContainer.innerHTML = data.miners.map(m => `
-                <div class="discovered-item">
+                <div class="discovered-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: var(--bg-surface); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); margin-bottom: 8px;">
                     <div class="discovered-info">
                         <strong>${escapeHtml(m.hostname || m.ip)}</strong>
-                        <span style="font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">${m.ip} • ${escapeHtml(m.model)}</span>
-                        <span style="font-size: 0.75rem; color: var(--accent-gold);">${m.hash_rate ? Math.round(m.hash_rate) + ' GH/s @ ' + m.frequency + ' MHz' : 'Bereit'}</span>
+                        <div style="font-size: 0.76rem; color: var(--text-muted); font-family: monospace;">${m.ip} • ${escapeHtml(m.model)}</div>
+                        <div style="font-size: 0.74rem; color: var(--accent-cyan);">${m.hash_rate ? Math.round(m.hash_rate) + ' GH/s @ ' + m.frequency + ' MHz' : 'Bereit'}</div>
                     </div>
                     <button onclick="addDiscoveredMiner('${m.ip}', '${escapeHtml(m.hostname)}', '${escapeHtml(m.model)}')" class="btn btn-primary btn-sm">+ Hinzufügen</button>
                 </div>
@@ -863,18 +1026,13 @@ async function openChangelogModal() {
 
 function parseSimpleMarkdown(md) {
     let html = escapeHtml(md);
-    // Replace headers
     html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>");
     html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
     html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>");
-    // Replace bold
     html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    // Replace code
     html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-    // Replace bullet points
     html = html.replace(/^\- (.*$)/gim, "<li>$1</li>");
     html = html.replace(/(<li>.*<\/li>)/gim, "<ul>$1</ul>");
-    // Line breaks
     html = html.replace(/\n\n/g, "<br><br>");
     return html;
 }
@@ -971,6 +1129,7 @@ function updateNotificationPermissionStatus() {
     const textEl = document.getElementById("notif-perm-text");
     const btn = document.getElementById("btn-request-notif");
     const badgeDot = document.getElementById("notif-badge-dot");
+    const dockDot = document.getElementById("dock-notif-dot");
 
     if (!("Notification" in window)) {
         if (textEl) {
@@ -988,11 +1147,12 @@ function updateNotificationPermissionStatus() {
             textEl.style.color = "var(--accent-green)";
         }
         if (btn) {
-            btn.textContent = "✓ Benachrichtigungen aktiv";
+            btn.innerHTML = `✓ Benachrichtigungen aktiv`;
             btn.disabled = true;
             btn.className = "btn btn-secondary btn-sm";
         }
         if (badgeDot) badgeDot.style.display = "none";
+        if (dockDot) dockDot.style.display = "none";
     } else if (perm === "denied") {
         if (textEl) {
             textEl.textContent = "Im Browser blockiert ✗";
@@ -1004,17 +1164,22 @@ function updateNotificationPermissionStatus() {
             btn.className = "btn btn-secondary btn-sm";
         }
         if (badgeDot) badgeDot.style.display = "block";
+        if (dockDot) dockDot.style.display = "block";
     } else {
         if (textEl) {
             textEl.textContent = "Noch nicht erlaubt";
-            textEl.style.color = "var(--accent-gold)";
+            textEl.style.color = "var(--accent-orange)";
         }
         if (btn) {
-            btn.textContent = "🔔 Benachrichtigungen im Browser erlauben";
+            btn.innerHTML = `
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                Benachrichtigungen im Browser erlauben
+            `;
             btn.disabled = false;
             btn.className = "btn btn-primary btn-sm";
         }
         if (badgeDot) badgeDot.style.display = "block";
+        if (dockDot) dockDot.style.display = "block";
     }
 }
 
@@ -1030,7 +1195,7 @@ async function requestNotificationPermission() {
         if (permission === "granted") {
             playAlertSound("info");
             sendNotification(
-                "🔔 BitAxe Benachrichtigungen aktiv!",
+                "BitAxe Benachrichtigungen aktiv",
                 "Du erhältst ab sofort sofortige Alarme bei Überhitzung, Ausfällen oder Taktänderungen deiner Miner.",
                 "welcome",
                 false
@@ -1062,7 +1227,6 @@ function playAlertSound(type = "info") {
         gain.connect(audioCtx.destination);
 
         if (type === "danger") {
-            // Urgent double-beep: 880Hz -> 660Hz -> 880Hz
             osc.frequency.setValueAtTime(880, now);
             osc.frequency.setValueAtTime(660, now + 0.12);
             osc.frequency.setValueAtTime(880, now + 0.24);
@@ -1072,7 +1236,6 @@ function playAlertSound(type = "info") {
             osc.stop(now + 0.45);
             if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
         } else {
-            // Gentle high-tech chime: 587Hz (D5) -> 880Hz (A5)
             osc.frequency.setValueAtTime(587.33, now);
             osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
             gain.gain.setValueAtTime(0.18, now);
@@ -1087,7 +1250,6 @@ function playAlertSound(type = "info") {
 function sendNotification(title, body, tag, isCritical = false) {
     playAlertSound(isCritical ? "danger" : "info");
 
-    // 1. Send via Service Worker (for native mobile OS drawers / lockscreens)
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
             type: "SHOW_NOTIFICATION",
@@ -1119,7 +1281,7 @@ function sendTestNotification() {
         return;
     }
     sendNotification(
-        "⚡ BitAxe Test-Alarm",
+        "BitAxe Test-Alarm",
         "Test erfolgreich! Benachrichtigungen und Vibrationen funktionieren einwandfrei auf deinem Gerät.",
         "test-" + Date.now(),
         false
@@ -1146,7 +1308,7 @@ function checkNotificationTriggers(telemetryList) {
                     if (!lastAlertTimestamps[alertKey] || (now - lastAlertTimestamps[alertKey] > 120000)) {
                         lastAlertTimestamps[alertKey] = now;
                         sendNotification(
-                            `🔥 ALARM: ${name} überhitzt!`,
+                            `ALARM: ${name} überhitzt!`,
                             `Chip-Temperatur liegt bei ${t.temp ? t.temp.toFixed(1) : '--'}°C. Notdrosselung aktiv!`,
                             alertKey,
                             true
@@ -1162,7 +1324,7 @@ function checkNotificationTriggers(telemetryList) {
                     if (!lastAlertTimestamps[alertKey] || (now - lastAlertTimestamps[alertKey] > 120000)) {
                         lastAlertTimestamps[alertKey] = now;
                         sendNotification(
-                            `⚡ VR-WARNUNG: ${name}`,
+                            `VR-WARNUNG: ${name}`,
                             `Spannungswandler erreicht kritische ${t.vr_temp.toFixed(1)}°C (Limit: ${minerCfg.max_vr_temp}°C)!`,
                             alertKey,
                             true
@@ -1175,14 +1337,14 @@ function checkNotificationTriggers(telemetryList) {
             if (notifSettings.offline) {
                 if (prev.connected === true && t.connected === false) {
                     sendNotification(
-                        `🔴 AUSFALL: ${name} ist OFFLINE!`,
+                        `AUSFALL: ${name} ist OFFLINE!`,
                         `Der Miner unter ${ip} antwortet nicht mehr im Netzwerk.`,
                         `offline-${ip}`,
                         true
                     );
                 } else if (prev.connected === false && t.connected === true) {
                     sendNotification(
-                        `🟢 ONLINE: ${name} ist wieder da!`,
+                        `ONLINE: ${name} ist wieder da!`,
                         `Verbindung zu ${ip} wiederhergestellt. Hashrate: ${Math.round(t.hash_rate || 0)} GH/s.`,
                         `online-${ip}`,
                         false
@@ -1194,7 +1356,7 @@ function checkNotificationTriggers(telemetryList) {
             if (notifSettings.reboot) {
                 if (t.governor_status === "RESTARTING" && prev.governor_status !== "RESTARTING") {
                     sendNotification(
-                        `🔄 WATCHDOG: ${name} startet neu`,
+                        `WATCHDOG: ${name} startet neu`,
                         `0 GH/s Hashrate-Freeze erkannt. Automatischer Neustart wird durchgeführt.`,
                         `reboot-${ip}`,
                         true
@@ -1206,7 +1368,7 @@ function checkNotificationTriggers(telemetryList) {
             if (notifSettings.tuning) {
                 if (t.frequency && prev.frequency && t.frequency > prev.frequency) {
                     sendNotification(
-                        `🚀 TUNING: ${name} gesteigert`,
+                        `TUNING: ${name} gesteigert`,
                         `Takt erfolgreich auf ${t.frequency} MHz @ ${t.voltage || '--'} mV erhöht.`,
                         `tuning-${ip}`,
                         false
