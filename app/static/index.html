@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0B0F17">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>BitAxeTool v2.1.0 - Multi-AutoTuner & Safety Governor</title>
+    
+    <link rel="icon" type="image/x-icon" href="/static/../../assets/bitaxe_icon.ico">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/chart.min.js"></script>
+    <script src="/static/js/app.js" defer></script>
+</head>
+<body>
+
+    <!-- Header Navigation Bar -->
+    <header class="app-header">
+        <div class="brand" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title">BitAxeTool</div>
+            </div>
+            <button onclick="openChangelogModal()" class="version-badge" title="Changelog & Version ansehen">v2.1.0</button>
+            <span id="connection-badge" class="brand-badge">VERBINDEN...</span>
+            <span id="port-badge" class="port-badge" style="display: none;">Port: --</span>
+        </div>
+
+        <div class="header-actions">
+            <button onclick="openScanModal()" class="btn btn-secondary">
+                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                Netzwerk-Scan
+            </button>
+            <button onclick="openAddMinerModal()" class="btn btn-secondary">
+                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                Miner hinzufügen
+            </button>
+            <button onclick="openChangelogModal()" class="btn btn-secondary" title="Changelog anzeigen">
+                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Changelog
+            </button>
+            <button onclick="openQrModal()" class="btn btn-primary" title="Mobil auf iPhone oder iPad öffnen">
+                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                Mobil
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-container">
+
+        <!-- Global Summary KPI Row -->
+        <section class="summary-bar">
+            <div class="kpi-card gold">
+                <span class="kpi-label">Gesamthashrate</span>
+                <span id="kpi-total-hashrate" class="kpi-value">-- GH/s</span>
+                <span class="kpi-sub">Echtzeit-Summe aller Miner</span>
+            </div>
+            <div class="kpi-card blue">
+                <span class="kpi-label">Gesamtleistung</span>
+                <span id="kpi-total-watts" class="kpi-value">-- W</span>
+                <span class="kpi-sub">Aktueller Stromverbrauch</span>
+            </div>
+            <div class="kpi-card red">
+                <span class="kpi-label">Höchsttemperatur</span>
+                <span id="kpi-max-temp" class="kpi-value">-- °C</span>
+                <span class="kpi-sub">Wärmster ASIC-Kern</span>
+            </div>
+            <div class="kpi-card green">
+                <span class="kpi-label">Effizienz</span>
+                <span id="kpi-total-efficiency" class="kpi-value">-- J/TH</span>
+                <span class="kpi-sub">Energie pro Terahash</span>
+            </div>
+            <div class="kpi-card purple">
+                <span class="kpi-label">Miner Status</span>
+                <span id="kpi-miner-count" class="kpi-value">0 / 0</span>
+                <span class="kpi-sub">Online & Gesteuert</span>
+            </div>
+        </section>
+
+        <!-- Miner Grid Section (Prominent Cockpit) -->
+        <section id="section-miners">
+            <div class="miners-section-header">
+                <div class="section-title">
+                    <svg width="20" height="20" fill="none" stroke="var(--accent-gold)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Bitaxe-Miner Cockpit
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="toggleChartSection()" id="btn-toggle-chart" class="btn btn-secondary btn-sm">
+                        📊 Diagramm ausblenden
+                    </button>
+                </div>
+            </div>
+
+            <div class="miners-grid" id="miners-grid">
+                <!-- Dynamically generated miner cards -->
+            </div>
+        </section>
+
+        <!-- Live Telemetry Line Chart (Collapsible) -->
+        <section class="telemetry-chart-card" id="section-charts">
+            <div class="chart-header">
+                <div class="section-title" style="font-size: 1rem;">
+                    <svg width="18" height="18" fill="none" stroke="var(--accent-gold)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    Live-Verlauf (Hashrate & Temperatur)
+                </div>
+                <div style="font-size: 0.78rem; color: var(--text-muted);">Echtzeit-Aktualisierung: 1s</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Live Event Logs with Realtime Streaming & Filters -->
+        <section class="logs-card" id="section-logs">
+            <div class="logs-header">
+                <div class="section-title" style="font-size: 1rem;">
+                    <span class="live-dot" title="Echtzeit-Stream aktiv"></span>
+                    Live-Systemprotokoll
+                </div>
+                <div class="log-toolbar">
+                    <div class="log-filters">
+                        <button class="log-filter-btn active" data-filter="all" onclick="setLogFilter('all')">Alle</button>
+                        <button class="log-filter-btn" data-filter="governor" onclick="setLogFilter('governor')">Tuning</button>
+                        <button class="log-filter-btn" data-filter="warning" onclick="setLogFilter('warning')">Warnungen & Fehler</button>
+                        <button class="log-filter-btn" data-filter="telemetry" onclick="setLogFilter('telemetry')">Telemetrie</button>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button onclick="downloadLogFile()" class="btn btn-secondary btn-sm" title="Gesamte Logdatei als Text herunterladen">
+                            📥 Download (.log)
+                        </button>
+                        <button onclick="clearLogs()" class="btn btn-secondary btn-sm" title="Protokollfenster leeren">
+                            🗑️ Leeren
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="log-window" id="log-window">
+                <!-- Live logs streamed here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Mobile Navigation Bar -->
+    <nav class="mobile-nav-bar">
+        <button class="mobile-nav-item active" onclick="document.getElementById('section-miners').scrollIntoView({behavior: 'smooth'})">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            Miner
+        </button>
+        <button class="mobile-nav-item" onclick="document.getElementById('section-charts').scrollIntoView({behavior: 'smooth'})">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            Diagramm
+        </button>
+        <button class="mobile-nav-item" onclick="document.getElementById('section-logs').scrollIntoView({behavior: 'smooth'})">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Logs
+        </button>
+        <button class="mobile-nav-item" onclick="openScanModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            Scan
+        </button>
+        <button class="mobile-nav-item" onclick="openQrModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            Mobil
+        </button>
+    </nav>
+
+    <!-- Modal: Netzwerk-Scan -->
+    <div class="modal-overlay" id="modal-scan">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Bitaxe-Miner im Netzwerk suchen</div>
+                <button class="modal-close" onclick="closeModal('modal-scan')">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Durchsucht das lokale Subnetz parallel per asynchronem HTTP-Scan und mDNS nach erreichbaren AxeOS-Geräten.
+            </p>
+            <div style="display: flex; gap: 10px; margin-top: 4px;">
+                <button id="btn-start-scan" onclick="startNetworkScan()" class="btn btn-primary" style="flex: 1;">
+                    Scan starten
+                </button>
+            </div>
+            <div id="scan-spinner" style="display: none; align-items: center; justify-content: center; gap: 10px; padding: 20px 0;">
+                <div style="width: 22px; height: 22px; border: 3px solid var(--border-color); border-top-color: var(--accent-gold); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                <span style="font-size: 0.88rem; color: var(--accent-gold);">Subnetz wird durchsucht...</span>
+            </div>
+            <div class="discovered-list" id="scan-results"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Miner Hinzufügen (Manuell) -->
+    <div class="modal-overlay" id="modal-add-miner">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Miner manuell hinzufügen</div>
+                <button class="modal-close" onclick="closeModal('modal-add-miner')">&times;</button>
+            </div>
+            <form id="form-add-miner">
+                <div class="form-group">
+                    <label>IP-Adresse des Bitaxe *</label>
+                    <input type="text" id="form-add-ip" placeholder="z.B. 192.168.1.150" required>
+                </div>
+                <div class="form-group">
+                    <label>Eigener Name (Nickname)</label>
+                    <input type="text" id="form-add-nick" placeholder="z.B. Mein Gamma 601">
+                </div>
+                <div class="form-group">
+                    <label>Modell</label>
+                    <select id="form-add-model">
+                        <option value="Bitaxe Gamma 601 (BM1370)">Bitaxe Gamma 601 (BM1370)</option>
+                        <option value="Bitaxe Supra 401 (BM1368)">Bitaxe Supra 401 (BM1368)</option>
+                        <option value="Bitaxe Ultra 204 (BM1366)">Bitaxe Ultra 204 (BM1366)</option>
+                        <option value="Bitaxe Max (BM1397)">Bitaxe Max (BM1397)</option>
+                        <option value="Bitaxe Hex">Bitaxe Hex (Multi-ASIC)</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-miner')">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Hinzufügen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Miner Parameter & Regelung konfigurieren -->
+    <div class="modal-overlay" id="modal-edit-miner">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">Regelungsparameter anpassen</div>
+                    <div id="edit-ip-display" style="font-size: 0.8rem; color: var(--accent-gold); font-family: monospace;"></div>
+                </div>
+                <button class="modal-close" onclick="closeModal('modal-edit-miner')">&times;</button>
+            </div>
+
+            <!-- Schnell-Profile Presets -->
+            <div>
+                <label style="display: block; margin-bottom: 6px; font-size: 0.82rem; color: var(--text-muted);">Schnellvorlagen:</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" onclick="applyPreset('eco')" class="btn btn-secondary btn-sm">🌱 Eco (56°C / Leise)</button>
+                    <button type="button" onclick="applyPreset('balanced')" class="btn btn-secondary btn-sm">⚖️ Ausgewogen (62°C / Empfohlen)</button>
+                    <button type="button" onclick="applyPreset('oc')" class="btn btn-secondary btn-sm">⚡ Performance (66°C / OC)</button>
+                </div>
+            </div>
+
+            <form id="form-edit-miner">
+                <div class="settings-group-title">Thermische Grenzen & Zielwerte</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Zieltemperatur (°C)</label>
+                        <input type="number" step="0.5" id="edit-target-temp" required>
+                        <span class="helper-text">Sollwert (z.B. 62°C)</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Toleranzband (±°C)</label>
+                        <input type="number" step="0.5" id="edit-temp-tolerance" required>
+                        <span class="helper-text">Deadband ohne Taktwechsel</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Max. Chip-Temperatur (°C)</label>
+                        <input type="number" step="0.5" id="edit-max-temp" required>
+                        <span class="helper-text">Notdrosselung (Standard: 70°C)</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Max. VRM-Temperatur (°C)</label>
+                        <input type="number" step="0.5" id="edit-max-vr-temp" required>
+                        <span class="helper-text">Spannungsregler-Limit (88°C)</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Max. Leistungsaufnahme (Watts)</label>
+                    <input type="number" step="0.5" id="edit-max-watts" required>
+                    <span class="helper-text">Schützt Netzteil & VR vor Überlast (Gamma: 26W)</span>
+                </div>
+
+                <div class="settings-group-title">Takt- & Spannungsbereich</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Min. Takt (MHz)</label>
+                        <input type="number" id="edit-min-freq" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Max. Takt (MHz)</label>
+                        <input type="number" id="edit-max-freq" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Taktschritt (MHz)</label>
+                        <input type="number" id="edit-freq-step" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Stabilisierungszeit (Sek.)</label>
+                        <input type="number" id="edit-cooldown" required>
+                        <span class="helper-text">Verhindert Pendeln</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Min. Spannung (mV)</label>
+                        <input type="number" id="edit-min-volt" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Max. Spannung (mV)</label>
+                        <input type="number" id="edit-max-volt" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Spannungsschritt (mV)</label>
+                    <input type="number" id="edit-volt-step" required>
+                </div>
+
+                <div class="settings-group-title">Schutzfunktionen</div>
+                <div class="form-group">
+                    <label class="switch-label">
+                        <span>Flatline-Watchdog (Reboot bei echtem 0 GH/s Freeze)</span>
+                        <input type="checkbox" id="edit-flatline-toggle" class="switch-input">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="switch-label">
+                        <span>Autotuning für diesen Miner aktivieren</span>
+                        <input type="checkbox" id="edit-enabled-toggle" class="switch-input">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                    <button type="button" onclick="deleteActiveMiner()" class="btn btn-danger btn-sm">Miner löschen</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-miner')">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Manueller Takt / Schnelltest -->
+    <div class="modal-overlay" id="modal-manual-tune">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Manueller Takt- & Spannungstest</div>
+                <button class="modal-close" onclick="closeModal('modal-manual-tune')">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Testet sofort eine bestimmte Frequenz und Spannung auf <span id="manual-tune-ip" style="color: var(--accent-gold); font-family: monospace;"></span>.
+            </p>
+            <form id="form-manual-tune">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Frequenz (MHz)</label>
+                        <input type="number" id="manual-tune-freq" value="550" step="25" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Kernspannung (mV)</label>
+                        <input type="number" id="manual-tune-volt" value="1100" step="10" required>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-manual-tune')">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Jetzt anwenden</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Changelog & Info -->
+    <div class="modal-overlay" id="modal-changelog">
+        <div class="modal-box" style="max-width: 680px;">
+            <div class="modal-header">
+                <div class="modal-title">Über BitAxeTool & Changelog</div>
+                <button class="modal-close" onclick="closeModal('modal-changelog')">&times;</button>
+            </div>
+            <div id="changelog-content" class="changelog-body">
+                <p style="color: var(--text-muted);">Lade Changelog...</p>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Version 2.1.0 • Besmaen</span>
+                <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Mobil Verbinden (QR-Code) -->
+    <div class="modal-overlay" id="modal-qr">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">Auf Smartphone / Tablet öffnen</div>
+                <button class="modal-close" onclick="closeModal('modal-qr')">&times;</button>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-image-wrapper">
+                    <img id="qr-code-img" src="/api/qrcode" alt="QR-Code zur Verbindung">
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">
+                    Scanne diesen QR-Code mit der Kamera deines <strong>Smartphones oder Tablets</strong> im selben WLAN:
+                </p>
+                <div id="qr-lan-url" class="qr-url-pill">http://...</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

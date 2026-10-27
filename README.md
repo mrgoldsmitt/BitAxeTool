@@ -1,0 +1,94 @@
+# BitAxeTool v2.1.0 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+
+**BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
+
+Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
+
+Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone 13 Mini**, **iPhone 17 Pro**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.1.0
+
+- 🪟 **Nativer Windows-Betrieb ohne Terminal:**
+  - Standalone kompiliert mit PyInstaller (`dist/BitAxeTool/BitAxeTool.exe`).
+  - Kein schwarzes Terminalfenster mehr (`--windowed`).
+  - Startbar per Doppelklick über `Start_BitAxeTool.vbs` oder direkt als `.exe`.
+- 🛡️ **Kollisionsfreier Port:**
+  - Standardport **`21420`** (vermeidet Port-Konflikte mit Port 8080 oder Vulkansimulationen).
+  - Automatischer Ausweich-Portfinder bei bestehenden Belegungen.
+- 🌡️ **Thermisches Headroom-Tuning:**
+  - Zielkorridor (`target_temp ± tolerance`), kein vorzeitiges Drosseln mehr bei gesundem Silizium.
+  - Kalibrierte Standardwerte (Ziel 62°C, Notdrosselung 70°C, Power-Limit für BM1370 auf 26W angehoben).
+- 📜 **Echtzeit-Live-Protokoll & Persistentes Logging:**
+  - Sofortiges Streaming über WebSockets ohne Neuladen der Seite.
+  - Automatische Protokollierung aller Warnungen, Fehler und Miner-Snapshots in `logs/bitaxe_monitor.log`.
+  - Filter für Tuning, Warnungen & Telemetrie sowie 1-Klick-Download des Logs.
+- 🎨 **Schlichteres, aufgeräumtes Design:**
+  - 4 übersichtliche Kacheln pro Miner (Hashrate, Temperatur, Takt & Spannung, Leistung & Effizienz).
+  - Einstellungsmenü mit sauber gruppierten Feldern.
+  - Integrierter Versions- und Changelog-Dialog.
+
+---
+
+## 🔍 Analyse & Verbesserungen gegenüber dem Referenzprogramm
+
+Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tiefgreifend analysiert. Dabei wurden gravierende Schwachstellen identifiziert und in **BitAxeTool** von Grund auf neu und robuster gelöst:
+
+| Problembereich im Referenzprojekt | Ursache & Fehler | Lösung & Verbesserung in BitAxeTool |
+| :--- | :--- | :--- |
+| **Netzwerk-Scan** | Synchroner `for`-Loop über bis zu 254 IPs (`requests.get(timeout=1)`). Scan dauert über **4 Minuten** und blockiert das gesamte Programm. | **Asynchroner Concurrent-Scanner** (`asyncio` + `httpx` mit Connection Pooling) + **mDNS/Zeroconf Discovery**. Scan des gesamten `/24`-Subnetzes in **~1,5 Sekunden**! |
+| **Thread-Safety & Daten-Kollision** | Globale Variablen (`global running`, `global tier_list`) wurden zwischen allen Minern geteilt. Bei mehreren Minern überschrieben sich die Parameter gegenseitig. | **Isolierte `MinerWorker`-Tasks** mit eigenem State, Lock, Cancel-Tokens und individuellen Hardware-Profilen. |
+| **Flapping & Oszillation (Sägezahn)** | Anpassung erfolgte alle 5 Sekunden, obwohl der ASIC-Siliziumkern 30–60 Sekunden braucht, um thermisch ins Gleichgewicht zu kommen. Führt zu extremen Temperaturschwankungen und Instabilitäten. | **Thermal Governor mit Hysteresis-Deadband** (Toleranzfenster z.B. 60–64°C = `OPTIMAL`) und **Stabilisierungs-Cooldown** (25s) vor Hochtakten, kombiniert mit **sofortiger Notdrosselung** bei Überhitzung. |
+| **Hardcodierte Hardware-Tabellen** | Nur BM1370 Gamma wurde mit einer festen CSV unterstützt. BM1366, BM1368 oder Hex wurden nicht dynamisch erkannt. | Dynamische Abfrage der hardware-spezifischen Frequenz- und Spannungsstufen direkt über `/api/system/asic` (AxeOS 2.0+) mit Fallback auf kalibrierte Profile. |
+| **Abstürze durch `ZeroDivisionError`** | Bei identischem `min_volt` und `max_volt` stürzte der Tuning-Loop ab. | Abgesicherte mathematische Normalisierung und Validierung aller Benutzereingaben per Pydantic. |
+| **Benutzeroberfläche** | Veraltetes, starres Tkinter-Fenster ohne moderne Skalierung, Responsive-Fähigkeit oder Dark Mode. | **Hochmoderne, schlichte Obsidian-Dark-Oberfläche** mit Live-Charts, flüssigen Animationen und nativer Windows-Desktop-Integration (WebView2). |
+
+---
+
+## 🚀 Schnellstart & Installation
+
+### Option A: Fertige Windows-Anwendung starten (Empfohlen)
+- Doppelklick auf **`dist\BitAxeTool\BitAxeTool.exe`** oder **`Start_BitAxeTool.vbs`**.
+- Öffnet direkt das native Windows-Fenster ohne Terminal oder CMD-Box.
+
+### Option B: Windows-Installer (.exe) ausführen
+- Der fertige Windows-Installer liegt in:
+  `installer_output\BitAxeTool_Setup_v2.1.0.exe`
+- Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
+
+### Option C: Aus dem Quellcode starten
+- Doppelklick auf **`Run_BitAxeTool.bat`**.
+
+---
+
+## 📡 AxeOS REST API Dokumentation
+
+BitAxeTool kommuniziert nativ mit der unverschlüsselten REST-API von AxeOS:
+
+- **`GET /api/system/info`**:
+  Ruft ASIC-Temperatur (`temp`), VR-Temperatur (`vrTemp`), aktuelle Frequenz (`frequency`), Kernspannung (`coreVoltage`), Hashrate (`hashRate`), Leistungsaufnahme (`power`), Lüfterdrehzahl (`fanrpm` / `fanspeed`) und Akzeptierte/Verworfene Shares ab.
+- **`GET /api/system/asic`**:
+  Liefert die hardware-unterstützten Frequenzschritte (`frequencyOptions`) und Spannungen (`voltageOptions`).
+- **`PATCH /api/system`**:
+  Setzt Takt und Spannung sofort auf Hardwareebene:
+  ```json
+  {
+    "frequency": 600,
+    "coreVoltage": 1120
+  }
+  ```
+- **`POST /api/system/restart`**:
+  Startet den ESP32 und das ASIC-Board neu.
+
+- **`POST /api/system/identify`**:
+  Lässt den Bildschirm des Miners aufleuchten („Finden“).
+
+---
+
+## 🧪 Tests ausführen
+
+Zur Überprüfung aller Komponenten (Regelung, Interpolation, Sicherheitsschwellen, API):
+```bash
+python -m pytest tests/
+```

@@ -1,0 +1,37 @@
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyInstaller
+dist/
+build/
+*.spec.bak
+
+# Testing cache
+.pytest_cache/
+.coverage
+
+# Inno Setup output
+installer_output/
+
+# Reference upstream repository
+reference-repo/
+
+# Logs
+logs/
+*.log
+
+# User config local backups
+config.json.bak
+config.json.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
