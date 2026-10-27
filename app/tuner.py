@@ -23,7 +23,8 @@ class MinerWorker:
         self._task: Optional[asyncio.Task] = None
         self._running = False
         self._flatline_history: List[float] = []
-        self._last_tune_time: float = 0.0
+        # Allow a short stabilization window on fresh startup before first tune
+        self._last_tune_time: float = time.time() - max(0, config.tuning_cooldown - 12.0)
         self._last_telemetry_log_time: float = 0.0
         self._last_applied_freq: Optional[int] = None
         self._last_applied_volt: Optional[int] = None
@@ -50,6 +51,8 @@ class MinerWorker:
         """Update tuning parameters dynamically."""
         self.config = new_config
         self._profile = get_profile_for_model(new_config.model or new_config.asic_model)
+        self.telemetry.frequency_options = self.get_available_frequencies()
+        self.telemetry.voltage_options = self.get_available_voltages()
         self.log("Konfiguration dynamisch aktualisiert.", "info")
 
     def log(self, message: str, level: str = "info") -> None:
@@ -62,6 +65,64 @@ class MinerWorker:
         )
         self.log_callback(entry)
 
+    def get_available_frequencies(self) -> List[int]:
+        """Return full calibrated frequency ladder honoring min_freq and max_freq."""
+        steps = set()
+
+        # 1. Calibrated tiers from profile (e.g. 450, 475, ..., 950)
+        if self._profile and self._profile.scaling_tiers:
+            for tier in self._profile.scaling_tiers:
+                if self.config.min_freq <= tier.frequency <= self.config.max_freq:
+                    steps.add(tier.frequency)
+
+        # 2. AxeOS preset dropdown options
+        if self._supported_freqs:
+            for f in self._supported_freqs:
+                if self.config.min_freq <= f <= self.config.max_freq:
+                    steps.add(f)
+
+        # 3. Grid steps based on config.freq_step
+        step = max(5, self.config.freq_step or 25)
+        f = self.config.min_freq
+        while f <= self.config.max_freq:
+            steps.add(f)
+            f += step
+
+        # 4. Include current frequency
+        if self.telemetry.frequency:
+            steps.add(self.telemetry.frequency)
+
+        return sorted(list(steps))
+
+    def get_available_voltages(self) -> List[int]:
+        """Return full voltage ladder honoring min_voltage and max_voltage."""
+        volts = set()
+
+        # 1. From profile calibrated scaling tiers
+        if self._profile and self._profile.scaling_tiers:
+            for tier in self._profile.scaling_tiers:
+                if self.config.min_voltage <= tier.voltage <= self.config.max_voltage:
+                    volts.add(tier.voltage)
+
+        # 2. From AxeOS options
+        if self._supported_volts:
+            for v in self._supported_volts:
+                if self.config.min_voltage <= v <= self.config.max_voltage:
+                    volts.add(v)
+
+        # 3. Grid steps
+        step = max(5, self.config.voltage_step or 10)
+        v = self.config.min_voltage
+        while v <= self.config.max_voltage:
+            volts.add(v)
+            v += step
+
+        # 4. Include current voltage
+        if self.telemetry.voltage:
+            volts.add(self.telemetry.voltage)
+
+        return sorted(list(volts))
+
     async def _initialize_hardware_profiles(self) -> None:
         """Query /api/system/asic to get official hardware frequency and voltage steps."""
         asic_info = await self.client.get_asic_settings()
@@ -70,16 +131,17 @@ class MinerWorker:
             volt_opts = asic_info.get("voltageOptions", [])
             if freq_opts:
                 self._supported_freqs = sorted([int(f) for f in freq_opts if int(f) > 0])
-                self.telemetry.frequency_options = self._supported_freqs
             if volt_opts:
                 self._supported_volts = sorted([int(v) for v in volt_opts if int(v) > 0])
-                self.telemetry.voltage_options = self._supported_volts
 
             model_name = asic_info.get("deviceModel") or asic_info.get("ASICModel")
             if model_name and (self.config.model == "Unknown" or not self.config.model):
                 self.config.model = model_name
                 self._profile = get_profile_for_model(model_name)
-                self.log(f"Hardware erkannt: {model_name} mit {len(self._supported_freqs)} Taktschritten.", "info")
+                self.log(f"Hardware erkannt: {model_name}.", "info")
+
+        self.telemetry.frequency_options = self.get_available_frequencies()
+        self.telemetry.voltage_options = self.get_available_voltages()
 
     async def _loop(self) -> None:
         """Main worker control cycle."""
@@ -189,6 +251,12 @@ class MinerWorker:
         else:
             self.telemetry.efficiency_j_th = None
 
+        # Ensure frequency and voltage option lists are populated
+        if not self.telemetry.frequency_options:
+            self.telemetry.frequency_options = self.get_available_frequencies()
+        if not self.telemetry.voltage_options:
+            self.telemetry.voltage_options = self.get_available_voltages()
+
     def _log_telemetry_summary(self) -> None:
         """Record periodic snapshot of miner values for tracking."""
         name = self.config.nickname or self.config.ip
@@ -216,7 +284,6 @@ class MinerWorker:
         current_volt = self.telemetry.voltage or self._last_applied_volt or self.config.min_voltage
 
         # 1. Flatline / Freeze Watchdog
-        # Only reboot if hashrate is confirmed 0 (dead ASIC / frozen engine) for multiple consecutive cycles
         if self.config.flatline_watchdog:
             self._flatline_history.append(hash_rate)
             if len(self._flatline_history) > self.config.flatline_cycles:
@@ -229,6 +296,7 @@ class MinerWorker:
                 self.telemetry.governor_message = "Hashrate eingefroren. Miner führt Neustart durch..."
                 await self.client.restart()
                 self._flatline_history.clear()
+                self._last_tune_time = now + 45.0
                 await asyncio.sleep(45)  # Allow miner to reboot
                 return
 
@@ -295,6 +363,11 @@ class MinerWorker:
                     self.telemetry.frequency = new_freq
                     self.telemetry.voltage = new_volt
                 self._last_tune_time = now
+                self.telemetry.governor_status = "COOLING_DOWN"
+                self.telemetry.governor_message = f"Takt gesenkt auf {new_freq} MHz @ {new_volt} mV zur Abkühlung."
+            else:
+                self.telemetry.governor_status = "MIN_CLOCK"
+                self.telemetry.governor_message = f"Bereits auf Minimaltakt ({current_freq} MHz). Kühlung prüfen!"
             return
 
         # 5. Under Target Band (Cool, thermal headroom available to ramp up)
@@ -302,7 +375,7 @@ class MinerWorker:
             # Check maximum configured clock limit
             if current_freq >= self.config.max_freq:
                 self.telemetry.governor_status = "MAX_CLOCK"
-                self.telemetry.governor_message = f"Läuft bereits auf Maximaltakt ({current_freq} MHz)."
+                self.telemetry.governor_message = f"Maximaler konfigurierter Takt ({current_freq} MHz) erreicht."
                 return
 
             # Check electrical headroom (leave at least 0.5W margin before max_watts)
@@ -317,6 +390,12 @@ class MinerWorker:
                 self.telemetry.governor_message = f"VR-Temperaturgrenze ({vr_temp:.1f}°C / {self.config.max_vr_temp:.1f}°C) erreicht. Halte Takt."
                 return
 
+            # Check excessive ASIC error percentage
+            if self.telemetry.error_percentage and self.telemetry.error_percentage > 30.0:
+                self.telemetry.governor_status = "STABILIZING"
+                self.telemetry.governor_message = f"ASIC-Fehlerrate ({self.telemetry.error_percentage:.1f}%) erhöht. Halte Takt zur Stabilisierung."
+                return
+
             # Check stabilization cooldown before stepping up
             if now - self._last_tune_time < self.config.tuning_cooldown:
                 self.telemetry.governor_status = "STABILIZING"
@@ -329,40 +408,43 @@ class MinerWorker:
             new_volt = self._get_safe_voltage(new_freq)
 
             if new_freq > current_freq:
-                self.log(f"Thermischer Spielraum vorhanden ({temp:.1f}°C < {lower_bound:.1f}°C). Erhöhe Takt auf {new_freq} MHz @ {new_volt} mV", "info")
+                self.log(f"Thermischer Spielraum vorhanden ({temp:.1f}°C < {lower_bound:.1f}°C). Erhöhe Takt auf {new_freq} MHz @ {new_volt} mV (Ziel: {self.config.target_temp:.1f}°C)", "info")
                 ok, msg = await self.client.apply_tuning(new_freq, new_volt)
                 if ok:
                     self._last_applied_freq = new_freq
                     self._last_applied_volt = new_volt
                     self.telemetry.frequency = new_freq
                     self.telemetry.voltage = new_volt
-                self._last_tune_time = now
-                self.telemetry.governor_status = "RAMPING_UP"
-                self.telemetry.governor_message = f"Takt gesteigert auf {new_freq} MHz @ {new_volt} mV."
+                    self._last_tune_time = now
+                    self.telemetry.governor_status = "RAMPING_UP"
+                    self.telemetry.governor_message = f"Takt gesteigert auf {new_freq} MHz @ {new_volt} mV."
+                else:
+                    self.log(f"Tuning-Fehler beim Setzen von {new_freq} MHz: {msg}", "error")
+                    self.telemetry.governor_status = "ERROR"
+                    self.telemetry.governor_message = f"Fehler beim Anwenden: {msg}"
+            else:
+                self.telemetry.governor_status = "MAX_CLOCK"
+                self.telemetry.governor_message = f"Höchster verfügbarer Takt ({current_freq} MHz) erreicht."
 
     def _get_next_higher_frequency(self, current_freq: int) -> int:
         """Find the next safe frequency step upwards."""
-        if self._supported_freqs:
-            for f in self._supported_freqs:
-                if f > current_freq and f <= self.config.max_freq:
-                    return f
-            return min(current_freq, self.config.max_freq)
-        else:
-            return min(current_freq + self.config.freq_step, self.config.max_freq)
+        freqs = self.get_available_frequencies()
+        for f in freqs:
+            if f > current_freq and f <= self.config.max_freq:
+                return f
+        return min(current_freq, self.config.max_freq)
 
     def _get_next_lower_frequency(self, current_freq: int) -> int:
         """Find the next safe frequency step downwards."""
-        if self._supported_freqs:
-            for f in reversed(self._supported_freqs):
-                if f < current_freq and f >= self.config.min_freq:
-                    return f
-            return max(current_freq, self.config.min_freq)
-        else:
-            return max(current_freq - self.config.freq_step, self.config.min_freq)
+        freqs = self.get_available_frequencies()
+        for f in reversed(freqs):
+            if f < current_freq and f >= self.config.min_freq:
+                return f
+        return max(current_freq, self.config.min_freq)
 
     def _get_safe_voltage(self, freq: int) -> int:
         """Calculate optimal voltage for target frequency obeying user limits."""
-        if self.config.enforce_safe_tiers and self._profile.scaling_tiers:
+        if self.config.enforce_safe_tiers and self._profile and self._profile.scaling_tiers:
             calc_volt = find_safe_voltage_for_freq(freq, self._profile.scaling_tiers, self.config.min_voltage)
         else:
             calc_volt = self.config.min_voltage

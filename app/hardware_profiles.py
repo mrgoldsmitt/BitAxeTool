@@ -51,6 +51,10 @@ BM1370_TIERS = [
     VoltageTier(frequency=850, voltage=1221, target_hashrate=1734.0),
     VoltageTier(frequency=875, voltage=1231, target_hashrate=1785.0),
     VoltageTier(frequency=900, voltage=1241, target_hashrate=1836.0),
+    VoltageTier(frequency=925, voltage=1251, target_hashrate=1887.0),
+    VoltageTier(frequency=950, voltage=1261, target_hashrate=1938.0),
+    VoltageTier(frequency=975, voltage=1271, target_hashrate=1989.0),
+    VoltageTier(frequency=1000, voltage=1280, target_hashrate=2040.0),
 ]
 
 # BM1366 (Bitaxe Ultra 204)
@@ -83,17 +87,17 @@ PROFILES: Dict[str, AsicProfile] = {
         model_name="Bitaxe Gamma 601",
         asic_model="BM1370",
         min_freq=450,
-        max_freq=750,
+        max_freq=950,
         default_freq=525,
         freq_step=25,
         min_voltage=1060,
-        max_voltage=1220,
+        max_voltage=1300,
         default_voltage=1100,
         voltage_step=10,
         default_target_temp=62.0,
-        max_safe_temp=70.0,
+        max_safe_temp=72.0,
         max_safe_vr_temp=88.0,
-        default_max_watts=26.0,
+        default_max_watts=28.0,
         scaling_tiers=BM1370_TIERS,
     ),
     "BM1366": AsicProfile(
