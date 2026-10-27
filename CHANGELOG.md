@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 ## [2.1.0] - 2026-10-27
 
 ### 🚀 Highlights & Neuerungen
+- **24-Stunden-Verlaufsdiagramme als Popup:**
+  - Durch Klick auf eine der 6 KPI-Karten im oberen Bereich öffnet sich ein interaktives Liquid-Glass-Diagramm mit dem 24h-Verlauf der jeweiligen Metrik (Hashrate, Leistung, ASIC-Temperatur, VRM-Temperatur, Effizienz oder Miner-Anzahl).
+  - Zeitbereich umschaltbar zwischen `1 Std`, `6 Std` und `24 Std`.
+  - Direkte Anzeige von aktuellen Werten sowie Minimum, Durchschnitt und Maximum über den gewählten Zeitraum.
+
+- **Optimierte Miner-Kartenbreite & Best-Difficulty-Integration:**
+  - Die Miner-Karten passen sich nun 100% responsive und ohne horizontales Überlaufen an mobile Bildschirme an.
+  - Die separate "Best Difficulty"-Karte wurde entfernt; die Bestwerte (`All-Time` und `Session / Boot`) sind jetzt direkt mit goldenem Stern auf jeder Miner-Statuskarte integriert.
+
+- **Dauerhaft fixierte Menüleiste (iOS Bottom Dock):**
+  - Das schwebende Liquid-Glass-Dock bleibt beim Scrollen fest am unteren Bildschirmrand verankert (`translateZ(0)` Hardwarebeschleunigung).
+  - Vertikales Icon-Layout verhindert jegliches Überlaufen auf schmalen Smartphone-Displays.
 - **iOS Liquid Glass Design & Farben nach Referenzvorlage:**
   - Komplettes Redesign der Benutzeroberfläche im authentischen **iOS Liquid Glass Stil**: Tiefer OLED-Schwarz-Hintergrund (`#000000`), satinierte Frosted-Glass-Karten (`backdrop-filter: blur(28px)`), dezente Lichtkanten und abgerundete Ecken (`20px`).
   - **Präzise 6-Karten-Metrikleiste** mit originalen Apple-Neon-Akzentfarben:

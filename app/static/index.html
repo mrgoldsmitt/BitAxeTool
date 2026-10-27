@@ -77,16 +77,19 @@
     <!-- Main Content Container -->
     <main class="ios-dashboard-container">
 
-        <!-- 6 Metric Cards Grid matching the Screenshot -->
+        <!-- 6 Metric Cards Grid (Clickable for 24h history popup) -->
         <section class="ios-metric-grid" id="section-kpis">
             
             <!-- Card 1: Total Hash Rate (Electric Blue Lightning) -->
-            <div class="ios-metric-card" id="card-hashrate">
+            <div class="ios-metric-card" id="card-hashrate" onclick="openMetricHistoryModal('hashrate')" title="Tippen für 24h Verlauf">
                 <div class="ios-metric-top">
                     <div class="ios-metric-icon icon-cyan">
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                         </svg>
+                    </div>
+                    <div class="ios-metric-click-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 9l-5 5-4-4-6 6"></path></svg>
                     </div>
                 </div>
                 <div class="ios-metric-val" id="kpi-total-hashrate">-- TH/s</div>
@@ -94,12 +97,15 @@
             </div>
 
             <!-- Card 2: Total Power (Bright Orange Power) -->
-            <div class="ios-metric-card" id="card-power">
+            <div class="ios-metric-card" id="card-power" onclick="openMetricHistoryModal('power')" title="Tippen für 24h Verlauf">
                 <div class="ios-metric-top">
                     <div class="ios-metric-icon icon-orange">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                             <path d="M12 2v10M18.36 6.64a9 9 0 11-12.73 0"></path>
                         </svg>
+                    </div>
+                    <div class="ios-metric-click-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 9l-5 5-4-4-6 6"></path></svg>
                     </div>
                 </div>
                 <div class="ios-metric-val" id="kpi-total-watts">-- W</div>
@@ -107,12 +113,15 @@
             </div>
 
             <!-- Card 3: Avg ASIC Temp (Coral Red Thermometer) -->
-            <div class="ios-metric-card" id="card-temp-asic">
+            <div class="ios-metric-card" id="card-temp-asic" onclick="openMetricHistoryModal('temp_asic')" title="Tippen für 24h Verlauf">
                 <div class="ios-metric-top">
                     <div class="ios-metric-icon icon-red">
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0zM11.5 3.5a1 1 0 0 1 2 0v7h-2V3.5z"></path>
                         </svg>
+                    </div>
+                    <div class="ios-metric-click-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 9l-5 5-4-4-6 6"></path></svg>
                     </div>
                 </div>
                 <div class="ios-metric-val" id="kpi-max-temp">--°C</div>
@@ -120,12 +129,15 @@
             </div>
 
             <!-- Card 4: Avg VR Temp (Amber Orange Thermometer) -->
-            <div class="ios-metric-card" id="card-temp-vr">
+            <div class="ios-metric-card" id="card-temp-vr" onclick="openMetricHistoryModal('temp_vr')" title="Tippen für 24h Verlauf">
                 <div class="ios-metric-top">
                     <div class="ios-metric-icon icon-amber">
                         <svg viewBox="0 0 24 24" fill="currentColor">
                             <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0zM11.5 3.5a1 1 0 0 1 2 0v7h-2V3.5z"></path>
                         </svg>
+                    </div>
+                    <div class="ios-metric-click-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 9l-5 5-4-4-6 6"></path></svg>
                     </div>
                 </div>
                 <div class="ios-metric-val" id="kpi-avg-vr-temp">--°C</div>
@@ -133,12 +145,15 @@
             </div>
 
             <!-- Card 5: Avg Efficiency (Magenta / Purple Gauge) -->
-            <div class="ios-metric-card" id="card-efficiency">
+            <div class="ios-metric-card" id="card-efficiency" onclick="openMetricHistoryModal('efficiency')" title="Tippen für 24h Verlauf">
                 <div class="ios-metric-top">
                     <div class="ios-metric-icon icon-purple">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 14l3-3m5.2 2.8A9 9 0 103.8 13.8M12 7v1"></path>
                         </svg>
+                    </div>
+                    <div class="ios-metric-click-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 9l-5 5-4-4-6 6"></path></svg>
                     </div>
                 </div>
                 <div class="ios-metric-val" id="kpi-total-efficiency">-- J/TH</div>
@@ -146,7 +161,7 @@
             </div>
 
             <!-- Card 6: Online Miners (Neon Green Microchip) -->
-            <div class="ios-metric-card" id="card-miners-count">
+            <div class="ios-metric-card" id="card-miners-count" onclick="openMetricHistoryModal('miners_count')" title="Tippen für 24h Verlauf">
                 <div class="ios-metric-top">
                     <div class="ios-metric-icon icon-green">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -154,39 +169,14 @@
                             <path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"></path>
                         </svg>
                     </div>
+                    <div class="ios-metric-click-hint">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M18 9l-5 5-4-4-6 6"></path></svg>
+                    </div>
                 </div>
                 <div class="ios-metric-val" id="kpi-miner-count">0/0</div>
                 <div class="ios-metric-lbl">Online Miners</div>
             </div>
 
-        </section>
-
-        <!-- Best Difficulty Card matching Screenshot -->
-        <section class="ios-best-diff-card" id="section-best-diff">
-            <div class="ios-best-diff-header">
-                <div>
-                    <div class="ios-best-diff-title">Best Difficulty</div>
-                    <div class="ios-best-diff-miner" id="best-diff-miner-name">Lade Miner...</div>
-                </div>
-                <div class="ios-best-diff-star">
-                    <svg viewBox="0 0 24 24" fill="#FFD60A">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="ios-best-diff-body">
-                <div class="ios-best-diff-col">
-                    <div class="ios-best-diff-val" id="best-diff-all-time">--</div>
-                    <div class="ios-best-diff-sub">All Time Best</div>
-                </div>
-                <div class="ios-best-diff-col">
-                    <div class="ios-best-diff-val" id="best-diff-session">--</div>
-                    <div class="ios-best-diff-sub">Since System Boot</div>
-                </div>
-            </div>
-            <div class="ios-best-diff-dots" id="best-diff-pagination">
-                <span class="dot active"></span>
-            </div>
         </section>
 
         <!-- Miners Status Cockpit Section -->
@@ -197,7 +187,7 @@
             </div>
 
             <div class="miners-grid" id="miners-grid">
-                <!-- Dynamically populated miner cards in liquid glass style -->
+                <!-- Dynamically populated miner cards with Best Difficulty inside each card -->
             </div>
         </section>
 
@@ -263,7 +253,7 @@
 
     </main>
 
-    <!-- Floating Bottom iOS Liquid Glass Dock (Tab Bar) -->
+    <!-- Floating Bottom iOS Liquid Glass Dock (Pinned securely to screen bottom) -->
     <nav class="ios-dock" id="ios-bottom-dock">
         <!-- Tab 1: Dashboard -->
         <button class="ios-dock-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
@@ -312,6 +302,47 @@
             <span>Settings</span>
         </button>
     </nav>
+
+    <!-- Modal: 24h Metrik-Historie & Verlauf Popup (Beim Klick auf Werte im oberen Bereich) -->
+    <div class="modal-overlay" id="modal-metric-history">
+        <div class="modal-box ios-glass-modal" style="max-width: 620px;">
+            <div class="modal-header">
+                <div class="modal-title" id="history-modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    Metrik-Verlauf
+                </div>
+                <button class="modal-close" onclick="closeModal('modal-metric-history')">&times;</button>
+            </div>
+            <div class="history-modal-body">
+                <!-- Live KPI Stat Header inside popup -->
+                <div class="history-stat-bar">
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Aktueller Wert:</span>
+                        <div class="history-current-val" id="history-stat-current">--</div>
+                    </div>
+                    <div class="history-minmax-pills">
+                        <span class="pill-stat">Min: <strong id="history-stat-min">--</strong></span>
+                        <span class="pill-stat">Ø: <strong id="history-stat-avg">--</strong></span>
+                        <span class="pill-stat">Max: <strong id="history-stat-max">--</strong></span>
+                    </div>
+                </div>
+
+                <!-- Time Range Selector Pills -->
+                <div class="history-range-pills">
+                    <button class="range-btn" data-hours="1" onclick="loadMetricHistory(activeHistoryMetric, 1)">1 Std</button>
+                    <button class="range-btn" data-hours="6" onclick="loadMetricHistory(activeHistoryMetric, 6)">6 Std</button>
+                    <button class="range-btn active" data-hours="24" onclick="loadMetricHistory(activeHistoryMetric, 24)">24 Std</button>
+                </div>
+
+                <!-- 24h Chart Canvas -->
+                <div class="history-chart-wrapper">
+                    <canvas id="metricHistoryCanvas"></canvas>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-metric-history')">Fertig</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal: Settings & Action Sheet Menu -->
     <div class="modal-overlay" id="modal-menu">

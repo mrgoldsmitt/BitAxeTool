@@ -6,7 +6,7 @@
   /* Pure OLED Black & Apple Dark Palette */
   --bg-canvas: #000000;
   --bg-card: #1c1c1e;
-  --bg-card-glass: rgba(28, 28, 30, 0.78);
+  --bg-card-glass: rgba(28, 28, 30, 0.82);
   --bg-surface: #2c2c2e;
   --bg-surface-glass: rgba(44, 44, 46, 0.72);
   --border-glass: rgba(255, 255, 255, 0.08);
@@ -66,7 +66,7 @@ body {
   padding-top: env(safe-area-inset-top, 0);
   padding-left: env(safe-area-inset-left, 0);
   padding-right: env(safe-area-inset-right, 0);
-  padding-bottom: calc(90px + env(safe-area-inset-bottom, 0));
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0));
   -webkit-font-smoothing: antialiased;
 }
 
@@ -77,14 +77,17 @@ body {
   position: sticky;
   top: 0;
   z-index: 80;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(28px) saturate(190%);
   -webkit-backdrop-filter: blur(28px) saturate(190%);
-  padding: 16px 20px 12px 20px;
+  padding: 14px 18px 10px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ios-header-main {
@@ -94,7 +97,7 @@ body {
 }
 
 .ios-page-title {
-  font-size: clamp(1.75rem, 1.4rem + 1vw, 2.2rem);
+  font-size: clamp(1.6rem, 1.3rem + 1vw, 2.1rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text-main);
@@ -148,13 +151,13 @@ body {
 .ios-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* Circular Liquid Glass Button (matching Screenshot top-right) */
+/* Circular Liquid Glass Button */
 .ios-circle-btn {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--bg-surface-glass);
   backdrop-filter: blur(20px);
@@ -181,16 +184,16 @@ body {
 }
 
 .ios-circle-btn .ios-icon {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
 }
 
 .notification-badge-dot {
   position: absolute;
   top: 3px;
   right: 3px;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   background-color: var(--accent-red);
   border: 2px solid #000000;
   border-radius: 50%;
@@ -198,39 +201,51 @@ body {
 }
 
 /* ==========================================================
-   MAIN CONTAINER
+   MAIN DASHBOARD CONTAINER (Guaranteed Zero Horizontal Overflow)
    ========================================================== */
 .ios-dashboard-container {
   flex: 1;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 18px 24px 18px;
+  padding: 16px 14px 24px 14px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (max-width: 480px) {
+  .ios-dashboard-container {
+    padding: 12px 10px 24px 10px;
+    gap: 12px;
+  }
 }
 
 /* ==========================================================
-   6 METRIC CARDS GRID (Exact match to uploaded Screenshot)
+   6 METRIC CARDS GRID (Clickable for 24h history popup)
    ========================================================== */
 .ios-metric-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
   .ios-metric-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
   }
 }
 
 @media (min-width: 1080px) {
   .ios-metric-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 16px;
+    gap: 14px;
   }
 }
 
@@ -238,41 +253,65 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  padding: 14px 16px;
+  padding: 13px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 104px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  min-height: 98px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
   transition: var(--transition-smooth);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  user-select: none;
 }
 
 .ios-metric-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.65);
+}
+
+.ios-metric-card:active {
+  transform: scale(0.97);
 }
 
 .ios-metric-top {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 8px;
+  justify-content: space-between;
+  margin-bottom: 6px;
 }
 
 .ios-metric-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .ios-metric-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
+}
+
+.ios-metric-click-hint {
+  width: 16px;
+  height: 16px;
+  color: var(--text-dim);
+  opacity: 0.6;
+  transition: var(--transition-smooth);
+}
+
+.ios-metric-card:hover .ios-metric-click-hint {
+  opacity: 1;
+  color: var(--text-main);
+}
+
+.ios-metric-click-hint svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Icon Accent Colors */
@@ -285,7 +324,7 @@ body {
 .icon-blue { color: #0a84ff; }
 
 .ios-metric-val {
-  font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.55rem);
+  font-size: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-main);
@@ -296,128 +335,29 @@ body {
 }
 
 .ios-metric-lbl {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 /* ==========================================================
-   BEST DIFFICULTY CARD (Exact match to uploaded Screenshot)
-   ========================================================== */
-.ios-best-diff-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
-  transition: var(--transition-smooth);
-}
-
-.ios-best-diff-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-.ios-best-diff-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.ios-best-diff-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-main);
-  line-height: 1.2;
-}
-
-.ios-best-diff-miner {
-  font-size: 0.85rem;
-  color: var(--accent-cyan);
-  font-weight: 500;
-  margin-top: 2px;
-}
-
-.ios-best-diff-star {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ios-best-diff-star svg {
-  width: 20px;
-  height: 20px;
-}
-
-.ios-best-diff-body {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 2px;
-}
-
-.ios-best-diff-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.ios-best-diff-val {
-  font-size: clamp(1.35rem, 1.25rem + 0.6vw, 1.7rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-main);
-}
-
-.ios-best-diff-sub {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.ios-best-diff-dots {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.ios-best-diff-dots .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.25);
-  cursor: pointer;
-  transition: var(--transition-smooth);
-}
-
-.ios-best-diff-dots .dot.active {
-  background-color: #ffffff;
-  transform: scale(1.1);
-}
-
-/* ==========================================================
-   MINERS STATUS SECTION & HEADER
+   MINERS STATUS COCKPIT (Guaranteed Mobile Width Fit)
    ========================================================== */
 .ios-section-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 6px;
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .ios-section-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-main);
@@ -427,7 +367,7 @@ body {
 }
 
 .ios-updated-timer {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -435,8 +375,11 @@ body {
 /* Miners Grid */
 .miners-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
@@ -451,17 +394,22 @@ body {
   }
 }
 
-/* Miner Card (Liquid Glass iOS Style) */
+/* Miner Card (Width strictly contained) */
 .miner-card {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
   transition: var(--transition-smooth);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .miner-card:hover {
@@ -474,14 +422,18 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .miner-identity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .status-dot {
@@ -512,11 +464,12 @@ body {
 
 .miner-titles {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .miner-name {
-  font-size: 1rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--accent-cyan);
   white-space: nowrap;
@@ -525,25 +478,32 @@ body {
 }
 
 .miner-ip {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
   font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .miner-header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .miner-badge-model {
-  font-size: 0.68rem;
-  padding: 3px 8px;
+  font-size: 0.65rem;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
   color: var(--text-muted);
   border: 1px solid var(--border-glass);
+  max-width: 85px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Governor Status Banner */
@@ -551,17 +511,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 6px;
+  padding: 5px 8px;
   border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .gov-status {
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   flex-shrink: 0;
@@ -574,12 +538,57 @@ body {
 
 .gov-msg {
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Best Difficulty Row on Miner Card */
+.miner-diff-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 214, 10, 0.05);
+  border: 1px solid rgba(255, 214, 10, 0.16);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.miner-diff-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffd60a;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.miner-diff-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.miner-diff-tags strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.diff-bullet {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 /* Quad Metrics Grid Inside Miner Card */
@@ -587,6 +596,9 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .metric-quad-item {
@@ -597,12 +609,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .metric-quad-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .metric-quad-title {
@@ -612,6 +626,9 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .metric-quad-value {
@@ -634,22 +651,29 @@ body {
 /* Action Buttons inside Card */
 .card-actions {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 2px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-@media (max-width: 420px) {
+@media (min-width: 600px) {
   .card-actions {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 .card-actions .btn {
-  padding: 6px 8px;
+  padding: 7px 6px;
   min-height: 32px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   border-radius: var(--radius-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ==========================================================
@@ -659,11 +683,13 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-lg);
-  padding: 16px 18px;
+  padding: 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ios-card-header {
@@ -750,58 +776,69 @@ body {
 }
 
 /* ==========================================================
-   FLOATING BOTTOM iOS DOCK (Tab Bar - Exact match to Screenshot)
+   FLOATING BOTTOM iOS DOCK (Permanently Fixed to Screen Bottom)
    ========================================================== */
 .ios-dock {
   position: fixed;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0));
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  background: rgba(28, 28, 30, 0.85);
+  transform: translateX(-50%) translateZ(0);
+  -webkit-transform: translateX(-50%) translateZ(0);
+  will-change: transform;
+  z-index: 9999;
+  background: rgba(28, 28, 30, 0.88);
   backdrop-filter: blur(32px) saturate(200%);
   -webkit-backdrop-filter: blur(32px) saturate(200%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 40px;
-  padding: 5px 8px;
+  padding: 5px 6px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
-  max-width: calc(100vw - 28px);
+  justify-content: space-around;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.85);
+  width: calc(100% - 24px);
+  max-width: 440px;
+  box-sizing: border-box;
 }
 
 .ios-dock-item {
+  flex: 1;
+  min-width: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 30px;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 2px;
+  border-radius: 20px;
   background: transparent;
   border: none;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.68rem;
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition-smooth);
-  white-space: nowrap;
 }
 
 .ios-dock-item:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .ios-dock-item.active {
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
   color: var(--accent-orange);
   font-weight: 600;
 }
 
 .dock-icon {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
+  transition: var(--transition-smooth);
+}
+
+.ios-dock-item.active .dock-icon {
+  transform: scale(1.08);
 }
 
 .dock-icon-wrapper {
@@ -823,16 +860,73 @@ body {
   box-shadow: 0 0 5px var(--accent-red);
 }
 
-@media (max-width: 480px) {
-  .ios-dock-item {
-    padding: 8px 10px;
-    font-size: 0.75rem;
-    gap: 4px;
-  }
-  .dock-icon {
-    width: 17px;
-    height: 17px;
-  }
+/* ==========================================================
+   24H METRIC HISTORY POPUP STYLES
+   ========================================================== */
+.history-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-stat-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass-bright);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.history-current-val {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.history-minmax-pills {
+  display: flex;
+  gap: 10px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.history-minmax-pills strong {
+  color: #ffffff;
+}
+
+.history-range-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.range-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.range-btn.active, .range-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.history-chart-wrapper {
+  height: 230px;
+  width: 100%;
+  position: relative;
 }
 
 /* ==========================================================
@@ -842,12 +936,12 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   font-family: inherit;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 600;
-  padding: 8px 15px;
-  min-height: 38px;
+  padding: 8px 14px;
+  min-height: 36px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
@@ -891,7 +985,7 @@ body {
 .btn-sm {
   padding: 5px 9px;
   min-height: 30px;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   border-radius: var(--radius-xs);
 }
 
@@ -901,7 +995,7 @@ body {
   color: var(--text-main);
   border-radius: var(--radius-sm);
   padding: 5px 10px;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 500;
   cursor: pointer;
   display: inline-flex;
@@ -916,8 +1010,8 @@ body {
 }
 
 .ios-btn-icon {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
 }
 
 .ios-mini-icon {
@@ -945,7 +1039,7 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 14px;
 }
 
 .modal-overlay.active {
@@ -956,25 +1050,26 @@ body {
   background: rgba(28, 28, 30, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-xl);
-  padding: 22px;
+  padding: 20px;
   width: 100%;
-  max-width: 540px;
+  max-width: 520px;
   max-height: 88dvh;
   overflow-y: auto;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  box-sizing: border-box;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .modal-title {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-main);
 }
@@ -998,12 +1093,12 @@ body {
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-bottom: 12px;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
 .form-group label {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -1013,9 +1108,9 @@ body {
   border: 1px solid var(--border-glass-bright);
   border-radius: var(--radius-sm);
   color: #ffffff;
-  padding: 9px 12px;
+  padding: 8px 10px;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   outline: none;
   transition: var(--transition-smooth);
 }
@@ -1028,23 +1123,23 @@ body {
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 .helper-text {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--text-dim);
 }
 
 .settings-group-title {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--accent-cyan);
-  margin-top: 14px;
+  margin-top: 12px;
   margin-bottom: 6px;
-  padding-top: 8px;
+  padding-top: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -1055,9 +1150,9 @@ body {
   justify-content: space-between;
   cursor: pointer;
   user-select: none;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-main);
-  padding: 4px 0;
+  padding: 3px 0;
 }
 
 .switch-input {
@@ -1070,8 +1165,8 @@ body {
 .switch-slider {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 42px;
+  height: 22px;
   background-color: rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-pill);
   transition: var(--transition-smooth);
@@ -1081,8 +1176,8 @@ body {
 .switch-slider::before {
   content: "";
   position: absolute;
-  height: 20px;
-  width: 20px;
+  height: 18px;
+  width: 18px;
   left: 2px;
   bottom: 2px;
   background-color: #ffffff;
@@ -1113,7 +1208,7 @@ body {
   background: var(--bg-surface);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-md);
-  padding: 12px 14px;
+  padding: 11px 13px;
   color: var(--text-main);
   text-align: left;
   cursor: pointer;
@@ -1127,8 +1222,8 @@ body {
 }
 
 .ios-menu-icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.08);
   display: flex;
@@ -1138,8 +1233,8 @@ body {
 }
 
 .ios-menu-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
 }
 
 .ios-menu-text {
@@ -1147,13 +1242,13 @@ body {
 }
 
 .ios-menu-title {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-main);
 }
 
 .ios-menu-sub {
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
 }
 
@@ -1170,7 +1265,7 @@ body {
 }
 
 .notif-perm-status {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   display: flex;
   justify-content: space-between;
@@ -1182,7 +1277,7 @@ body {
 }
 
 .notif-section-title {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1205,7 +1300,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-main);
   cursor: pointer;
 }
@@ -1226,7 +1321,7 @@ body {
 }
 
 .pwa-guide-title {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--accent-cyan);
   margin-bottom: 6px;
@@ -1236,7 +1331,7 @@ body {
 }
 
 .pwa-guide-steps {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   color: var(--text-dim);
   display: flex;
   flex-direction: column;

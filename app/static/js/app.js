@@ -5,6 +5,7 @@
 let socket = null;
 let reconnectTimer = null;
 let chartInstance = null;
+let metricHistoryChartInstance = null;
 let knownMiners = [];
 let activeEditingIp = null;
 let allLogs = [];
@@ -12,8 +13,61 @@ let currentLogFilter = "all";
 let isMouseOverLogs = false;
 let isChartVisible = true;
 let currentTelemetry = [];
-let selectedDiffMinerIndex = 0;
 let lastTelemetryTimestamp = Date.now();
+let activeHistoryMetric = "hashrate";
+let activeHistoryHours = 24;
+
+// Metric configuration for 24h history graphs
+const METRIC_CONFIG = {
+    hashrate: {
+        title: "Total Hash Rate",
+        unit: "TH/s",
+        color: "#2997ff",
+        bgGradient: "rgba(41, 151, 255, 0.15)",
+        field: "hashrate_th",
+        decimals: 3
+    },
+    power: {
+        title: "Total Power",
+        unit: "W",
+        color: "#ff9500",
+        bgGradient: "rgba(255, 149, 0, 0.15)",
+        field: "power",
+        decimals: 1
+    },
+    temp_asic: {
+        title: "Avg ASIC Temperatur",
+        unit: "°C",
+        color: "#ff453a",
+        bgGradient: "rgba(255, 69, 58, 0.15)",
+        field: "temp_asic",
+        decimals: 1
+    },
+    temp_vr: {
+        title: "Avg VRM Temperatur",
+        unit: "°C",
+        color: "#ff9f0a",
+        bgGradient: "rgba(255, 159, 10, 0.15)",
+        field: "temp_vr",
+        decimals: 1
+    },
+    efficiency: {
+        title: "Avg Effizienz",
+        unit: "J/TH",
+        color: "#bf5af2",
+        bgGradient: "rgba(191, 90, 242, 0.15)",
+        field: "efficiency",
+        decimals: 2
+    },
+    miners_count: {
+        title: "Online Miners",
+        unit: "Geräte",
+        color: "#30d158",
+        bgGradient: "rgba(48, 209, 88, 0.15)",
+        field: "miners_count",
+        decimals: 0
+    }
+};
 
 // Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
@@ -92,7 +146,7 @@ function updateConnectionStatus(connected) {
     }
 }
 
-// --- Live Telemetry Rendering & iOS Liquid Glass Grid ---
+// --- Live Telemetry Rendering & 6 Metric Cards ---
 
 function renderTelemetry(telemetryList) {
     if (!telemetryList || !Array.isArray(telemetryList)) return;
@@ -155,20 +209,17 @@ function renderTelemetry(telemetryList) {
         }
     }
 
-    // 3. Render Best Difficulty Card
-    renderBestDifficultyCard(telemetryList);
-
-    // 4. Update Live Line Chart
+    // 3. Update Live Line Chart
     if (isChartVisible) {
         updateChartData(totalHashrate, avgAsicTemp);
     }
 
-    // 5. Update Miner Cards
+    // 4. Update Miner Cards
     telemetryList.forEach(t => {
         updateMinerCard(t);
     });
 
-    // 6. Smart Notification Triggers
+    // 5. Smart Notification Triggers
     checkNotificationTriggers(telemetryList);
 }
 
@@ -185,40 +236,6 @@ function formatDifficulty(diff) {
     if (diff >= 1e6) return (diff / 1e6).toFixed(2) + " M";
     if (diff >= 1e3) return (diff / 1e3).toFixed(2) + " K";
     return diff.toString();
-}
-
-function renderBestDifficultyCard(telemetryList) {
-    if (!telemetryList || telemetryList.length === 0) return;
-
-    if (selectedDiffMinerIndex >= telemetryList.length) {
-        selectedDiffMinerIndex = 0;
-    }
-
-    const currentMiner = telemetryList[selectedDiffMinerIndex];
-    const minerCfg = knownMiners.find(m => m.ip === currentMiner.ip);
-    const minerName = (minerCfg && minerCfg.nickname) ? minerCfg.nickname : (currentMiner.ip || "Bitaxe");
-
-    const elName = document.getElementById("best-diff-miner-name");
-    const elAllTime = document.getElementById("best-diff-all-time");
-    const elSession = document.getElementById("best-diff-session");
-    const elDots = document.getElementById("best-diff-pagination");
-
-    if (elName) elName.textContent = minerName;
-    if (elAllTime) elAllTime.textContent = formatDifficulty(currentMiner.best_diff);
-    if (elSession) elSession.textContent = formatDifficulty(currentMiner.best_session_diff);
-
-    if (elDots && telemetryList.length > 1) {
-        elDots.innerHTML = telemetryList.map((_, idx) => `
-            <span class="dot ${idx === selectedDiffMinerIndex ? 'active' : ''}" onclick="selectBestDiffMiner(${idx})" title="Miner wechseln"></span>
-        `).join("");
-    }
-}
-
-function selectBestDiffMiner(index) {
-    selectedDiffMinerIndex = index;
-    if (currentTelemetry.length > 0) {
-        renderBestDifficultyCard(currentTelemetry);
-    }
 }
 
 function updateRelativeTime() {
@@ -318,6 +335,16 @@ function updateMinerCard(telemetry) {
     if (pwrSub) {
         pwrSub.textContent = telemetry.efficiency_j_th ? `${telemetry.efficiency_j_th} J/TH Effizienz` : "-- J/TH";
     }
+
+    // 5. Best Difficulty directly on Miner Card
+    const bestDiffVal = card.querySelector(".card-val-best-diff");
+    const sessionDiffVal = card.querySelector(".card-val-session-diff");
+    if (bestDiffVal) {
+        bestDiffVal.textContent = formatDifficulty(telemetry.best_diff);
+    }
+    if (sessionDiffVal) {
+        sessionDiffVal.textContent = formatDifficulty(telemetry.best_session_diff);
+    }
 }
 
 function getTempColorClass(temp) {
@@ -325,6 +352,139 @@ function getTempColorClass(temp) {
     if (temp >= 68) return "temp-danger";
     if (temp >= 64) return "temp-warn";
     return "temp-cool";
+}
+
+// --- 24h Metric History Popup Modal & Charts ---
+
+async function openMetricHistoryModal(metricKey) {
+    activeHistoryMetric = metricKey || "hashrate";
+    const cfg = METRIC_CONFIG[activeHistoryMetric];
+    if (!cfg) return;
+
+    const titleEl = document.getElementById("history-modal-title");
+    if (titleEl) {
+        titleEl.innerHTML = `
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${cfg.color}; box-shadow: 0 0 8px ${cfg.color};"></span>
+            ${cfg.title} (Verlauf)
+        `;
+    }
+
+    openModal("modal-metric-history");
+    await loadMetricHistory(activeHistoryMetric, activeHistoryHours);
+}
+
+async function loadMetricHistory(metricKey, hours = 24) {
+    activeHistoryMetric = metricKey;
+    activeHistoryHours = hours;
+    const cfg = METRIC_CONFIG[metricKey];
+    if (!cfg) return;
+
+    // Update active filter button
+    document.querySelectorAll(".range-btn").forEach(btn => {
+        if (parseInt(btn.getAttribute("data-hours")) === hours) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    try {
+        const res = await fetch(`/api/telemetry/history?hours=${hours}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const points = data.points || [];
+
+        if (points.length === 0) return;
+
+        const values = points.map(p => p[cfg.field]);
+        const labels = points.map(p => p.time);
+
+        const curVal = values[values.length - 1];
+        const minVal = Math.min(...values);
+        const maxVal = Math.max(...values);
+        const avgVal = values.reduce((a, b) => a + b, 0) / values.length;
+
+        const elCur = document.getElementById("history-stat-current");
+        const elMin = document.getElementById("history-stat-min");
+        const elAvg = document.getElementById("history-stat-avg");
+        const elMax = document.getElementById("history-stat-max");
+
+        if (elCur) elCur.textContent = `${curVal.toFixed(cfg.decimals)} ${cfg.unit}`;
+        if (elMin) elMin.textContent = `${minVal.toFixed(cfg.decimals)} ${cfg.unit}`;
+        if (elAvg) elAvg.textContent = `${avgVal.toFixed(cfg.decimals)} ${cfg.unit}`;
+        if (elMax) elMax.textContent = `${maxVal.toFixed(cfg.decimals)} ${cfg.unit}`;
+
+        renderMetricHistoryChart(labels, values, cfg);
+    } catch (e) {
+        console.error("Fehler beim Laden der Metrik-Historie:", e);
+    }
+}
+
+function renderMetricHistoryChart(labels, values, cfg) {
+    const canvas = document.getElementById("metricHistoryCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    if (metricHistoryChartInstance) {
+        metricHistoryChartInstance.destroy();
+    }
+
+    metricHistoryChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: cfg.title,
+                data: values,
+                borderColor: cfg.color,
+                backgroundColor: cfg.bgGradient,
+                fill: true,
+                tension: 0.35,
+                borderWidth: 2.2,
+                pointRadius: values.length > 50 ? 0 : 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: cfg.color
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 250 },
+            scales: {
+                x: {
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: {
+                        color: "#8e8e93",
+                        font: { size: 10 },
+                        maxTicksLimit: 7
+                    }
+                },
+                y: {
+                    grid: { color: "rgba(255, 255, 255, 0.05)" },
+                    ticks: {
+                        color: "#8e8e93",
+                        font: { size: 10 },
+                        callback: (val) => `${val} ${cfg.unit}`
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: "rgba(28, 28, 30, 0.95)",
+                    borderColor: "rgba(255, 255, 255, 0.15)",
+                    borderWidth: 1,
+                    titleColor: "#ffffff",
+                    bodyColor: cfg.color,
+                    titleFont: { size: 11 },
+                    bodyFont: { size: 13, weight: "bold" },
+                    callbacks: {
+                        label: (ctx) => ` ${ctx.parsed.y.toFixed(cfg.decimals)} ${cfg.unit}`
+                    }
+                }
+            }
+        }
+    });
 }
 
 // --- Live Telemetry Chart ---
@@ -577,6 +737,21 @@ function createMinerCardHtml(miner) {
             <span class="gov-msg">Warte auf erste Telemetrie-Messung...</span>
         </div>
 
+        <!-- Best Difficulty Row directly on Miner Card -->
+        <div class="miner-diff-bar">
+            <div class="miner-diff-header">
+                <svg class="ios-mini-icon" viewBox="0 0 24 24" fill="#ffd60a">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                </svg>
+                <span class="diff-title">Best Difficulty</span>
+            </div>
+            <div class="miner-diff-tags">
+                <span class="diff-tag">All-Time: <strong class="card-val-best-diff">--</strong></span>
+                <span class="diff-bullet">•</span>
+                <span class="diff-tag">Boot: <strong class="card-val-session-diff">--</strong></span>
+            </div>
+        </div>
+
         <!-- 4 Clean Metric Tiles with Pure Inline SVGs -->
         <div class="metrics-quad">
             <div class="metric-quad-item">
@@ -676,14 +851,12 @@ function switchTab(tab) {
     });
 
     const secKpis = document.getElementById("section-kpis");
-    const secBestDiff = document.getElementById("section-best-diff");
     const secMiners = document.getElementById("section-miners");
     const secCharts = document.getElementById("section-charts");
     const secLogs = document.getElementById("section-logs");
 
     if (tab === "dashboard") {
         if (secKpis) secKpis.style.display = "grid";
-        if (secBestDiff) secBestDiff.style.display = "flex";
         if (secMiners) secMiners.style.display = "block";
         if (secCharts) secCharts.style.display = "none";
         if (secLogs) secLogs.style.display = "none";
