@@ -10,6 +10,30 @@ import threading
 import webbrowser
 import subprocess
 
+# Safe stream proxy for GUI/windowed modes where sys.stdout/stderr is None
+class SafeStream:
+    def __init__(self, target_file=None):
+        self.target_file = target_file
+
+    def write(self, s):
+        if self.target_file:
+            try:
+                self.target_file.write(s)
+                self.target_file.flush()
+            except Exception:
+                pass
+
+    def flush(self):
+        if self.target_file:
+            try:
+                self.target_file.flush()
+            except Exception:
+                pass
+
+    def isatty(self):
+        return False
+
+
 # Ensure project root is in sys.path and set working directory
 if getattr(sys, "frozen", False):
     APP_DIR = os.path.dirname(sys.executable)
@@ -19,6 +43,7 @@ if getattr(sys, "frozen", False):
     PROJECT_ROOT = APP_DIR
 else:
     PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    INTERNAL_DIR = PROJECT_ROOT
 
 try:
     os.chdir(PROJECT_ROOT)
@@ -28,46 +53,73 @@ except Exception:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-# Verify dependencies before proceeding
+# Setup log directory and stream redirection
+log_dir = os.path.join(PROJECT_ROOT, "logs")
 try:
-    import uvicorn
-    import fastapi
-except (ImportError, ModuleNotFoundError):
-    is_win = sys.platform.startswith("win")
-    venv_python = (
-        os.path.join(PROJECT_ROOT, ".venv", "Scripts", "python.exe")
-        if is_win
-        else os.path.join(PROJECT_ROOT, ".venv", "bin", "python")
-    )
-    if os.path.exists(venv_python) and os.path.abspath(sys.executable).lower() != os.path.abspath(venv_python).lower():
-        print(f"[*] Switching to virtual environment: {venv_python}")
-        os.execv(venv_python, [venv_python] + sys.argv)
+    os.makedirs(log_dir, exist_ok=True)
+    _gui_log_path = os.path.join(log_dir, "bitaxe_app.log")
+    _log_fp = open(_gui_log_path, "a", encoding="utf-8")
+except Exception:
+    _gui_log_path = None
+    _log_fp = None
 
-    req_file = os.path.join(PROJECT_ROOT, "requirements.txt")
-    if os.path.exists(req_file):
-        print("[*] Installing missing dependencies...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "--prefer-binary", "-r", req_file])
-        except Exception:
-            subprocess.check_call([
-                sys.executable, "-m", "pip", "install", "--prefer-binary",
-                "fastapi", "uvicorn", "websockets", "httpx", "pydantic", "zeroconf", "qrcode"
-            ])
-        import uvicorn
-    else:
-        print("\n[FEHLER] 'uvicorn' fehlt. Bitte führe 'pip install -r requirements.txt' aus.\n")
-        sys.exit(1)
-
-from app.config import load_config
-from app.server import set_active_port, APP_VERSION
+if sys.stdout is None or not hasattr(sys.stdout, "write"):
+    sys.stdout = SafeStream(_log_fp)
+if sys.stderr is None or not hasattr(sys.stderr, "write"):
+    sys.stderr = SafeStream(_log_fp)
 
 # Configure logging
+log_handlers = [logging.StreamHandler(sys.stdout)]
+if _gui_log_path:
+    try:
+        log_handlers.append(logging.FileHandler(_gui_log_path, encoding="utf-8"))
+    except Exception:
+        pass
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    datefmt="%H:%M:%S"
+    datefmt="%H:%M:%S",
+    handlers=log_handlers
 )
 logger = logging.getLogger("BitAxeTool")
+
+# Verify dependencies before proceeding (only in non-frozen script mode)
+if not getattr(sys, "frozen", False):
+    try:
+        import uvicorn
+        import fastapi
+    except (ImportError, ModuleNotFoundError):
+        is_win = sys.platform.startswith("win")
+        venv_python = (
+            os.path.join(PROJECT_ROOT, ".venv", "Scripts", "python.exe")
+            if is_win
+            else os.path.join(PROJECT_ROOT, ".venv", "bin", "python")
+        )
+        if os.path.exists(venv_python) and os.path.abspath(sys.executable).lower() != os.path.abspath(venv_python).lower():
+            logger.info(f"Switching to virtual environment: {venv_python}")
+            os.execv(venv_python, [venv_python] + sys.argv)
+
+        req_file = os.path.join(PROJECT_ROOT, "requirements.txt")
+        if os.path.exists(req_file):
+            logger.info("Installing missing dependencies...")
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "--prefer-binary", "-r", req_file])
+            except Exception:
+                subprocess.check_call([
+                    sys.executable, "-m", "pip", "install", "--prefer-binary",
+                    "fastapi", "uvicorn", "websockets", "httpx", "pydantic", "zeroconf", "qrcode"
+                ])
+            import uvicorn
+        else:
+            logger.error("'uvicorn' fehlt. Bitte führe 'pip install -r requirements.txt' aus.")
+            sys.exit(1)
+else:
+    import uvicorn
+    import fastapi
+
+from app.config import load_config
+from app.server import set_active_port, APP_VERSION
 
 
 def get_lan_ip() -> str:
@@ -119,14 +171,25 @@ def print_banner(lan_ip: str, port: int, headless: bool = False):
  [*] Betriebsmodus:       {"Headless / LAN Web Server" if headless else "Natives Windows Desktop-Fenster (WebView2)"}
 ========================================================================
 """
-    print(banner)
+    logger.info(banner)
 
 
-def run_web_server(host: str, port: int):
+def run_web_server(host: str, port: int, server_holder: dict):
     """Run Uvicorn ASGI server hosting FastAPI."""
     try:
         from app.server import app
-        uvicorn.run(app, host=host, port=port, log_level="warning")
+        config = uvicorn.Config(
+            app,
+            host=host,
+            port=port,
+            log_config=None,  # Do not invoke uvicorn's color-checking default log_config
+            access_log=False,
+            timeout_keep_alive=30
+        )
+        server = uvicorn.Server(config)
+        server_holder["server"] = server
+        logger.info(f"Starte Uvicorn Webserver auf {host}:{port}...")
+        server.run()
     except Exception as e:
         logger.error(f"Fehler beim Starten des Uvicorn-Webservers: {e}", exc_info=True)
 
@@ -153,11 +216,24 @@ def main():
     print_banner(lan_ip, port, headless=headless)
 
     # Start FastAPI server in background thread
-    server_thread = threading.Thread(target=run_web_server, args=(host, port), daemon=True)
+    server_holder = {}
+    server_thread = threading.Thread(target=run_web_server, args=(host, port, server_holder), daemon=True)
     server_thread.start()
 
-    # Wait briefly for server startup
-    time.sleep(1.0)
+    # Synchronize: wait until the server responds on localhost:port
+    server_ready = False
+    for _ in range(40):  # up to 8 seconds
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.2):
+                server_ready = True
+                break
+        except OSError:
+            time.sleep(0.2)
+
+    if not server_ready:
+        logger.error(f"Webserver konnte auf Port {port} nicht rechtzeitig gebunden werden!")
+    else:
+        logger.info(f"Webserver erfolgreich gebunden auf Port {port}.")
 
     app_url = f"http://127.0.0.1:{port}"
 
@@ -166,8 +242,10 @@ def main():
         try:
             while True:
                 time.sleep(1)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             logger.info("Beende Server...")
+            if "server" in server_holder and server_holder["server"]:
+                server_holder["server"].should_exit = True
             sys.exit(0)
 
     # Try PyWebView for a native Windows 10/11 desktop window
@@ -175,9 +253,11 @@ def main():
         try:
             import webview
 
-            icon_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "assets", "bitaxe_icon.ico"))
+            icon_path = os.path.abspath(os.path.join(PROJECT_ROOT, "assets", "bitaxe_icon.ico"))
             if not os.path.exists(icon_path):
-                icon_path = None
+                icon_path = os.path.abspath(os.path.join(INTERNAL_DIR, "assets", "bitaxe_icon.ico"))
+                if not os.path.exists(icon_path):
+                    icon_path = None
 
             logger.info("Erstelle natives Windows-Anwendungsfenster...")
             window = webview.create_window(
@@ -190,6 +270,8 @@ def main():
                 text_select=True
             )
             webview.start(icon=icon_path)
+            if "server" in server_holder and server_holder["server"]:
+                server_holder["server"].should_exit = True
             sys.exit(0)
         except Exception as e:
             logger.warning(f"Natives Desktop-Fenster nicht gestartet ({e}). Öffne Web-Browser...")
@@ -201,8 +283,10 @@ def main():
     try:
         while True:
             time.sleep(1)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         logger.info("Beende BitAxeTool...")
+        if "server" in server_holder and server_holder["server"]:
+            server_holder["server"].should_exit = True
         sys.exit(0)
 
 

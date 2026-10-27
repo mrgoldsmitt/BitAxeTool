@@ -36,6 +36,7 @@ def build():
         "--collect-all=zeroconf",
         "--collect-all=uvicorn",
         "--collect-all=fastapi",
+        "--collect-all=webview",
         "--hidden-import=uvicorn.logging",
         "--hidden-import=uvicorn.loops",
         "--hidden-import=uvicorn.loops.auto",
