@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMiners();
     loadNetworkInfo();
     setupEventListeners();
+    loadNotificationSettings();
+    registerServiceWorker();
 });
 
 // --- WebSocket Connection & Real-Time Streaming ---
@@ -141,6 +143,9 @@ function renderTelemetry(telemetryList) {
     telemetryList.forEach(t => {
         updateMinerCard(t);
     });
+
+    // 4. Smart Notification Triggers
+    checkNotificationTriggers(telemetryList);
 }
 
 function updateMinerCard(telemetry) {
@@ -900,5 +905,337 @@ function setupEventListeners() {
     if (logWin) {
         logWin.addEventListener("mouseenter", () => { isMouseOverLogs = true; });
         logWin.addEventListener("mouseleave", () => { isMouseOverLogs = false; });
+    }
+}
+
+// --- Progressive Web App & Smartphone Notification Engine ---
+
+const NOTIF_STORAGE_KEY = "bitaxe_notif_settings";
+let notifSettings = {
+    overheat: true,
+    vr: true,
+    offline: true,
+    reboot: true,
+    tuning: true,
+    sound: true
+};
+
+let previousMinerStates = {};
+let lastAlertTimestamps = {};
+let audioCtx = null;
+
+function loadNotificationSettings() {
+    try {
+        const saved = localStorage.getItem(NOTIF_STORAGE_KEY);
+        if (saved) {
+            notifSettings = { ...notifSettings, ...JSON.parse(saved) };
+        }
+    } catch (e) {}
+
+    const chkOverheat = document.getElementById("notif-opt-overheat");
+    const chkVr = document.getElementById("notif-opt-vr");
+    const chkOffline = document.getElementById("notif-opt-offline");
+    const chkReboot = document.getElementById("notif-opt-reboot");
+    const chkTuning = document.getElementById("notif-opt-tuning");
+    const chkSound = document.getElementById("notif-opt-sound");
+
+    if (chkOverheat) chkOverheat.checked = notifSettings.overheat;
+    if (chkVr) chkVr.checked = notifSettings.vr;
+    if (chkOffline) chkOffline.checked = notifSettings.offline;
+    if (chkReboot) chkReboot.checked = notifSettings.reboot;
+    if (chkTuning) chkTuning.checked = notifSettings.tuning;
+    if (chkSound) chkSound.checked = notifSettings.sound;
+
+    updateNotificationPermissionStatus();
+}
+
+function saveNotificationSettings() {
+    const chkOverheat = document.getElementById("notif-opt-overheat");
+    const chkVr = document.getElementById("notif-opt-vr");
+    const chkOffline = document.getElementById("notif-opt-offline");
+    const chkReboot = document.getElementById("notif-opt-reboot");
+    const chkTuning = document.getElementById("notif-opt-tuning");
+    const chkSound = document.getElementById("notif-opt-sound");
+
+    if (chkOverheat) notifSettings.overheat = chkOverheat.checked;
+    if (chkVr) notifSettings.vr = chkVr.checked;
+    if (chkOffline) notifSettings.offline = chkOffline.checked;
+    if (chkReboot) notifSettings.reboot = chkReboot.checked;
+    if (chkTuning) notifSettings.tuning = chkTuning.checked;
+    if (chkSound) notifSettings.sound = chkSound.checked;
+
+    localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifSettings));
+}
+
+function updateNotificationPermissionStatus() {
+    const textEl = document.getElementById("notif-perm-text");
+    const btn = document.getElementById("btn-request-notif");
+    const badgeDot = document.getElementById("notif-badge-dot");
+
+    if (!("Notification" in window)) {
+        if (textEl) {
+            textEl.textContent = "Nicht vom Browser unterstützt";
+            textEl.style.color = "var(--text-muted)";
+        }
+        if (btn) btn.style.display = "none";
+        return;
+    }
+
+    const perm = Notification.permission;
+    if (perm === "granted") {
+        if (textEl) {
+            textEl.textContent = "Aktiviert ✓";
+            textEl.style.color = "var(--accent-green)";
+        }
+        if (btn) {
+            btn.textContent = "✓ Benachrichtigungen aktiv";
+            btn.disabled = true;
+            btn.className = "btn btn-secondary btn-sm";
+        }
+        if (badgeDot) badgeDot.style.display = "none";
+    } else if (perm === "denied") {
+        if (textEl) {
+            textEl.textContent = "Im Browser blockiert ✗";
+            textEl.style.color = "var(--accent-red)";
+        }
+        if (btn) {
+            btn.textContent = "In Browsereinstellungen gesperrt";
+            btn.disabled = true;
+            btn.className = "btn btn-secondary btn-sm";
+        }
+        if (badgeDot) badgeDot.style.display = "block";
+    } else {
+        if (textEl) {
+            textEl.textContent = "Noch nicht erlaubt";
+            textEl.style.color = "var(--accent-gold)";
+        }
+        if (btn) {
+            btn.textContent = "🔔 Benachrichtigungen im Browser erlauben";
+            btn.disabled = false;
+            btn.className = "btn btn-primary btn-sm";
+        }
+        if (badgeDot) badgeDot.style.display = "block";
+    }
+}
+
+async function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        alert("Dieser Browser unterstützt leider keine Web-Benachrichtigungen.");
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        updateNotificationPermissionStatus();
+        if (permission === "granted") {
+            playAlertSound("info");
+            sendNotification(
+                "🔔 BitAxe Benachrichtigungen aktiv!",
+                "Du erhältst ab sofort sofortige Alarme bei Überhitzung, Ausfällen oder Taktänderungen deiner Miner.",
+                "welcome",
+                false
+            );
+        }
+    } catch (e) {
+        console.warn("Fehler bei Notification.requestPermission:", e);
+    }
+}
+
+function openNotificationModal() {
+    loadNotificationSettings();
+    openModal("modal-notifications");
+}
+
+function playAlertSound(type = "info") {
+    if (!notifSettings.sound) return;
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === "danger") {
+            // Urgent double-beep: 880Hz -> 660Hz -> 880Hz
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.setValueAtTime(660, now + 0.12);
+            osc.frequency.setValueAtTime(880, now + 0.24);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+            osc.start(now);
+            osc.stop(now + 0.45);
+            if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
+        } else {
+            // Gentle high-tech chime: 587Hz (D5) -> 880Hz (A5)
+            osc.frequency.setValueAtTime(587.33, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+            if (navigator.vibrate) navigator.vibrate(120);
+        }
+    } catch (e) {}
+}
+
+function sendNotification(title, body, tag, isCritical = false) {
+    playAlertSound(isCritical ? "danger" : "info");
+
+    // 1. Send via Service Worker (for native mobile OS drawers / lockscreens)
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: "SHOW_NOTIFICATION",
+            title: title,
+            options: {
+                body: body,
+                tag: tag,
+                icon: "/static/icons/icon-192.png",
+                badge: "/static/icons/favicon-32.png",
+                requireInteraction: isCritical
+            }
+        });
+    } else if ("Notification" in window && Notification.permission === "granted") {
+        try {
+            new Notification(title, {
+                body: body,
+                tag: tag,
+                icon: "/static/icons/icon-192.png",
+                requireInteraction: isCritical
+            });
+        } catch (e) {}
+    }
+}
+
+function sendTestNotification() {
+    saveNotificationSettings();
+    if ("Notification" in window && Notification.permission !== "granted") {
+        requestNotificationPermission();
+        return;
+    }
+    sendNotification(
+        "⚡ BitAxe Test-Alarm",
+        "Test erfolgreich! Benachrichtigungen und Vibrationen funktionieren einwandfrei auf deinem Gerät.",
+        "test-" + Date.now(),
+        false
+    );
+}
+
+function checkNotificationTriggers(telemetryList) {
+    if (!telemetryList || !Array.isArray(telemetryList)) return;
+    const now = Date.now();
+
+    telemetryList.forEach(t => {
+        const ip = t.ip;
+        const prev = previousMinerStates[ip];
+        const minerCfg = knownMiners.find(m => m.ip === ip);
+        const name = (minerCfg && minerCfg.nickname) ? minerCfg.nickname : ip;
+
+        if (prev) {
+            // 1. Überhitzung / Notdrosselung
+            if (notifSettings.overheat) {
+                const isThrottling = t.governor_status === "EMERGENCY_THROTTLE";
+                const isOverMax = t.temp && minerCfg && minerCfg.max_temp && (t.temp >= minerCfg.max_temp);
+                if (isThrottling || isOverMax) {
+                    const alertKey = `overheat-${ip}`;
+                    if (!lastAlertTimestamps[alertKey] || (now - lastAlertTimestamps[alertKey] > 120000)) {
+                        lastAlertTimestamps[alertKey] = now;
+                        sendNotification(
+                            `🔥 ALARM: ${name} überhitzt!`,
+                            `Chip-Temperatur liegt bei ${t.temp ? t.temp.toFixed(1) : '--'}°C. Notdrosselung aktiv!`,
+                            alertKey,
+                            true
+                        );
+                    }
+                }
+            }
+
+            // 2. VR-Temperatur (Spannungswandler)
+            if (notifSettings.vr && t.vr_temp && minerCfg && minerCfg.max_vr_temp) {
+                if (t.vr_temp >= (minerCfg.max_vr_temp - 2.0)) {
+                    const alertKey = `vr-${ip}`;
+                    if (!lastAlertTimestamps[alertKey] || (now - lastAlertTimestamps[alertKey] > 120000)) {
+                        lastAlertTimestamps[alertKey] = now;
+                        sendNotification(
+                            `⚡ VR-WARNUNG: ${name}`,
+                            `Spannungswandler erreicht kritische ${t.vr_temp.toFixed(1)}°C (Limit: ${minerCfg.max_vr_temp}°C)!`,
+                            alertKey,
+                            true
+                        );
+                    }
+                }
+            }
+
+            // 3. Miner Offline / Ausfall
+            if (notifSettings.offline) {
+                if (prev.connected === true && t.connected === false) {
+                    sendNotification(
+                        `🔴 AUSFALL: ${name} ist OFFLINE!`,
+                        `Der Miner unter ${ip} antwortet nicht mehr im Netzwerk.`,
+                        `offline-${ip}`,
+                        true
+                    );
+                } else if (prev.connected === false && t.connected === true) {
+                    sendNotification(
+                        `🟢 ONLINE: ${name} ist wieder da!`,
+                        `Verbindung zu ${ip} wiederhergestellt. Hashrate: ${Math.round(t.hash_rate || 0)} GH/s.`,
+                        `online-${ip}`,
+                        false
+                    );
+                }
+            }
+
+            // 4. Flatline Watchdog Reboot
+            if (notifSettings.reboot) {
+                if (t.governor_status === "RESTARTING" && prev.governor_status !== "RESTARTING") {
+                    sendNotification(
+                        `🔄 WATCHDOG: ${name} startet neu`,
+                        `0 GH/s Hashrate-Freeze erkannt. Automatischer Neustart wird durchgeführt.`,
+                        `reboot-${ip}`,
+                        true
+                    );
+                }
+            }
+
+            // 5. Auto-Tuning Taktsteigerung
+            if (notifSettings.tuning) {
+                if (t.frequency && prev.frequency && t.frequency > prev.frequency) {
+                    sendNotification(
+                        `🚀 TUNING: ${name} gesteigert`,
+                        `Takt erfolgreich auf ${t.frequency} MHz @ ${t.voltage || '--'} mV erhöht.`,
+                        `tuning-${ip}`,
+                        false
+                    );
+                }
+            }
+        }
+
+        // Save state snapshot for next cycle
+        previousMinerStates[ip] = {
+            connected: t.connected,
+            temp: t.temp,
+            vr_temp: t.vr_temp,
+            frequency: t.frequency,
+            governor_status: t.governor_status
+        };
+    });
+}
+
+function registerServiceWorker() {
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("/sw.js")
+                .then(reg => {
+                    console.log("[PWA] Service Worker aktiv, Scope:", reg.scope);
+                })
+                .catch(err => {
+                    console.warn("[PWA] Service Worker Fehler:", err);
+                });
+        });
     }
 }

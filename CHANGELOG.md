@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 ## [2.1.0] - 2026-10-27
 
 ### 🚀 Highlights & Neuerungen
+- **Progressive Web App (PWA) & Smartphone-App:**
+  - Vollständige PWA-Unterstützung mit `manifest.json` und Service Worker (`sw.js`).
+  - Hochauflösendes App-Iconset (192x192, 512x512, maskable für Android und `apple-touch-icon` für iOS Safari).
+  - Direkt auf iPhone, iPad und Android-Smartphones als eigenständige Vollbild-App ohne Browserleiste installierbar.
+  - Offline-Shell-Caching für blitzschnellen Start auf mobilen Geräten.
+
+- **Echtzeit-Smartphone-Alarme & Benachrichtigungen:**
+  - Sofortige Push- und Systembenachrichtigungen direkt auf Smartphone und Desktop.
+  - **Überhitzungsschutz:** Sofortige Alarmierung bei Chip-Überhitzung oder Notdrosselung (`EMERGENCY_THROTTLE`).
+  - **Spannungswandler-Wächter:** Warnung bei kritischer Erwärmung der VRM-Spulen.
+  - **Ausfall-Erkennung:** Alarm bei Verbindungsabbruch eines Miners im LAN sowie Entwarnung bei Wiederverbindung.
+  - **Watchdog-Reboot:** Meldung bei automatischem Neustart nach 0 GH/s Freeze.
+  - **Tuning-Fortschritt:** Benachrichtigung bei erfolgreicher Erhöhung der Taktfrequenz.
+  - **Akustischer Alarm & Vibration:** Zweistufiger Web-Audio-Alarmton und Smartphone-Haptik bei Notfällen.
+  - **Test-Alarmfunktion:** Sofortiges Testen von Ton, Vibration und Benachrichtigungen im Einrichtungsmenü.
+
 - **Nativer Windows-Betrieb ohne Terminal:**
   - Vollständige Kompilierung als eigenständige Windows-Anwendung (`BitAxeTool.exe`) mittels PyInstaller mit `--windowed` Flag (kein störendes schwarzes Konsolenfenster).
   - Modernes, rahmenloses WebView2-Desktop-Fenster mit nativem Windows-Icon.

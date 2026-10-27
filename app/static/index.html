@@ -6,8 +6,13 @@
     <meta name="theme-color" content="#0B0F17">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BitAxe">
     <title>BitAxeTool v2.1.0 - Multi-AutoTuner & Safety Governor</title>
     
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="/static/js/chart.min.js"></script>
@@ -43,6 +48,13 @@
             <button onclick="openChangelogModal()" class="btn btn-secondary" title="Changelog anzeigen">
                 <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Changelog
+            </button>
+            <button id="btn-notifications" onclick="openNotificationModal()" class="btn btn-secondary" title="Benachrichtigungen & PWA einrichten">
+                <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                </svg>
+                <span class="btn-text-hide-mobile">Alarm</span>
+                <span class="notification-badge-dot" id="notif-badge-dot" style="display: none;"></span>
             </button>
             <button onclick="openQrModal()" class="btn btn-primary" title="Mobil auf iPhone oder iPad öffnen">
                 <svg width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
@@ -412,6 +424,74 @@
                     Scanne diesen QR-Code mit der Kamera deines <strong>Smartphones oder Tablets</strong> im selben WLAN:
                 </p>
                 <div id="qr-lan-url" class="qr-url-pill">http://...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Benachrichtigungen & PWA App Installation -->
+    <div class="modal-overlay" id="modal-notifications">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    Smartphone-Alarme &amp; PWA
+                </div>
+                <button class="modal-close" onclick="closeModal('modal-notifications')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="notif-permission-card" id="notif-permission-box">
+                    <div class="notif-perm-status">
+                        <span>Browser-Berechtigung:</span> <strong id="notif-perm-text">Wird ermittelt...</strong>
+                    </div>
+                    <button type="button" id="btn-request-notif" class="btn btn-primary btn-sm" onclick="requestNotificationPermission()">
+                        🔔 Benachrichtigungen im Browser erlauben
+                    </button>
+                </div>
+
+                <div class="notif-section-title">Ereignisse für Benachrichtigungen:</div>
+                <div class="notif-checkbox-group">
+                    <label class="notif-label">
+                        <input type="checkbox" id="notif-opt-overheat" checked>
+                        <span><strong>🔥 Überhitzung &amp; Notdrosselung</strong> (Chip &gt; Max-Temp oder Notfall)</span>
+                    </label>
+                    <label class="notif-label">
+                        <input type="checkbox" id="notif-opt-vr" checked>
+                        <span><strong>⚡ VR-Spannungswandler Warnung</strong> (Spulentemperatur kritisch)</span>
+                    </label>
+                    <label class="notif-label">
+                        <input type="checkbox" id="notif-opt-offline" checked>
+                        <span><strong>🔴 Miner-Ausfall / Offline</strong> (Verbindungsabbruch im LAN)</span>
+                    </label>
+                    <label class="notif-label">
+                        <input type="checkbox" id="notif-opt-reboot" checked>
+                        <span><strong>🔄 Watchdog Reboot</strong> (Automatischer Neustart bei 0 GH/s Freeze)</span>
+                    </label>
+                    <label class="notif-label">
+                        <input type="checkbox" id="notif-opt-tuning" checked>
+                        <span><strong>🚀 Auto-Tuning Fortschritt</strong> (Erfolgreiche Taktsteigerung)</span>
+                    </label>
+                    <label class="notif-label">
+                        <input type="checkbox" id="notif-opt-sound" checked>
+                        <span><strong>🔊 Akustischer Alarmton &amp; Smartphone-Vibration</strong></span>
+                    </label>
+                </div>
+
+                <div class="notif-pwa-guide">
+                    <div class="pwa-guide-title">📱 Als native App auf dem Smartphone installieren:</div>
+                    <div class="pwa-guide-steps">
+                        <div><strong>iOS (iPhone / iPad):</strong> In Safari auf das <em>Teilen-Symbol</em> (unten) tippen &rarr; <em>"Zum Home-Bildschirm"</em> auswählen.</div>
+                        <div><strong>Android:</strong> Im Menü (drei Punkte) auf <em>"App installieren"</em> bzw. <em>"Zum Startbildschirm"</em> tippen.</div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="padding: 16px 0 0 0; display: flex; justify-content: space-between; gap: 8px;">
+                    <button type="button" class="btn btn-secondary" onclick="sendTestNotification()">
+                        🧪 Test-Alarm senden
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="closeModal('modal-notifications')">
+                        Fertig
+                    </button>
+                </div>
             </div>
         </div>
     </div>

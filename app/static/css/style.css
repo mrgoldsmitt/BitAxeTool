@@ -1121,3 +1121,110 @@ input:focus, select:focus {
     max-height: 85dvh;
   }
 }
+
+/* Notification Badge Dot */
+.notification-badge-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-gold);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-gold);
+}
+
+#btn-notifications {
+  position: relative;
+}
+
+@media (max-width: 520px) {
+  .btn-text-hide-mobile {
+    display: none;
+  }
+}
+
+/* Notification & PWA Modal Styles */
+.notif-permission-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.notif-perm-status {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notif-perm-status strong {
+  color: var(--accent-gold);
+}
+
+.notif-section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.notif-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 16px;
+}
+
+.notif-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  cursor: pointer;
+  user-select: none;
+}
+
+.notif-label input[type="checkbox"] {
+  margin-top: 3px;
+  accent-color: var(--accent-gold);
+  width: 15px;
+  height: 15px;
+}
+
+.notif-pwa-guide {
+  background: rgba(247, 147, 26, 0.05);
+  border: 1px dashed rgba(247, 147, 26, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.pwa-guide-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
+}
+
+.pwa-guide-steps {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.4;
+}

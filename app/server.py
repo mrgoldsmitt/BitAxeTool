@@ -432,6 +432,26 @@ async def serve_favicon():
     return HTMLResponse("", status_code=204)
 
 
+@app.get("/manifest.json")
+async def serve_manifest():
+    manifest_file = os.path.join(static_dir, "manifest.json")
+    if os.path.exists(manifest_file):
+        return FileResponse(manifest_file, media_type="application/manifest+json")
+    return HTMLResponse("{}", status_code=404)
+
+
+@app.get("/sw.js")
+async def serve_service_worker():
+    sw_file = os.path.join(static_dir, "sw.js")
+    if os.path.exists(sw_file):
+        return FileResponse(
+            sw_file,
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/"}
+        )
+    return HTMLResponse("", status_code=404)
+
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
     index_file = os.path.join(static_dir, "index.html")
