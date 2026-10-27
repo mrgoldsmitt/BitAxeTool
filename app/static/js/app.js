@@ -74,12 +74,14 @@ function updateConnectionStatus(connected) {
     const badge = document.getElementById("connection-badge");
     if (!badge) return;
     if (connected) {
-        badge.textContent = "LIVE VERBUNDEN";
+        badge.textContent = "LIVE";
+        badge.title = "Echtzeit-Verbindung aktiv";
         badge.style.color = "var(--accent-green)";
         badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
         badge.style.backgroundColor = "rgba(16, 185, 129, 0.12)";
     } else {
-        badge.textContent = "GETRENNT";
+        badge.textContent = "OFFLINE";
+        badge.title = "Verbindung getrennt - verbinde neu...";
         badge.style.color = "var(--accent-red)";
         badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
         badge.style.backgroundColor = "rgba(239, 68, 68, 0.12)";
@@ -459,12 +461,12 @@ function createMinerCardHtml(miner) {
         <div class="miner-header">
             <div class="miner-identity">
                 <span class="status-dot"></span>
-                <div>
+                <div class="miner-titles">
                     <div class="miner-name">${escapeHtml(miner.nickname || miner.ip)}</div>
                     <div class="miner-ip">${miner.ip}</div>
                 </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="miner-header-right">
                 <span class="miner-badge-model">${escapeHtml(miner.model || miner.asic_model)}</span>
                 <label class="switch-label" style="margin: 0;" title="Autotuning aktivieren / pausieren">
                     <input type="checkbox" ${miner.enabled ? 'checked' : ''} onchange="toggleMinerAutotune('${miner.ip}', this.checked)" class="switch-input">
@@ -513,24 +515,20 @@ function createMinerCardHtml(miner) {
             </div>
         </div>
 
-        <!-- Sleek Action Toolbar -->
+        <!-- Sleek Responsive 2x2/4x1 Action Toolbar -->
         <div class="card-actions">
-            <div style="display: flex; gap: 6px;">
-                <button onclick="openEditModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Regelungsparameter & Schwellen anpassen">
-                    ⚙️ Einstellungen
-                </button>
-                <button onclick="openManualTuneModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Manuellen Frequenz- und Spannungstest ausführen">
-                    ⚡ Schnelltest
-                </button>
-            </div>
-            <div style="display: flex; gap: 6px;">
-                <button onclick="restartMiner('${miner.ip}')" class="btn btn-secondary btn-sm text-rose-400" title="Miner neu starten">
-                    🔄 Reboot
-                </button>
-                <button onclick="openMinerWebUI('${miner.ip}')" class="btn btn-secondary btn-sm" title="AxeOS Weboberfläche im Browser öffnen">
-                    🌐 Web-UI
-                </button>
-            </div>
+            <button onclick="openEditModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Regelungsparameter & Schwellen anpassen">
+                ⚙️ Einstellungen
+            </button>
+            <button onclick="openManualTuneModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Manuellen Frequenz- und Spannungstest ausführen">
+                ⚡ Schnelltest
+            </button>
+            <button onclick="restartMiner('${miner.ip}')" class="btn btn-secondary btn-sm text-rose-400" title="Miner neu starten">
+                🔄 Reboot
+            </button>
+            <button onclick="openMinerWebUI('${miner.ip}')" class="btn btn-secondary btn-sm" title="AxeOS Weboberfläche im Browser öffnen">
+                🌐 Web-UI
+            </button>
         </div>
     </div>
     `;
