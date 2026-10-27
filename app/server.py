@@ -158,7 +158,7 @@ async def get_version_info():
     return {
         "version": APP_VERSION,
         "appName": "BitAxeTool",
-        "author": "Besmaen",
+        "author": "mrgoldsmitt",
         "description": "Multi-AutoTuner & Safety Governor for Bitaxe Solo Miners"
     }
 
