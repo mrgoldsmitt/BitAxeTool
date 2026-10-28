@@ -921,6 +921,8 @@ function switchMinerEditTab(tabName) {
         if (btn) btn.classList.toggle("active", t === tabName);
         if (pane) pane.style.display = (t === tabName) ? "block" : "none";
     });
+    const scrollBody = document.getElementById("edit-miner-scroll-body");
+    if (scrollBody) scrollBody.scrollTop = 0;
 }
 
 function toggleFanManualInputs(isAuto) {
@@ -1077,19 +1079,19 @@ async function saveMinerSettings(e) {
     }
 
     const payload = {
-        // Governor & Thermal
-        target_temp: parseFloat(document.getElementById("edit-target-temp").value),
-        temp_tolerance: parseFloat(document.getElementById("edit-temp-tolerance").value),
-        max_temp: parseFloat(document.getElementById("edit-max-temp").value),
-        max_vr_temp: parseFloat(document.getElementById("edit-max-vr-temp").value),
-        max_watts: parseFloat(document.getElementById("edit-max-watts").value),
-        min_freq: parseInt(document.getElementById("edit-min-freq").value),
-        max_freq: parseInt(document.getElementById("edit-max-freq").value),
-        freq_step: parseInt(document.getElementById("edit-freq-step").value),
-        min_voltage: parseInt(document.getElementById("edit-min-volt").value),
-        max_voltage: parseInt(document.getElementById("edit-max-volt").value),
-        voltage_step: parseInt(document.getElementById("edit-volt-step").value),
-        tuning_cooldown: parseInt(document.getElementById("edit-cooldown").value),
+        // Governor & Thermal (with fallback defaults if blank)
+        target_temp: parseFloat(document.getElementById("edit-target-temp").value) || 62.0,
+        temp_tolerance: parseFloat(document.getElementById("edit-temp-tolerance").value) || 2.0,
+        max_temp: parseFloat(document.getElementById("edit-max-temp").value) || 72.0,
+        max_vr_temp: parseFloat(document.getElementById("edit-max-vr-temp").value) || 88.0,
+        max_watts: parseFloat(document.getElementById("edit-max-watts").value) || 26.0,
+        min_freq: parseInt(document.getElementById("edit-min-freq").value) || 450,
+        max_freq: parseInt(document.getElementById("edit-max-freq").value) || 750,
+        freq_step: parseInt(document.getElementById("edit-freq-step").value) || 25,
+        min_voltage: parseInt(document.getElementById("edit-min-volt").value) || 1050,
+        max_voltage: parseInt(document.getElementById("edit-max-volt").value) || 1250,
+        voltage_step: parseInt(document.getElementById("edit-volt-step").value) || 10,
+        tuning_cooldown: parseInt(document.getElementById("edit-cooldown").value) || 30,
         flatline_watchdog: document.getElementById("edit-flatline-toggle").checked,
         enabled: document.getElementById("edit-enabled-toggle").checked,
 
@@ -1161,6 +1163,15 @@ async function deleteActiveMiner() {
 
 // Preset Handlers
 function applyPreset(name) {
+    const presetButtons = {
+        eco: document.getElementById("preset-btn-eco"),
+        balanced: document.getElementById("preset-btn-balanced"),
+        oc: document.getElementById("preset-btn-oc")
+    };
+    Object.keys(presetButtons).forEach(k => {
+        if (presetButtons[k]) presetButtons[k].classList.toggle("active", k === name);
+    });
+
     if (name === "eco") {
         document.getElementById("edit-target-temp").value = 56.0;
         document.getElementById("edit-temp-tolerance").value = 2.0;
@@ -1183,6 +1194,15 @@ function applyPreset(name) {
         document.getElementById("edit-max-freq").value = 775;
         document.getElementById("edit-max-watts").value = 28.0;
     }
+
+    // Visual feedback highlight
+    ["edit-target-temp", "edit-max-temp", "edit-min-freq", "edit-max-freq", "edit-max-watts"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.borderColor = "var(--accent-cyan)";
+            setTimeout(() => { if (el) el.style.borderColor = ""; }, 800);
+        }
+    });
 }
 
 // --- Manual Tuning ---
@@ -1423,6 +1443,28 @@ function setupEventListeners() {
 
     const formManual = document.getElementById("form-manual-tune");
     if (formManual) formManual.addEventListener("submit", submitManualTune);
+
+    // Direct event bindings for Miner Settings Tabs
+    ["tuning", "pools", "hardware"].forEach(t => {
+        const btn = document.getElementById(`tabbtn-miner-${t}`);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                switchMinerEditTab(t);
+            });
+        }
+    });
+
+    // Direct event bindings for Miner Quick Presets
+    ["eco", "balanced", "oc"].forEach(p => {
+        const btn = document.getElementById(`preset-btn-${p}`);
+        if (btn) {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                applyPreset(p);
+            });
+        }
+    });
 
     const logWin = document.getElementById("log-window");
     if (logWin) {

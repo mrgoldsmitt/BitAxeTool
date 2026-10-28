@@ -23,7 +23,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.3.0"
+APP_VERSION = "2.3.1"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -240,6 +240,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_cache_control_headers(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/static/css/") or path.startswith("/static/js/") or path.endswith("sw.js") or path.endswith("manifest.json"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 
 async def broadcast_telemetry_loop():
@@ -722,5 +733,12 @@ async def serve_index():
     index_file = os.path.join(static_dir, "index.html")
     if os.path.exists(index_file):
         with open(index_file, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
+            return HTMLResponse(
+                content=f.read(),
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
     return HTMLResponse("<h1>BitAxeTool API Running</h1><p>Static UI not yet loaded.</p>")

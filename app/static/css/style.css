@@ -1031,23 +1031,21 @@ body {
    ========================================================== */
 body.modal-open {
   overflow: hidden !important;
-  touch-action: none;
+  /* Note: NEVER put touch-action: none here, as WebKit on iOS blocks scrolling back up */
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.75);
+  background-color: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: 100000;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 10px 8px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  padding: 12px 10px;
+  overflow: hidden; /* Overlay does not scroll, eliminating nested momentum scroll collisions */
 }
 
 .modal-overlay.active {
@@ -1060,13 +1058,183 @@ body.modal-open {
   border-radius: var(--radius-xl);
   padding: 18px 14px calc(24px + env(safe-area-inset-bottom, 16px)) 14px;
   width: 100%;
-  max-width: 540px;
+  max-width: 500px;
   max-height: calc(88dvh - env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
   box-sizing: border-box;
+}
+
+/* Dedicated Modal Sheet Layout for Complex Forms (Fixed Header + Fixed Tabs + Scroll Body + Fixed Footer) */
+.modal-box.modal-sheet-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: calc(86dvh - env(safe-area-inset-bottom, 0px)) !important;
+  height: calc(86dvh - env(safe-area-inset-bottom, 0px)) !important;
+  max-width: 470px !important;
+  width: calc(100% - 16px) !important;
+  margin: 0 auto;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.9);
+}
+
+.modal-sheet-layout .modal-header {
+  padding: 12px 14px 8px 14px;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* Dedicated Miner Settings Tabs (Pinned at top of Modal) */
+.miner-tab-nav {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 5px 8px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.miner-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.68rem; /* Smaller font size */
+  font-weight: 600;
+  padding: 6px 3px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+
+.miner-tab-btn .tab-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.miner-tab-btn:hover {
+  color: #ffffff;
+}
+
+.miner-tab-btn.active {
+  background: rgba(41, 151, 255, 0.18);
+  border-color: rgba(41, 151, 255, 0.4);
+  color: #ffffff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Form Container Inside Sheet */
+.modal-scroll-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-scroll-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  padding: 12px 14px 18px 14px;
+  box-sizing: border-box;
+}
+
+/* Quick Preset Buttons Grid */
+.preset-section {
+  margin-bottom: 10px;
+}
+
+.preset-section-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-preset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.68rem; /* Smaller font size */
+  font-weight: 600;
+  padding: 6px 3px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn-preset:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.btn-preset.active {
+  background: rgba(41, 151, 255, 0.25);
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(41, 151, 255, 0.35);
+}
+
+.btn-preset .preset-icon {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+/* Sticky Modal Footer Actions (Always Accessible) */
+.modal-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 8px)) 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(22, 22, 24, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  gap: 8px;
 }
 
 .modal-header {
@@ -1183,21 +1351,48 @@ body.modal-open {
 
 @media (max-width: 480px) {
   .modal-overlay {
-    padding: 8px 6px;
+    padding: 6px 4px;
   }
   .modal-box.ios-glass-modal {
     padding: 14px 10px calc(24px + env(safe-area-inset-bottom, 16px)) 10px;
     border-radius: var(--radius-lg);
   }
+  .modal-box.modal-sheet-layout {
+    width: calc(100% - 8px) !important;
+    max-width: 100% !important;
+    max-height: calc(88dvh - env(safe-area-inset-bottom, 0px)) !important;
+    height: calc(88dvh - env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: var(--radius-lg);
+  }
+  .miner-tab-nav {
+    padding: 4px 6px;
+    gap: 3px;
+  }
+  .miner-tab-btn {
+    font-size: 0.62rem;
+    padding: 5px 2px;
+    gap: 2px;
+  }
+  .btn-preset {
+    font-size: 0.62rem;
+    padding: 5px 2px;
+    gap: 2px;
+  }
+  .modal-scroll-body {
+    padding: 10px 10px 14px 10px;
+  }
   .form-row {
     gap: 6px;
   }
+  .form-group label {
+    font-size: 0.70rem;
+  }
   .form-group input, .form-group select {
-    padding: 7px 8px;
-    font-size: 0.84rem;
+    padding: 6px 7px;
+    font-size: 0.80rem;
   }
   .helper-text {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
   }
 }
 

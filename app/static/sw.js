@@ -3,13 +3,13 @@
  * Provides offline shell caching, background notification delivery, and PWA installation support.
  */
 
-const CACHE_NAME = 'bitaxetool-v2.1.0';
+const CACHE_NAME = 'bitaxetool-v2.3.1';
 const STATIC_ASSETS = [
     '/',
     '/manifest.json',
-    '/static/css/style.css',
-    '/static/js/app.js',
-    '/static/js/chart.min.js',
+    '/static/css/style.css?v=2.3.1',
+    '/static/js/app.js?v=2.3.1',
+    '/static/js/chart.min.js?v=2.3.1',
     '/static/icons/icon-192.png',
     '/static/icons/icon-512.png',
     '/static/icons/icon-maskable-512.png',
@@ -19,7 +19,7 @@ const STATIC_ASSETS = [
     '/favicon.ico'
 ];
 
-// Install: Cache essential shell
+// Install: Cache essential shell and activate immediately
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
@@ -30,13 +30,14 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate: Clean up old caches
+// Activate: Clean up all old caches immediately
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
                 keys.map((key) => {
                     if (key !== CACHE_NAME) {
+                        console.log('[SW] Deleting old cache:', key);
                         return caches.delete(key);
                     }
                 })
@@ -45,7 +46,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: Network-First for API & HTML; Cache-First for static assets
+// Fetch: Network-First for API, HTML, CSS, and JS; Cache-First for static images/icons
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
@@ -54,8 +55,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Network first for root HTML navigation to ensure latest version is always seen
-    if (event.request.mode === 'navigate' || url.pathname === '/') {
+    // Network-First for HTML, CSS, and JS to guarantee instantaneous updates without stale caches
+    if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.css') || url.pathname.endsWith('.js') || url.search.includes('v=')) {
         event.respondWith(
             fetch(event.request)
                 .then((networkResponse) => {
@@ -65,16 +66,15 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 })
-                .catch(() => caches.match('/'))
+                .catch(() => caches.match(event.request).then(cached => cached || caches.match('/')))
         );
         return;
     }
 
-    // Cache-First for static assets with background revalidation
+    // Cache-First for static assets (images, icons) with background revalidation
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             if (cachedResponse) {
-                // Fetch in background to update cache
                 fetch(event.request).then((networkResponse) => {
                     if (networkResponse && networkResponse.status === 200) {
                         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));

@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.1] - 2026-10-28
+
+### 📱 Mobile iOS UX & Freeze-Fix
+- **Modal-Sheet-Layout mit fixierten Tabs & Actions:**
+  - **Obere Reiter fest verankert:** Die Tabs (`Tuning`, `Pools`, `Lüfter & Display`) bleiben beim Scrollen immer oben fixiert und scrollen nicht mehr aus dem Sichtbereich heraus.
+  - **Aktions-Buttons fest verankert:** "Löschen", "Abbrechen" und "Speichern" bleiben stets am unteren Bildschirmrand sichtbar und erreichbar – kein Scrollen mehr bis zum Seitenende nötig.
+  - **Beseitigung von Scroll-Freezes auf iOS:** Entfernen von `touch-action: none` auf dem Body und Auflösung verschachtelter Scroll-Container in WebKit. Das Scrollen nach oben und unten friert nie mehr ein.
+- **Kompaktere Schaltflächen & kleinere Schriftgröße:**
+  - Deutlich reduzierte Schriftgrößen auf den Tabs (`0.68rem` / `0.62rem` mobil) und den Preset-Schnellvorlagen (`Eco`, `Ausgewogen`, `Power`), sodass alle Buttons auch auf schmalen Bildschirmen einzeilig und perfekt ins Raster passen.
+  - Direkte Event-Bindung für Touch- und Klick-Events auf den oberen Buttons für sofortige Reaktionszeit ohne Verzögerung.
+- **Element-Breiten & Responsivität optimiert:**
+  - Maximale Modalbreite auf handliche `470px` (bzw. 100% minus Rand auf Smartphones) verkleinert.
+  - Schnellvorlagen auf ein gleichmäßiges 3-Spalten-Grid umgestellt – kein Überlaufen oder Verzerren mehr.
+- **PWA & Cache-Busting:**
+  - Service Worker auf Network-First für HTML, CSS und JS umgestellt.
+  - Automatisches Löschen veralteter PWA-Caches beim Update, sodass Layout-Fixes sofort auf Smartphones ankommen.
+
+---
+
 ## [2.3.0] - 2026-10-28
 
 ### 🚀 Highlights & Neuerungen
