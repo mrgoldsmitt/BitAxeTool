@@ -1069,10 +1069,72 @@
                 <div class="modal-footer" style="padding: 16px 0 0 0; display: flex; justify-content: space-between; gap: 8px;">
                     <button type="button" class="btn btn-secondary" onclick="sendTestNotification()">
                         <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"></path><path d="M8.5 2h7"></path><path d="M7 16h10"></path></svg>
-                        Test-Alarm senden
+                        Einstellungen testen
                     </button>
                     <button type="button" class="btn btn-primary" onclick="closeModal('modal-notifications')">
                         Fertig
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS Dynamic Island / Spring Notification Banner (Pops down from top) -->
+    <div id="ios-toast-banner" class="ios-toast-banner" onclick="hideToastBanner()">
+        <div class="toast-icon-box">
+            <img src="/static/icons/icon-192.png" alt="BitAxe" class="toast-app-icon">
+        </div>
+        <div class="toast-content">
+            <div class="toast-header-row">
+                <span class="toast-app-name">BitAxe Alarm</span>
+                <span class="toast-time">Jetzt</span>
+            </div>
+            <div class="toast-title" id="toast-title">Test-Alarm ausgelöst!</div>
+            <div class="toast-body" id="toast-body">Warnton und Vibration wurden erfolgreich auf deinem Gerät abgespielt.</div>
+        </div>
+    </div>
+
+    <!-- Modal: Test-Alarm Feedback Popup (Garantiert sofortige visuelle Rückmeldung) -->
+    <div class="modal-overlay" id="modal-test-alarm-result" style="z-index: 100060;">
+        <div class="modal-box ios-glass-modal" style="max-width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <svg class="ios-inline-icon accent-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    Test-Alarm Rückmeldung
+                </div>
+                <button class="modal-close" onclick="closeModal('modal-test-alarm-result')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="test-result-box">
+                    <div class="test-check-item success">
+                        <div class="test-check-icon accent-green">✓</div>
+                        <div class="test-check-text">
+                            <strong>Akustischer Alarmton &amp; Vibration: Aktiv</strong>
+                            Der Signalton und die haptische Vibration wurden soeben erfolgreich ausgelöst.
+                        </div>
+                    </div>
+                    <div class="test-check-item notice" id="test-push-status-card">
+                        <div class="test-check-icon accent-orange">ℹ</div>
+                        <div class="test-check-text">
+                            <strong>Sperrbildschirm-Push auf dem iPhone:</strong>
+                            <span id="test-push-status-detail">
+                                Im normalen Safari-Tab sperrt Apple System-Mitteilungen für den Sperrbildschirm. Es gibt in den Safari-Einstellungen dafür keinen Schalter.<br><br>
+                                <strong>Lösung:</strong> Einmal unten auf <em>Teilen &rarr; „Zum Home-Bildschirm“</em> tippen und die BitAxe-App über das Icon auf dem Home-Bildschirm starten!
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-test-alarm-result'); openNotificationHelpModal();">
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Anleitung öffnen
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-test-alarm-result')">
+                        Alles klar
                     </button>
                 </div>
             </div>
@@ -1089,7 +1151,7 @@
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    Mitteilungen in Safari &amp; iOS
+                    Mitteilungen auf iPhone &amp; Safari
                 </div>
                 <button class="modal-close" onclick="closeModal('modal-notification-help')">&times;</button>
             </div>
@@ -1099,8 +1161,8 @@
                 <div class="ios-info-callout">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ios-mini-icon accent-cyan"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                     <div>
-                        <strong>Warum kein Direktlink zu den iOS-Einstellungen?</strong><br>
-                        Apple verbietet Webseiten im Browser aus Sicherheitsgründen, die iOS-Systemeinstellungen direkt per Klick zu öffnen. Folge bitte diesen einfachen Schritten:
+                        <strong>Warum gibt es in Safari keinen Schalter für Mitteilungen?</strong><br>
+                        Apple hat in den Safari-Einstellungen auf dem iPhone <em>keinen</em> Schalter für Web-Push eingebaut. Apple schaltet Web-Push <strong>ausnahmslos nur frei</strong>, wenn du die Seite als App auf deinen Home-Bildschirm legst!
                     </div>
                 </div>
 
@@ -1109,70 +1171,70 @@
                     <div class="step-header">
                         <span class="step-num-badge">1</span>
                         <div class="step-title">
-                            Entscheidend für iOS: Zum Home-Bildschirm hinzufügen
-                            <span class="step-pill-important">Pflicht für Push auf iOS</span>
+                            Schritt 1: Zum Home-Bildschirm hinzufügen (Apple-Voraussetzung)
+                            <span class="step-pill-important">Zwingend nötig</span>
                         </div>
                     </div>
                     <div class="step-body-text">
-                        Apple unterstützt Web-Push-Mitteilungen auf dem iPhone &amp; iPad (ab iOS 16.4) <strong>ausschließlich für Web-Apps auf dem Home-Bildschirm</strong>. Im regulären Safari-Browser-Tab sperrt Apple Mitteilungen grundsätzlich, um Spam zu verhindern.
+                        Du musst in den Safari-Einstellungen gar nicht suchen – folge einfach diesen 3 Schritten:
                     </div>
                     <div class="step-action-box">
                         <div class="step-subitem">
                             <strong>A.</strong> In Safari unten in der Leiste auf das <strong>Teilen-Symbol</strong> tippen (Viereck mit Pfeil nach oben).
                         </div>
                         <div class="step-subitem">
-                            <strong>B.</strong> Nach unten scrollen und <strong>„Zum Home-Bildschirm“</strong> auswählen.
+                            <strong>B.</strong> Im Menü nach unten wischen und auf <strong>„Zum Home-Bildschirm“</strong> tippen, dann oben rechts auf <em>„Hinzufügen“</em>.
                         </div>
                         <div class="step-subitem">
-                            <strong>C.</strong> Die BitAxe-App über das neue Icon auf dem Home-Bildschirm öffnen.
-                        </div>
-                        <div class="step-subitem">
-                            <strong>D.</strong> Bei der Abfrage <em>„BitAxe möchte dir Mitteilungen senden“</em> auf <strong>Erlauben</strong> tippen.
+                            <strong>C.</strong> Safari schließen und das neue <strong>BitAxe-Icon auf deinem Home-Bildschirm</strong> antippen.
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 2: Safari Website Settings -->
+                <!-- Step 2: Native Push Permission inside the App -->
                 <div class="ios-help-step">
                     <div class="step-header">
                         <span class="step-num-badge">2</span>
                         <div class="step-title">
-                            Safari-Website-Berechtigung freigeben
+                            Schritt 2: In der Home-Screen-App Mitteilungen erlauben
                         </div>
                     </div>
                     <div class="step-body-text">
-                        Falls die IP-Adresse zuvor einmal abgelehnt wurde, ist sie in Safari für diese Sitzung gesperrt:
+                        Sobald du die BitAxe-App über das Home-Bildschirm-Icon öffnest, ist die Apple-Sperre aufgehoben:
                     </div>
                     <div class="step-action-box">
                         <div class="step-subitem">
-                            <strong>A.</strong> Links in der Safari-Adresszeile auf das <strong>„aA“</strong>-Symbol (oder Webseiten-Menü) tippen.
+                            <strong>A.</strong> In der Home-Screen-App unten auf den Reiter <strong>„Alarm“</strong> tippen.
                         </div>
                         <div class="step-subitem">
-                            <strong>B.</strong> Auf <strong>„Website-Einstellungen“</strong> tippen.
+                            <strong>B.</strong> Auf <strong>„Benachrichtigungen erlauben“</strong> tippen.
                         </div>
                         <div class="step-subitem">
-                            <strong>C.</strong> Den Punkt <strong>„Mitteilungen“</strong> auf <strong>„Erlauben“</strong> (oder „Fragen“) stellen.
+                            <strong>C.</strong> Den nativen iOS-Dialog <em>„BitAxe möchte dir Mitteilungen senden“</em> mit <strong>„Erlauben“</strong> bestätigen.
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 3: iOS Notification Settings -->
+                <!-- Step 3: iOS System Notifications -->
                 <div class="ios-help-step">
                     <div class="step-header">
                         <span class="step-num-badge">3</span>
                         <div class="step-title">
-                            iOS-Einstellungen &rarr; Mitteilungen prüfen
+                            Schritt 3: Kontrolle in den iPhone-Einstellungen
                         </div>
+                    </div>
+                    <div class="step-body-text">
+                        Erst nachdem die App auf dem Home-Bildschirm liegt, erscheint sie auch in den echten iOS-Einstellungen:
                     </div>
                     <div class="step-action-box">
                         <div class="step-subitem">
-                            <strong>A.</strong> Öffne die iPhone-<strong>Einstellungen</strong> &rarr; <strong>Mitteilungen</strong>.
+                            <strong>A.</strong> iPhone-<strong>Einstellungen</strong> &rarr; <strong>Mitteilungen</strong> öffnen.
                         </div>
                         <div class="step-subitem">
-                            <strong>B.</strong> Suche in der Liste nach <strong>Safari</strong> (oder nach <strong>BitAxe</strong>, falls als App hinzugefügt).
+                            <strong>B.</strong> In der Liste nach <strong>„BitAxe“</strong> suchen.
                         </div>
                         <div class="step-subitem">
-                            <strong>C.</strong> Stelle sicher, dass <strong>„Mitteilungen erlauben“</strong> aktiv ist sowie <em>Sperrbildschirm</em> und <em>Töne</em> aktiviert sind.
+                            <strong>C.</strong> Sicherstellen, dass <em>Mitteilungen erlauben</em>, <em>Sperrbildschirm</em> und <em>Töne</em> aktiviert sind.
                         </div>
                     </div>
                 </div>
@@ -1182,17 +1244,17 @@
                     <div class="step-header">
                         <span class="step-num-badge green">&#x2713;</span>
                         <div class="step-title">
-                            Akustischer Alarmton &amp; Vibration (Funktioniert immer!)
+                            In-App Warnton &amp; Banner (Funktioniert IMMER!)
                         </div>
                     </div>
                     <div class="step-body-text">
-                        Solange BitAxe geöffnet ist (im Tab oder als App), ertönt bei Überhitzung (Chip/VRM), Ausfällen oder Reboots stets ein <strong>lauter Alarmton mit Smartphone-Vibration</strong> – unabhängig von den iOS-Push-Mitteilungs-Rechten.
+                        Auch ohne Home-Screen-Installation: Solange BitAxe geöffnet ist, ertönt bei Überhitzung (Chip/VRM), Ausfällen oder Reboots stets der <strong>laute Warnton, die Smartphone-Vibration und das obere Alarm-Banner</strong>!
                     </div>
                 </div>
             </div>
 
             <div class="modal-footer-actions">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="playAlertSound('danger')">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="playAlertSound('danger'); showToastBanner('BitAxe Warnton-Test', 'Akustischer Alarmton und Vibration ertönen einwandfrei.');">
                     <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
                     Warnton testen
                 </button>

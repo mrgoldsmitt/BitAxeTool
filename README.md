@@ -1,4 +1,4 @@
-# BitAxeTool v2.3.2 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.3 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
@@ -8,9 +8,16 @@ Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche fü
 
 ---
 
-## ⚡ Neu in Version 2.3.2
+## ⚡ Neu in Version 2.3.3
 
-- 🔔 **Safari & iOS Benachrichtigungs-Führung:**
+- 🚨 **Zuverlässiges Feedback beim Test-Alarm („Einstellungen testen“):**
+  - Beim Klick auf *„Einstellungen testen“* / *„Test-Alarm“* öffnet sich nun immer sofort ein klares Rückmelde-Fenster mit detailliertem Status.
+  - Das interaktive iOS-Dynamic-Island-Banner fährt oben am Bildschirmrand herunter, der akustische Warnton ertönt und die Smartphone-Vibration wird unmittelbar ausgelöst.
+  - Kein stilles Verpuffen mehr, falls der Browser Push-Rechte noch nicht erteilt hat.
+- 🍏 **Klarheit für iOS & Safari:**
+  - Auf iPhones gibt es in Safari-Tabs prinzipiell keinen Schalter für Web-Push-Mitteilungen – Apple unterstützt Web-Push ausschließlich dann, wenn eine Web-App zum Home-Bildschirm hinzugefügt wurde.
+  - Die App erkennt dies nun automatisch: Statt eines ins Leere laufenden Berechtigungsdialogs wird direkt die 10-Sekunden-Anleitung (*Teilen &rarr; Zum Home-Bildschirm*) angezeigt.
+- 🔔 **Safari & iOS Benachrichtigungs-Führung (v2.3.2):**
   - Der Berechtigungs-Button führt bei blockiertem Status direkt zur interaktiven Schritt-für-Schritt-Anleitung für iPhone und Safari.
   - Ausführliche Erklärung zur Apple-PWA-Pflicht (ab iOS 16.4 erlaubt Apple Web-Push nur für Apps auf dem Home-Bildschirm).
   - Anleitung zum Zurücksetzen der Website-Berechtigungen über das Safari `aA`-Menü.
@@ -88,7 +95,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.3.2.exe`
+  `installer_output\BitAxeTool_Setup_v2.3.3.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten

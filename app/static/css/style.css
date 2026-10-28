@@ -1725,6 +1725,145 @@ body.modal-open {
   color: #ffffff;
 }
 
+/* iOS Dynamic Island / Spring Notification Banner */
+.ios-toast-banner {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 10px));
+  left: 50%;
+  transform: translateX(-50%) translateY(-150%);
+  width: calc(100% - 24px);
+  max-width: 440px;
+  background: rgba(30, 30, 34, 0.96);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 14px 45px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 200000;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.ios-toast-banner.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toast-icon-box {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.toast-app-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.toast-app-name {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.toast-time {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+}
+
+.toast-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast-body {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Test Result Modal Box */
+.test-result-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.test-check-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+}
+
+.test-check-item.success {
+  background: rgba(48, 209, 88, 0.08);
+  border-color: rgba(48, 209, 88, 0.3);
+}
+
+.test-check-item.notice {
+  background: rgba(255, 159, 10, 0.08);
+  border-color: rgba(255, 159, 10, 0.3);
+}
+
+.test-check-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.test-check-text {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+
+.test-check-text strong {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 2px;
+}
+
 /* QR Modal Elements */
 .qr-modal-body {
   display: flex;

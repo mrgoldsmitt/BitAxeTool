@@ -1532,6 +1532,26 @@ function saveNotificationSettings() {
     localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifSettings));
 }
 
+let toastTimer = null;
+function showToastBanner(title, body) {
+    const banner = document.getElementById("ios-toast-banner");
+    if (!banner) return;
+    const titleEl = document.getElementById("toast-title");
+    const bodyEl = document.getElementById("toast-body");
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.textContent = body;
+    banner.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        hideToastBanner();
+    }, 4500);
+}
+
+function hideToastBanner() {
+    const banner = document.getElementById("ios-toast-banner");
+    if (banner) banner.classList.remove("show");
+}
+
 function updateNotificationPermissionStatus() {
     const textEl = document.getElementById("notif-perm-text");
     const subhintEl = document.getElementById("notif-perm-subhint");
@@ -1540,6 +1560,7 @@ function updateNotificationPermissionStatus() {
     const dockDot = document.getElementById("dock-notif-dot");
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
 
     if (!("Notification" in window)) {
         if (textEl) {
@@ -1561,6 +1582,32 @@ function updateNotificationPermissionStatus() {
         return;
     }
 
+    if (isIOS && !isStandalone) {
+        if (textEl) {
+            textEl.textContent = "Home-Bildschirm erforderlich";
+            textEl.style.color = "var(--accent-orange)";
+        }
+        if (subhintEl) {
+            subhintEl.style.display = "block";
+            subhintEl.innerHTML = "<strong>iOS-Vorgabe:</strong> Apple unterstützt Sperrbildschirm-Mitteilungen auf iPhones nur, wenn die App zum Home-Bildschirm hinzugefügt wurde. In normalen Safari-Tabs gibt es dafür <em>keinen</em> Schalter.";
+            subhintEl.style.color = "var(--text-muted)";
+        }
+        if (btn) {
+            btn.innerHTML = `
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Anleitung: Als Home-Screen App einrichten
+            `;
+            btn.disabled = false;
+            btn.className = "btn btn-secondary btn-sm";
+            btn.onclick = () => openNotificationHelpModal();
+        }
+        if (badgeDot) badgeDot.style.display = "block";
+        if (dockDot) dockDot.style.display = "block";
+        return;
+    }
+
     const perm = Notification.permission;
     if (perm === "granted") {
         if (textEl) {
@@ -1573,7 +1620,7 @@ function updateNotificationPermissionStatus() {
             subhintEl.style.color = "var(--accent-green)";
         }
         if (btn) {
-            btn.innerHTML = `✓ Mitteilungen aktiv (Testen)`;
+            btn.innerHTML = `<svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Mitteilungen aktiv (Testen)`;
             btn.disabled = false;
             btn.className = "btn btn-secondary btn-sm";
             btn.onclick = () => sendTestNotification();
@@ -1633,7 +1680,15 @@ function openNotificationHelpModal() {
 
 async function requestNotificationPermission() {
     if (!("Notification" in window)) {
-        alert("Dieser Browser unterstützt leider keine Web-Benachrichtigungen.");
+        openNotificationHelpModal();
+        return;
+    }
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
+
+    if (isIOS && !isStandalone) {
+        openNotificationHelpModal();
         return;
     }
 
@@ -1642,15 +1697,19 @@ async function requestNotificationPermission() {
         updateNotificationPermissionStatus();
         if (permission === "granted") {
             playAlertSound("info");
+            showToastBanner("Mitteilungen aktiviert", "Du erhältst ab sofort Live-Alarme bei kritischen Ereignissen.");
             sendNotification(
                 "BitAxe Benachrichtigungen aktiv",
                 "Du erhältst ab sofort sofortige Alarme bei Überhitzung, Ausfällen oder Taktänderungen deiner Miner.",
                 "welcome",
                 false
             );
+        } else if (permission === "denied") {
+            openNotificationHelpModal();
         }
     } catch (e) {
         console.warn("Fehler bei Notification.requestPermission:", e);
+        openNotificationHelpModal();
     }
 }
 
@@ -1660,7 +1719,7 @@ function openNotificationModal() {
 }
 
 function playAlertSound(type = "info") {
-    if (!notifSettings.sound) return;
+    if (!notifSettings.sound && type !== "danger") return;
     try {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1678,7 +1737,7 @@ function playAlertSound(type = "info") {
             osc.frequency.setValueAtTime(880, now);
             osc.frequency.setValueAtTime(660, now + 0.12);
             osc.frequency.setValueAtTime(880, now + 0.24);
-            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.setValueAtTime(0.3, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
             osc.start(now);
             osc.stop(now + 0.45);
@@ -1686,17 +1745,20 @@ function playAlertSound(type = "info") {
         } else {
             osc.frequency.setValueAtTime(587.33, now);
             osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
-            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.setValueAtTime(0.2, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.start(now);
             osc.stop(now + 0.4);
             if (navigator.vibrate) navigator.vibrate(120);
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn("Audio playback issue:", e);
+    }
 }
 
 function sendNotification(title, body, tag, isCritical = false) {
     playAlertSound(isCritical ? "danger" : "info");
+    showToastBanner(title, body);
 
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({
@@ -1725,16 +1787,52 @@ function sendNotification(title, body, tag, isCritical = false) {
 function sendTestNotification() {
     saveNotificationSettings();
     playAlertSound("danger");
-    if ("Notification" in window && Notification.permission !== "granted") {
-        requestNotificationPermission();
-        return;
+    showToastBanner("BitAxe Test-Alarm", "Akustischer Warnton und Vibration aktiv!");
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isStandalone = (window.navigator.standalone === true) || window.matchMedia('(display-mode: standalone)').matches;
+    const hasPush = ("Notification" in window && Notification.permission === "granted");
+
+    if (hasPush) {
+        sendNotification(
+            "BitAxe Test-Alarm",
+            "Test erfolgreich! Benachrichtigungen und Warntöne funktionieren einwandfrei.",
+            "test-" + Date.now(),
+            false
+        );
     }
-    sendNotification(
-        "BitAxe Test-Alarm",
-        "Test erfolgreich! Benachrichtigungen und Vibrationen funktionieren einwandfrei auf deinem Gerät.",
-        "test-" + Date.now(),
-        false
-    );
+
+    const detailEl = document.getElementById("test-push-status-detail");
+    const cardEl = document.getElementById("test-push-status-card");
+    if (detailEl && cardEl) {
+        if (hasPush) {
+            cardEl.className = "test-check-item success";
+            const icon = cardEl.querySelector(".test-check-icon");
+            if (icon) {
+                icon.className = "test-check-icon accent-green";
+                icon.textContent = "✓";
+            }
+            detailEl.innerHTML = "<strong>Sperrbildschirm-Push aktiv:</strong> Benachrichtigungen sind vollständig eingerichtet und funktionieren.";
+        } else {
+            cardEl.className = "test-check-item notice";
+            const icon = cardEl.querySelector(".test-check-icon");
+            if (icon) {
+                icon.className = "test-check-icon accent-orange";
+                icon.textContent = "ℹ";
+            }
+            if (isIOS) {
+                if (!isStandalone) {
+                    detailEl.innerHTML = "Im normalen Safari-Tab sperrt Apple Push-Mitteilungen für den Sperrbildschirm. Es gibt in den Safari-Einstellungen dafür <strong>keinen</strong> Schalter.<br><br><strong>Lösung in 10 Sekunden:</strong> Einmal unten auf <em>Teilen &rarr; „Zum Home-Bildschirm“</em> tippen und die BitAxe-App über das Icon auf dem Home-Bildschirm starten!";
+                } else {
+                    detailEl.innerHTML = "Die App ist auf dem Home-Bildschirm installiert, aber Mitteilungen wurden noch nicht freigegeben.<br><br>Tippe auf <em>„Anleitung öffnen“</em> oder im Alarm-Menü auf <em>„Mitteilungen erlauben“</em>.";
+                }
+            } else {
+                detailEl.innerHTML = "Web-Push-Benachrichtigungen sind im Browser noch nicht aktiviert oder blockiert.<br><br>Tippe auf <em>„Anleitung öffnen“</em>, um Mitteilungen im Browser zu erlauben.";
+            }
+        }
+    }
+
+    openModal("modal-test-alarm-result");
 }
 
 function checkNotificationTriggers(telemetryList) {

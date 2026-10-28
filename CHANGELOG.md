@@ -4,6 +4,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.3] - 2026-10-28
+
+### 🚨 Zuverlässiges Feedback beim Test-Alarm („Einstellungen testen“)
+- **Garantiertes optisches & akustisches Feedback:**
+  - Der Klick auf *„Einstellungen testen“* / *„Test-Alarm“* läuft niemals mehr ins Leere.
+  - Das elegante **iOS Dynamic Island Dropdown-Banner** fährt oben herab mit App-Icon, Zeitstempel, Titel und Testnachricht.
+  - Der synthetische **akustische Warnton** und die **Smartphone-Vibration** werden sofort ausgelöst.
+  - Ein dediziertes **Rückmelde-Modal (`Test-Alarm Rückmeldung`)** poppt sofort auf und zeigt exakt an, welche Alarme aktiv sind (Ton/Vibration: aktiv ✓) und welchen Status die Sperrbildschirm-Push-Rechte auf dem aktuellen Endgerät haben.
+- **Klarheit zu Safari & iOS-Mitteilungen:**
+  - Auf iPhones (iOS 16.4+) sperrt Apple Web-Push im normalen Safari-Browser-Tab grundsätzlich – es existiert in den Safari-Einstellungen dafür technisch kein Schalter.
+  - BitAxeTool erkennt nun vollautomatisch, ob es in einem Safari-Tab oder als installierte PWA-App auf dem Home-Bildschirm läuft.
+  - Läuft die App im Safari-Tab, wird dem Anwender direkt der 10-Sekunden-Weg (*Teilen &rarr; „Zum Home-Bildschirm“*) erklärt, um native Sperrbildschirm-Mitteilungen freizuschalten.
+
+---
+
 ## [2.3.2] - 2026-10-28
 
 ### 🔔 Safari & iOS Benachrichtigungs-Führung & PWA-Setup
