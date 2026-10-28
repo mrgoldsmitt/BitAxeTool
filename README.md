@@ -1,4 +1,4 @@
-# BitAxeTool v2.3.1 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.2 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
@@ -8,8 +8,13 @@ Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche fü
 
 ---
 
-## ⚡ Neu in Version 2.3.1
+## ⚡ Neu in Version 2.3.2
 
+- 🔔 **Safari & iOS Benachrichtigungs-Führung:**
+  - Der Berechtigungs-Button führt bei blockiertem Status direkt zur interaktiven Schritt-für-Schritt-Anleitung für iPhone und Safari.
+  - Ausführliche Erklärung zur Apple-PWA-Pflicht (ab iOS 16.4 erlaubt Apple Web-Push nur für Apps auf dem Home-Bildschirm).
+  - Anleitung zum Zurücksetzen der Website-Berechtigungen über das Safari `aA`-Menü.
+  - Sofortiges Abspielen von Warnton und Vibration beim Test-Alarm.
 - 📱 **Modernes iOS Modal-Sheet-Design & Freeze-Fix:**
   - Feste obere Navigation: Tabs (`Tuning`, `Pools`, `Lüfter & Display`) bleiben beim Scrollen fest am oberen Rand verankert.
   - Feste untere Leiste: Die Aktions-Buttons (`Löschen`, `Abbrechen`, `Speichern`) sind stets sichtbar und sofort erreichbar.
@@ -83,7 +88,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.3.1.exe`
+  `installer_output\BitAxeTool_Setup_v2.3.2.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten

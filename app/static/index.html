@@ -8,16 +8,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
-    <title>BitAxeTool v2.3.1 - Multi-AutoTuner & Safety Governor</title>
+    <title>BitAxeTool v2.3.2 - Multi-AutoTuner & Safety Governor</title>
     
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.1">
-    <script src="/static/js/chart.min.js?v=2.3.1"></script>
-    <script src="/static/js/app.js?v=2.3.1" defer></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.2">
+    <script src="/static/js/chart.min.js?v=2.3.2"></script>
+    <script src="/static/js/app.js?v=2.3.2" defer></script>
 </head>
 <body>
 
@@ -27,7 +27,7 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.1</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.2</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
@@ -254,7 +254,7 @@
         <!-- Bottom Page Footer with Author Copyright & CC License -->
         <footer class="ios-page-footer">
             <div class="ios-footer-content">
-                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.1</strong></span>
+                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.2</strong></span>
                 <span class="ios-footer-sep">&bull;</span>
                 <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
                 <span class="ios-footer-sep">&bull;</span>
@@ -418,7 +418,7 @@
                     </div>
                     <div class="ios-menu-text">
                         <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
-                        <div class="ios-menu-sub">Version 2.3.1 • Alle Neuerungen &amp; Updates</div>
+                        <div class="ios-menu-sub">Version 2.3.2 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
 
@@ -440,7 +440,7 @@
             <div class="ios-menu-footer-card">
                 <div class="footer-card-row">
                     <div class="footer-card-info">
-                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.1</span></div>
+                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.2</span></div>
                         <div class="footer-author-text">
                             &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
                         </div>
@@ -951,7 +951,7 @@
             <!-- Modal Footer -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Version 2.3.1 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
+                    Version 2.3.2 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
                 </span>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
             </div>
@@ -995,12 +995,17 @@
                     <div class="notif-perm-status">
                         <span>Browser-Berechtigung:</span> <strong id="notif-perm-text">Wird ermittelt...</strong>
                     </div>
+                    <div id="notif-perm-subhint" class="notif-subhint-text" style="display: none;"></div>
                     <button type="button" id="btn-request-notif" class="btn btn-primary btn-sm" onclick="requestNotificationPermission()">
                         <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                         </svg>
                         Benachrichtigungen im Browser erlauben
+                    </button>
+                    <button type="button" class="notif-help-btn-link" onclick="openNotificationHelpModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Schritt-für-Schritt-Anleitung für Safari &amp; iPhone
                     </button>
                 </div>
 
@@ -1070,6 +1075,130 @@
                         Fertig
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Schritt-für-Schritt Anleitung Benachrichtigungen für Safari & iPhone -->
+    <div class="modal-overlay" id="modal-notification-help" style="z-index: 100050;">
+        <div class="modal-box ios-glass-modal modal-sheet-layout" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+                    <svg class="ios-inline-icon accent-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Mitteilungen in Safari &amp; iOS
+                </div>
+                <button class="modal-close" onclick="closeModal('modal-notification-help')">&times;</button>
+            </div>
+
+            <div class="modal-scroll-body" style="padding: 14px 16px;">
+                <!-- Security Context Info Banner -->
+                <div class="ios-info-callout">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ios-mini-icon accent-cyan"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <div>
+                        <strong>Warum kein Direktlink zu den iOS-Einstellungen?</strong><br>
+                        Apple verbietet Webseiten im Browser aus Sicherheitsgründen, die iOS-Systemeinstellungen direkt per Klick zu öffnen. Folge bitte diesen einfachen Schritten:
+                    </div>
+                </div>
+
+                <!-- Step 1: The Essential iOS Requirement (PWA on Home Screen) -->
+                <div class="ios-help-step">
+                    <div class="step-header">
+                        <span class="step-num-badge">1</span>
+                        <div class="step-title">
+                            Entscheidend für iOS: Zum Home-Bildschirm hinzufügen
+                            <span class="step-pill-important">Pflicht für Push auf iOS</span>
+                        </div>
+                    </div>
+                    <div class="step-body-text">
+                        Apple unterstützt Web-Push-Mitteilungen auf dem iPhone &amp; iPad (ab iOS 16.4) <strong>ausschließlich für Web-Apps auf dem Home-Bildschirm</strong>. Im regulären Safari-Browser-Tab sperrt Apple Mitteilungen grundsätzlich, um Spam zu verhindern.
+                    </div>
+                    <div class="step-action-box">
+                        <div class="step-subitem">
+                            <strong>A.</strong> In Safari unten in der Leiste auf das <strong>Teilen-Symbol</strong> tippen (Viereck mit Pfeil nach oben).
+                        </div>
+                        <div class="step-subitem">
+                            <strong>B.</strong> Nach unten scrollen und <strong>„Zum Home-Bildschirm“</strong> auswählen.
+                        </div>
+                        <div class="step-subitem">
+                            <strong>C.</strong> Die BitAxe-App über das neue Icon auf dem Home-Bildschirm öffnen.
+                        </div>
+                        <div class="step-subitem">
+                            <strong>D.</strong> Bei der Abfrage <em>„BitAxe möchte dir Mitteilungen senden“</em> auf <strong>Erlauben</strong> tippen.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Safari Website Settings -->
+                <div class="ios-help-step">
+                    <div class="step-header">
+                        <span class="step-num-badge">2</span>
+                        <div class="step-title">
+                            Safari-Website-Berechtigung freigeben
+                        </div>
+                    </div>
+                    <div class="step-body-text">
+                        Falls die IP-Adresse zuvor einmal abgelehnt wurde, ist sie in Safari für diese Sitzung gesperrt:
+                    </div>
+                    <div class="step-action-box">
+                        <div class="step-subitem">
+                            <strong>A.</strong> Links in der Safari-Adresszeile auf das <strong>„aA“</strong>-Symbol (oder Webseiten-Menü) tippen.
+                        </div>
+                        <div class="step-subitem">
+                            <strong>B.</strong> Auf <strong>„Website-Einstellungen“</strong> tippen.
+                        </div>
+                        <div class="step-subitem">
+                            <strong>C.</strong> Den Punkt <strong>„Mitteilungen“</strong> auf <strong>„Erlauben“</strong> (oder „Fragen“) stellen.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: iOS Notification Settings -->
+                <div class="ios-help-step">
+                    <div class="step-header">
+                        <span class="step-num-badge">3</span>
+                        <div class="step-title">
+                            iOS-Einstellungen &rarr; Mitteilungen prüfen
+                        </div>
+                    </div>
+                    <div class="step-action-box">
+                        <div class="step-subitem">
+                            <strong>A.</strong> Öffne die iPhone-<strong>Einstellungen</strong> &rarr; <strong>Mitteilungen</strong>.
+                        </div>
+                        <div class="step-subitem">
+                            <strong>B.</strong> Suche in der Liste nach <strong>Safari</strong> (oder nach <strong>BitAxe</strong>, falls als App hinzugefügt).
+                        </div>
+                        <div class="step-subitem">
+                            <strong>C.</strong> Stelle sicher, dass <strong>„Mitteilungen erlauben“</strong> aktiv ist sowie <em>Sperrbildschirm</em> und <em>Töne</em> aktiviert sind.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Always Working In-App Audio Alarm -->
+                <div class="ios-help-step highlight-green">
+                    <div class="step-header">
+                        <span class="step-num-badge green">&#x2713;</span>
+                        <div class="step-title">
+                            Akustischer Alarmton &amp; Vibration (Funktioniert immer!)
+                        </div>
+                    </div>
+                    <div class="step-body-text">
+                        Solange BitAxe geöffnet ist (im Tab oder als App), ertönt bei Überhitzung (Chip/VRM), Ausfällen oder Reboots stets ein <strong>lauter Alarmton mit Smartphone-Vibration</strong> – unabhängig von den iOS-Push-Mitteilungs-Rechten.
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer-actions">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="playAlertSound('danger')">
+                    <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    Warnton testen
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-notification-help')">
+                    Schließen
+                </button>
             </div>
         </div>
     </div>

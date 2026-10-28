@@ -4,6 +4,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.2] - 2026-10-28
+
+### 🔔 Safari & iOS Benachrichtigungs-Führung & PWA-Setup
+- **Interaktiver Button & Schritt-für-Schritt-Anleitung:**
+  - Der Button bei gesperrter/blockierter Berechtigung ist nicht mehr starr deaktiviert, sondern öffnet direkt die neue, detaillierte Anleitung zur Aktivierung von Mitteilungen.
+  - Dedizierter Hilfe-Dialog (`Mitteilungen in Safari & iOS`) mit visuellen Schritt-Karten:
+    - **Schritt 1:** Erklärung der Apple-Pflicht zur Home-Bildschirm-Installation (ab iOS 16.4 erlaubt Apple Web-Push auf iPhones ausschließlich für Apps auf dem Home-Bildschirm).
+    - **Schritt 2:** Zurücksetzen der Website-Berechtigung in Safari über das `aA`-Menü.
+    - **Schritt 3:** Überprüfung der iOS-Systemeinstellungen unter *Einstellungen -> Mitteilungen -> Safari/BitAxe*.
+    - **Schritt 4:** Hinweis auf akustische Sofortalarme und Vibration, die im geöffneten Zustand auch ohne Push-Rechte immer zuverlässig anschlagen.
+- **Sofortiges Feedback bei Test-Alarm:**
+  - Beim Klick auf *Test-Alarm senden* wird auch bei fehlenden System-Rechten sofort der Alarmton abgespielt und Vibration ausgelöst, sodass der Anwender die Alarmfunktion direkt testen kann.
+
+---
+
 ## [2.3.1] - 2026-10-28
 
 ### 📱 Mobile iOS UX & Freeze-Fix

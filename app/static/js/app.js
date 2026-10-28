@@ -1534,16 +1534,30 @@ function saveNotificationSettings() {
 
 function updateNotificationPermissionStatus() {
     const textEl = document.getElementById("notif-perm-text");
+    const subhintEl = document.getElementById("notif-perm-subhint");
     const btn = document.getElementById("btn-request-notif");
     const badgeDot = document.getElementById("notif-badge-dot");
     const dockDot = document.getElementById("dock-notif-dot");
 
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
     if (!("Notification" in window)) {
         if (textEl) {
-            textEl.textContent = "Nicht vom Browser unterstützt";
+            textEl.textContent = isIOS ? "Nur als Home-Screen App" : "Nicht vom Browser unterstützt";
             textEl.style.color = "var(--text-muted)";
         }
-        if (btn) btn.style.display = "none";
+        if (subhintEl) {
+            subhintEl.style.display = "block";
+            subhintEl.textContent = isIOS 
+                ? "Auf dem iPhone erfordert Apple das Hinzufügen zum Home-Bildschirm (Teilen -> Zum Home-Bildschirm), um Mitteilungen zu erlauben."
+                : "Dieser Browser unterstützt die Push-Mitteilungs-API leider nicht.";
+        }
+        if (btn) {
+            btn.innerHTML = `<svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Anleitung für iPhone &amp; Safari`;
+            btn.disabled = false;
+            btn.className = "btn btn-secondary btn-sm";
+            btn.onclick = () => openNotificationHelpModal();
+        }
         return;
     }
 
@@ -1553,10 +1567,16 @@ function updateNotificationPermissionStatus() {
             textEl.textContent = "Aktiviert ✓";
             textEl.style.color = "var(--accent-green)";
         }
+        if (subhintEl) {
+            subhintEl.style.display = "block";
+            subhintEl.textContent = "Mitteilungen sind aktiv! Du wirst bei kritischen Ereignissen sofort alarmiert.";
+            subhintEl.style.color = "var(--accent-green)";
+        }
         if (btn) {
-            btn.innerHTML = `✓ Benachrichtigungen aktiv`;
-            btn.disabled = true;
+            btn.innerHTML = `✓ Mitteilungen aktiv (Testen)`;
+            btn.disabled = false;
             btn.className = "btn btn-secondary btn-sm";
+            btn.onclick = () => sendTestNotification();
         }
         if (badgeDot) badgeDot.style.display = "none";
         if (dockDot) dockDot.style.display = "none";
@@ -1565,10 +1585,23 @@ function updateNotificationPermissionStatus() {
             textEl.textContent = "Im Browser blockiert ✗";
             textEl.style.color = "var(--accent-red)";
         }
+        if (subhintEl) {
+            subhintEl.style.display = "block";
+            subhintEl.innerHTML = isIOS
+                ? "<strong>Hinweis für Safari:</strong> Apple sperrt Web-Push im normalen Tab. Tippe auf die Anleitung, um die Freigabe in wenigen Schritten zu aktivieren."
+                : "Mitteilungen wurden im Browser abgelehnt. Tippe auf die Anleitung, um sie in den Browsereinstellungen freizugeben.";
+            subhintEl.style.color = "var(--text-muted)";
+        }
         if (btn) {
-            btn.textContent = "In Browsereinstellungen gesperrt";
-            btn.disabled = true;
+            btn.innerHTML = `
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Anleitung: So aktivierst du Mitteilungen
+            `;
+            btn.disabled = false;
             btn.className = "btn btn-secondary btn-sm";
+            btn.onclick = () => openNotificationHelpModal();
         }
         if (badgeDot) badgeDot.style.display = "block";
         if (dockDot) dockDot.style.display = "block";
@@ -1577,6 +1610,9 @@ function updateNotificationPermissionStatus() {
             textEl.textContent = "Noch nicht erlaubt";
             textEl.style.color = "var(--accent-orange)";
         }
+        if (subhintEl) {
+            subhintEl.style.display = "none";
+        }
         if (btn) {
             btn.innerHTML = `
                 <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
@@ -1584,10 +1620,15 @@ function updateNotificationPermissionStatus() {
             `;
             btn.disabled = false;
             btn.className = "btn btn-primary btn-sm";
+            btn.onclick = () => requestNotificationPermission();
         }
         if (badgeDot) badgeDot.style.display = "block";
         if (dockDot) dockDot.style.display = "block";
     }
+}
+
+function openNotificationHelpModal() {
+    openModal("modal-notification-help");
 }
 
 async function requestNotificationPermission() {
@@ -1683,6 +1724,7 @@ function sendNotification(title, body, tag, isCritical = false) {
 
 function sendTestNotification() {
     saveNotificationSettings();
+    playAlertSound("danger");
     if ("Notification" in window && Notification.permission !== "granted") {
         requestNotificationPermission();
         return;
