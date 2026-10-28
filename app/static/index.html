@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
-    <title>BitAxeTool v2.2.0 - Multi-AutoTuner & Safety Governor</title>
+    <title>BitAxeTool v2.3.0 - Multi-AutoTuner & Safety Governor</title>
     
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
@@ -27,7 +27,7 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.2.0</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.0</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
@@ -254,7 +254,7 @@
         <!-- Bottom Page Footer with Author Copyright & CC License -->
         <footer class="ios-page-footer">
             <div class="ios-footer-content">
-                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.2.0</strong></span>
+                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.0</strong></span>
                 <span class="ios-footer-sep">&bull;</span>
                 <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
                 <span class="ios-footer-sep">&bull;</span>
@@ -418,7 +418,7 @@
                     </div>
                     <div class="ios-menu-text">
                         <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
-                        <div class="ios-menu-sub">Version 2.2.0 • Alle Neuerungen &amp; Updates</div>
+                        <div class="ios-menu-sub">Version 2.3.0 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
 
@@ -440,7 +440,7 @@
             <div class="ios-menu-footer-card">
                 <div class="footer-card-row">
                     <div class="footer-card-info">
-                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.2.0</span></div>
+                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.0</span></div>
                         <div class="footer-author-text">
                             &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
                         </div>
@@ -521,132 +521,279 @@
         </div>
     </div>
 
-    <!-- Modal: Miner Parameter & Regelung konfigurieren -->
+    <!-- Modal: Miner Parameter & Vollständige Konfiguration -->
     <div class="modal-overlay" id="modal-edit-miner">
-        <div class="modal-box ios-glass-modal">
+        <div class="modal-box ios-glass-modal" style="max-width: 560px;">
             <div class="modal-header">
                 <div>
-                    <div class="modal-title">Regelungsparameter anpassen</div>
+                    <div class="modal-title">Miner-Optionen &amp; Setup</div>
                     <div id="edit-ip-display" style="font-size: 0.8rem; color: var(--accent-cyan); font-family: monospace;"></div>
                 </div>
                 <button class="modal-close" onclick="closeModal('modal-edit-miner')">&times;</button>
             </div>
 
-            <!-- Schnell-Profile Presets mit SVG Icons -->
-            <div>
-                <label style="display: block; margin-bottom: 8px; font-size: 0.82rem; color: var(--text-muted);">Schnellvorlagen:</label>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <button type="button" onclick="applyPreset('eco')" class="btn btn-secondary btn-sm">
-                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path></svg>
-                        Eco (56°C / Leise)
-                    </button>
-                    <button type="button" onclick="applyPreset('balanced')" class="btn btn-secondary btn-sm">
-                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
-                        Ausgewogen (62°C)
-                    </button>
-                    <button type="button" onclick="applyPreset('oc')" class="btn btn-secondary btn-sm">
-                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-                        Performance (66°C)
-                    </button>
-                </div>
+            <!-- Segmented Tab Navigation for Miner Settings -->
+            <div class="about-tab-nav" style="margin-bottom: 12px;">
+                <button type="button" class="about-tab-btn active" id="tabbtn-miner-tuning" onclick="switchMinerEditTab('tuning')">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 13px; height: 13px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                    Tuning &amp; Thermik
+                </button>
+                <button type="button" class="about-tab-btn" id="tabbtn-miner-pools" onclick="switchMinerEditTab('pools')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    Mining-Pools
+                </button>
+                <button type="button" class="about-tab-btn" id="tabbtn-miner-hardware" onclick="switchMinerEditTab('hardware')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 13px; height: 13px;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    Lüfter &amp; Display
+                </button>
             </div>
 
             <form id="form-edit-miner">
-                <div class="settings-group-title">Thermische Grenzen &amp; Zielwerte</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Zieltemperatur (°C)</label>
-                        <input type="number" step="0.5" id="edit-target-temp" required>
-                        <span class="helper-text">Sollwert (z.B. 62°C)</span>
+                <!-- TAB 1: Tuning & Thermik -->
+                <div class="miner-edit-pane active" id="pane-miner-tuning">
+                    <!-- Schnell-Profile Presets -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-size: 0.78rem; color: var(--text-muted);">Schnellvorlagen:</label>
+                        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" onclick="applyPreset('eco')" class="btn btn-secondary btn-sm" style="flex: 1; min-width: 95px; padding: 6px 8px;">
+                                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path></svg>
+                                Eco (56°C)
+                            </button>
+                            <button type="button" onclick="applyPreset('balanced')" class="btn btn-secondary btn-sm" style="flex: 1; min-width: 95px; padding: 6px 8px;">
+                                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+                                Ausgewogen (62°C)
+                            </button>
+                            <button type="button" onclick="applyPreset('oc')" class="btn btn-secondary btn-sm" style="flex: 1; min-width: 95px; padding: 6px 8px;">
+                                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                                Power (66°C)
+                            </button>
+                        </div>
                     </div>
+
+                    <div class="settings-group-title">Thermische Grenzen &amp; Zielwerte</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Zieltemperatur (°C)</label>
+                            <input type="number" step="0.5" id="edit-target-temp" required>
+                            <span class="helper-text">Sollwert (z.B. 62°C)</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Toleranzband (±°C)</label>
+                            <input type="number" step="0.5" id="edit-temp-tolerance" required>
+                            <span class="helper-text">Deadband ohne Taktwechsel</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Max. Chip-Temperatur (°C)</label>
+                            <input type="number" step="0.5" id="edit-max-temp" required>
+                            <span class="helper-text">Notdrosselung (Standard: 72°C)</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Max. VRM-Temperatur (°C)</label>
+                            <input type="number" step="0.5" id="edit-max-vr-temp" required>
+                            <span class="helper-text">Spannungsregler-Limit (88°C)</span>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label>Toleranzband (±°C)</label>
-                        <input type="number" step="0.5" id="edit-temp-tolerance" required>
-                        <span class="helper-text">Deadband ohne Taktwechsel</span>
+                        <label>Max. Leistungsaufnahme (Watts)</label>
+                        <input type="number" step="0.5" id="edit-max-watts" required>
+                        <span class="helper-text">Schützt Netzteil &amp; VR vor Überlast (Standard: 26–28W)</span>
+                    </div>
+
+                    <div class="settings-group-title">Takt- &amp; Spannungsbereich</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Min. Takt (MHz)</label>
+                            <input type="number" id="edit-min-freq" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Max. Takt (MHz)</label>
+                            <input type="number" id="edit-max-freq" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Taktschritt (MHz)</label>
+                            <input type="number" id="edit-freq-step" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Stabilisierungszeit (Sek.)</label>
+                            <input type="number" id="edit-cooldown" required>
+                            <span class="helper-text">Verhindert Pendeln (z.B. 25–30s)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Min. Spannung (mV)</label>
+                            <input type="number" id="edit-min-volt" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Max. Spannung (mV)</label>
+                            <input type="number" id="edit-max-volt" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Spannungsschritt (mV)</label>
+                        <input type="number" id="edit-volt-step" required>
+                    </div>
+
+                    <div class="settings-group-title">Schutzfunktionen</div>
+                    <div class="form-group">
+                        <label class="switch-label">
+                            <span>Flatline-Watchdog (Reboot bei 0 GH/s Freeze)</span>
+                            <input type="checkbox" id="edit-flatline-toggle" class="switch-input">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="switch-label">
+                            <span>Autotuning für diesen Miner aktivieren</span>
+                            <input type="checkbox" id="edit-enabled-toggle" class="switch-input">
+                            <span class="switch-slider"></span>
+                        </label>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Max. Chip-Temperatur (°C)</label>
-                        <input type="number" step="0.5" id="edit-max-temp" required>
-                        <span class="helper-text">Notdrosselung (Standard: 70°C)</span>
+                <!-- TAB 2: Mining Pools (Primär & Fallback) -->
+                <div class="miner-edit-pane" id="pane-miner-pools" style="display: none;">
+                    <div class="settings-group-title" style="margin-top: 4px;">Primärer Mining-Pool</div>
+                    <div class="form-row">
+                        <div class="form-group" style="grid-column: span 1;">
+                            <label>Pool-URL / Host *</label>
+                            <input type="text" id="edit-stratum-url" placeholder="z.B. solo.ckpool.org">
+                        </div>
+                        <div class="form-group" style="grid-column: span 1;">
+                            <label>Stratum-Port *</label>
+                            <input type="number" id="edit-stratum-port" placeholder="3333">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Max. VRM-Temperatur (°C)</label>
-                        <input type="number" step="0.5" id="edit-max-vr-temp" required>
-                        <span class="helper-text">Spannungsregler-Limit (88°C)</span>
+                        <label>Worker / Bitcoin-Adresse *</label>
+                        <input type="text" id="edit-stratum-user" placeholder="bc1q...oder Wallet.Worker">
+                        <span class="helper-text">BTC-Auszahlungsadresse oder Pool-Benutzername</span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pool-Passwort</label>
+                            <input type="password" id="edit-stratum-pass" placeholder="Standard: x">
+                        </div>
+                        <div class="form-group">
+                            <label>Vorgeschlagene Difficulty</label>
+                            <input type="number" id="edit-stratum-diff" placeholder="z.B. 1000">
+                        </div>
+                    </div>
+
+                    <div class="settings-group-title" style="margin-top: 14px;">Fallback Mining-Pool (Ausfallsicherheit)</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fallback URL / Host</label>
+                            <input type="text" id="edit-fallback-url" placeholder="z.B. eusolo.ckpool.org">
+                        </div>
+                        <div class="form-group">
+                            <label>Fallback Port</label>
+                            <input type="number" id="edit-fallback-port" placeholder="3333">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Fallback Worker / Adresse</label>
+                        <input type="text" id="edit-fallback-user" placeholder="bc1q...oder Fallback Worker">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Fallback Passwort</label>
+                            <input type="password" id="edit-fallback-pass" placeholder="Standard: x">
+                        </div>
+                        <div class="form-group">
+                            <label>Fallback Difficulty</label>
+                            <input type="number" id="edit-fallback-diff" placeholder="z.B. 1000">
+                        </div>
+                    </div>
+                    <div id="pool-active-indicator" style="font-size: 0.76rem; color: var(--accent-green); margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                        <span class="live-pulse-dot"></span>
+                        <span id="pool-active-text">Miner nutzt aktuell den primären Pool.</span>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Max. Leistungsaufnahme (Watts)</label>
-                    <input type="number" step="0.5" id="edit-max-watts" required>
-                    <span class="helper-text">Schützt Netzteil &amp; VR vor Überlast (Gamma: 26W)</span>
+                <!-- TAB 3: Lüfter & Display -->
+                <div class="miner-edit-pane" id="pane-miner-hardware" style="display: none;">
+                    <div class="settings-group-title" style="margin-top: 4px;">Geräte-Identifikation</div>
+                    <div class="form-group">
+                        <label>Miner Hostname</label>
+                        <input type="text" id="edit-hostname" placeholder="z.B. Satoshi">
+                        <span class="helper-text">Wird im AxeOS und im Netzwerk angezeigt</span>
+                    </div>
+
+                    <div class="settings-group-title" style="margin-top: 14px;">Lüftersteuerung (Fan Control)</div>
+                    <div class="form-group">
+                        <label class="switch-label">
+                            <span>Automatische Lüfterregelung (AxeOS Auto-Fan)</span>
+                            <input type="checkbox" id="edit-autofan-toggle" class="switch-input" onchange="toggleFanManualInputs(this.checked)">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-row" id="fan-manual-row">
+                        <div class="form-group">
+                            <label>Lüfterdrehzahl (%)</label>
+                            <input type="number" min="10" max="100" id="edit-fanspeed" placeholder="100">
+                            <span class="helper-text">10% bis 100%</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Minimale Lüfterdrehzahl (%)</label>
+                            <input type="number" min="10" max="100" id="edit-min-fanspeed" placeholder="25">
+                            <span class="helper-text">Mindestdrehzahl im Auto-Modus</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-group-title" style="margin-top: 14px;">Display-Einstellungen</div>
+                    <div class="form-group">
+                        <label class="switch-label">
+                            <span>Display um 180° drehen (Invert Screen)</span>
+                            <input type="checkbox" id="edit-invertscreen-toggle" class="switch-input">
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Display-Abschaltung / Timeout (Sekunden)</label>
+                        <input type="number" min="0" max="3600" id="edit-display-timeout" placeholder="0">
+                        <span class="helper-text">0 = Display dauerhaft eingeschaltet</span>
+                    </div>
                 </div>
 
-                <div class="settings-group-title">Takt- &amp; Spannungsbereich</div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Min. Takt (MHz)</label>
-                        <input type="number" id="edit-min-freq" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Max. Takt (MHz)</label>
-                        <input type="number" id="edit-max-freq" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Taktschritt (MHz)</label>
-                        <input type="number" id="edit-freq-step" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Stabilisierungszeit (Sek.)</label>
-                        <input type="number" id="edit-cooldown" required>
-                        <span class="helper-text">Verhindert Pendeln</span>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Min. Spannung (mV)</label>
-                        <input type="number" id="edit-min-volt" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Max. Spannung (mV)</label>
-                        <input type="number" id="edit-max-volt" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Spannungsschritt (mV)</label>
-                    <input type="number" id="edit-volt-step" required>
-                </div>
-
-                <div class="settings-group-title">Schutzfunktionen</div>
-                <div class="form-group">
+                <!-- Multi-Miner Broadcast Card (Auf alle Miner der selben Art übertragen) -->
+                <div class="apply-same-model-card" style="margin-top: 14px;">
                     <label class="switch-label">
-                        <span>Flatline-Watchdog (Reboot bei 0 GH/s Freeze)</span>
-                        <input type="checkbox" id="edit-flatline-toggle" class="switch-input">
+                        <span style="display: flex; align-items: center; gap: 7px;">
+                            <svg class="ios-mini-icon accent-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            <strong id="edit-apply-same-model-label">Auf alle Miner dieser Art anwenden</strong>
+                        </span>
+                        <input type="checkbox" id="edit-apply-same-model" class="switch-input">
                         <span class="switch-slider"></span>
                     </label>
+                    <div class="helper-text" id="edit-apply-same-model-hint" style="margin-top: 5px;">
+                        Übernimmt geänderte Tuning-, Pool- und Lüftereinstellungen gleichzeitig auf alle erkannten Miner desselben Modells.
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="switch-label">
-                        <span>Autotuning für diesen Miner aktivieren</span>
-                        <input type="checkbox" id="edit-enabled-toggle" class="switch-input">
-                        <span class="switch-slider"></span>
-                    </label>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
-                    <button type="button" onclick="deleteActiveMiner()" class="btn btn-danger btn-sm">Miner löschen</button>
-                    <div style="display: flex; gap: 8px;">
+                <!-- Action Footer Buttons -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" onclick="deleteActiveMiner()" class="btn btn-danger btn-sm">
+                        <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        Löschen
+                    </button>
+                    <div style="display: flex; gap: 8px; margin-left: auto;">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-miner')">Abbrechen</button>
-                        <button type="submit" class="btn btn-primary">Speichern</button>
+                        <button type="submit" id="btn-save-miner-settings" class="btn btn-primary">
+                            <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            Speichern
+                        </button>
                     </div>
                 </div>
             </form>
@@ -800,7 +947,7 @@
             <!-- Modal Footer -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Version 2.2.0 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
+                    Version 2.3.0 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
                 </span>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
             </div>

@@ -23,7 +23,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.2.0"
+APP_VERSION = "2.3.0"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -312,14 +312,12 @@ async def get_changelog():
         return content
     return (
         "# Changelog - BitAxeTool\n\n"
-        "## [2.2.0] - 2026-10-27\n\n"
+        "## [2.3.0] - 2026-10-28\n\n"
         "### 🚀 Neuerungen & Verbesserungen\n"
-        "- **Changelog & CC-Lizenz in Settings:** Vollständige Integration des Versionsverlaufs, der Creative Commons Lizenz (CC BY-NC 4.0) und des Copyrights von mrgoldsmitt (https://mrgoldsmitt.work) direkt im Einstellungsmenü.\n"
-        "- **24-Stunden-Verlaufsdiagramme:** Interaktives Liquid-Glass-Popup beim Antippen jeder Kennzahl (1h / 6h / 24h Filter, Min / Ø / Max).\n"
-        "- **Best Difficulty direkt auf Miner-Karten:** All-Time- und Session-Bestwerte mit goldenem Stern integriert.\n"
-        "- **Mobil-Optimierung:** 100% responsive Miner-Kartenbreite ohne horizontales Scrollen.\n"
-        "- **Fixierte Navigationsleiste:** Dauerhaft am unteren Bildschirmrand verankertes iOS Liquid Glass Dock.\n"
-        "- **PWA & Benachrichtigungen:** Vollständige Smartphone-App-Unterstützung mit Alarmen für Temperatur, Offline und Watchdog-Events."
+        "- **Vollständige Miner-Optionen & Pool-Konfiguration:** Primärer und Fallback-Pool (Host, Port, User, Passwort, Difficulty) sowie Lüftersteuerung und Display direkt im Miner-Dialog einstellbar.\n"
+        "- **Synchronisation auf alle Miner derselben Art:** 1-Klick-Übernahme aller Einstellungen auf alle erkannten Miner des gleichen Modells.\n"
+        "- **Fix für Modal-Scrollen & Einfrieren:** Modale Dialoge liegen nun sauber über der Dock-Leiste (z-Index 100000), body-scroll-lock verhindert Hänger in Safari.\n"
+        "- **Optimierte Formular-Breite:** Kein Abschneiden von Feldern oder Beschriftungen auf mobilen Bildschirmen mehr."
     )
 
 
@@ -386,21 +384,112 @@ async def add_miner(miner_data: Dict[str, Any]):
     return new_miner
 
 
+@app.get("/api/miners/{ip}/system_info")
+async def get_miner_system_info(ip: str):
+    """Retrieve full system info and settings directly from AxeOS device."""
+    client = BitAxeClient(ip)
+    info = await client.get_system_info()
+    if info is None:
+        raise HTTPException(status_code=503, detail=f"Miner {ip} antwortet nicht.")
+    return info
+
+
 @app.put("/api/miners/{ip}")
 async def update_miner_settings(ip: str, updated_fields: Dict[str, Any]):
+    """Update settings for a miner, with option to broadcast to all miners of the same model."""
     config = load_config()
     target = next((m for m in config.miners if m.ip == ip), None)
     if not target:
         raise HTTPException(status_code=404, detail="Miner nicht gefunden.")
 
-    for k, v in updated_fields.items():
-        if hasattr(target, k) and v is not None:
-            setattr(target, k, v)
+    apply_to_same_model = bool(updated_fields.pop("apply_to_same_model", False))
+
+    # Determine which miners will receive the update
+    if apply_to_same_model:
+        affected_miners = [
+            m for m in config.miners 
+            if (m.asic_model and m.asic_model == target.asic_model) or (m.model and m.model == target.model)
+        ]
+    else:
+        affected_miners = [target]
+
+    # Separate AxeOS device settings from local BitAxeTool Governor config
+    axeos_keys = {
+        "stratumURL", "stratumPort", "stratumUser", "stratumPassword", "stratumSuggestedDifficulty",
+        "fallbackStratumURL", "fallbackStratumPort", "fallbackStratumUser", "fallbackStratumPassword",
+        "fallbackStratumSuggestedDifficulty", "hostname", "autofanspeed", "fanspeed", "manualFanSpeed",
+        "minFanSpeed", "invertscreen", "displayTimeout"
+    }
+    axe_payload: Dict[str, Any] = {}
+    for k in axeos_keys:
+        if k in updated_fields and updated_fields[k] is not None and updated_fields[k] != "":
+            val = updated_fields[k]
+            if k in ("stratumPort", "fallbackStratumPort", "stratumSuggestedDifficulty", "fallbackStratumSuggestedDifficulty", "autofanspeed", "fanspeed", "manualFanSpeed", "minFanSpeed", "invertscreen", "displayTimeout"):
+                try:
+                    val = int(val)
+                except (ValueError, TypeError):
+                    continue
+            axe_payload[k] = val
+            if k == "fanspeed":
+                axe_payload["manualFanSpeed"] = val
+
+    # Cache map for local MinerConfig
+    cache_map = {
+        "stratumURL": "stratum_url",
+        "stratumPort": "stratum_port",
+        "stratumUser": "stratum_user",
+        "fallbackStratumURL": "fallback_stratum_url",
+        "fallbackStratumPort": "fallback_stratum_port",
+        "fallbackStratumUser": "fallback_stratum_user",
+        "autofanspeed": "autofanspeed",
+        "fanspeed": "fanspeed",
+        "hostname": "hostname",
+    }
+
+    # Update local configuration for each affected miner
+    for miner in affected_miners:
+        # Update governor and thermal parameters
+        for k, v in updated_fields.items():
+            if k not in axeos_keys and hasattr(miner, k) and v is not None:
+                setattr(miner, k, v)
+        # Update cached AxeOS settings
+        for axe_k, cache_k in cache_map.items():
+            if axe_k in axe_payload and hasattr(miner, cache_k):
+                if axe_k == "hostname" and apply_to_same_model and miner.ip != target.ip:
+                    continue
+                setattr(miner, cache_k, axe_payload[axe_k])
 
     save_config(config)
     tuner_mgr.sync_miners(config.miners)
-    add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="info", miner_ip=ip, message="Miner-Einstellungen aktualisiert."))
-    return target
+
+    # If AxeOS hardware settings were changed, push to device(s) asynchronously
+    axe_status_list = []
+    if axe_payload:
+        for miner in affected_miners:
+            miner_payload = dict(axe_payload)
+            if apply_to_same_model and miner.ip != target.ip and "hostname" in miner_payload:
+                del miner_payload["hostname"]
+            
+            client = BitAxeClient(miner.ip)
+            ok, msg = await client.update_system_settings(miner_payload)
+            axe_status_list.append(f"{miner.ip}: {'OK' if ok else msg}")
+
+    summary_msg = f"Einstellungen für {len(affected_miners)} Miner ({target.model or target.asic_model}) aktualisiert."
+    add_log(LogEntry(
+        timestamp=time.strftime("%H:%M:%S"),
+        level="info",
+        miner_ip=target.ip,
+        message=summary_msg
+    ))
+
+    return {
+        "status": "success",
+        "message": summary_msg,
+        **target.model_dump(),
+        "affected_count": len(affected_miners),
+        "affected_ips": [m.ip for m in affected_miners],
+        "axeos_results": axe_status_list
+    }
 
 
 @app.delete("/api/miners/{ip}")

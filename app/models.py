@@ -34,6 +34,16 @@ class MinerConfig(BaseModel):
     flatline_cycles: int = 6          # Number of consecutive 0 GH/s readings to trigger reboot
     enforce_safe_tiers: bool = True   # Follow calibrated voltage-frequency pairing curve
 
+    # AxeOS Network, Pool & Fan Parameters (Synced with AxeOS)
+    stratum_url: Optional[str] = None
+    stratum_port: Optional[int] = None
+    stratum_user: Optional[str] = None
+    fallback_stratum_url: Optional[str] = None
+    fallback_stratum_port: Optional[int] = None
+    fallback_stratum_user: Optional[str] = None
+    autofanspeed: Optional[int] = None
+    fanspeed: Optional[int] = None
+
 
 class MinerTelemetry(BaseModel):
     ip: str

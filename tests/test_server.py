@@ -49,10 +49,18 @@ def test_api_add_and_remove_miner():
     assert miner["ip"] == test_ip
     assert miner["target_temp"] == 56.5
 
-    # Update miner
-    put_res = client.put(f"/api/miners/{test_ip}", json={"target_temp": 59.0})
+    # Update miner with pool settings and apply_to_same_model
+    put_res = client.put(f"/api/miners/{test_ip}", json={
+        "target_temp": 59.0,
+        "stratumURL": "solo.ckpool.org",
+        "stratumPort": 3333,
+        "stratumUser": "bc1qtest123",
+        "apply_to_same_model": True
+    })
     assert put_res.status_code == 200
     assert put_res.json()["target_temp"] == 59.0
+    assert put_res.json()["stratum_url"] == "solo.ckpool.org"
+    assert put_res.json()["stratum_port"] == 3333
 
     # Delete miner
     del_res = client.delete(f"/api/miners/{test_ip}")
@@ -72,7 +80,7 @@ def test_api_version_and_changelog():
     ver_res = client.get("/api/version")
     assert ver_res.status_code == 200
     ver_data = ver_res.json()
-    assert ver_data["version"] == "2.2.0"
+    assert ver_data["version"] == "2.3.0"
     assert ver_data["appName"] == "BitAxeTool"
     assert ver_data["author"] == "mrgoldsmitt"
     assert ver_data["website"] == "https://mrgoldsmitt.work"
@@ -80,7 +88,7 @@ def test_api_version_and_changelog():
 
     cl_res = client.get("/api/changelog")
     assert cl_res.status_code == 200
-    assert "2.2.0" in cl_res.text
+    assert "2.3.0" in cl_res.text
     assert "mrgoldsmitt" in cl_res.text
 
     lic_res = client.get("/api/license")

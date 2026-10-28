@@ -1,4 +1,4 @@
-# BitAxeTool v2.2.0 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.0 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
@@ -8,7 +8,25 @@ Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche fü
 
 ---
 
-## ⚡ Neu in Version 2.2.0
+## ⚡ Neu in Version 2.3.0
+
+- ⛏️ **Vollständige Miner-Optionen & Stratum-Pools (AxeOS Sync):**
+  - Primärer Mining-Pool & Fallback-Pool (Host, Port, Worker, Passwort, Difficulty) direkt in den Optionen einstellbar.
+  - Hardware-, Lüfter- und Display-Setup (Hostname, automatische Lüfterregelung, manuelle Drehzahl, Screen-Invertierung, Timeout).
+  - Nahtlose, asynchrone Übertragung an AxeOS via REST-API (`PATCH /api/system`).
+- 🔄 **Synchronisation auf alle Miner derselben Art:**
+  - 1-Klick-Übernahme aller Einstellungen (Tuning-Grenzen, Pools, Lüfter) auf alle erkannten Miner desselben Modells (z. B. alle BM1370).
+- 📱 **Scroll- & Freeze-Fix für mobile Bildschirme:**
+  - Z-Index-Korrektur (`z-index: 100000`): Dialoge liegen uneingeschränkt über dem schwebenden Bottom Dock.
+  - `overscroll-behavior: contain` und Body-Scroll-Lock verhindern Hänger und Einfrieren in iOS Safari / WebKit.
+- 📐 **Optimierte Formular-Breite (100% responsiv):**
+  - `minmax(0, 1fr)` verhindert jegliches horizontales Abschneiden von Labels und Eingabefeldern auf Smartphones.
+- 🗂️ **Segmentierte Reiter im Optionsdialog:**
+  - Aufteilung in *Tuning & Thermik*, *Mining-Pools* und *Lüfter & Display* für schnelle und übersichtliche Bedienung.
+
+---
+
+## ⚡ Highlights früherer Versionen (v2.2.0 & v2.1.0)
 
 - ⚙️ **Changelog, CC-Lizenz & Urheberrecht direkt in Settings:**
   - Vollständige Integration von Versionsverlauf, Lizenzdetails (CC BY-NC 4.0) und Entwickler-Attribution (`mrgoldsmitt`) mit Direktlink zu [mrgoldsmitt.work](https://mrgoldsmitt.work).
@@ -58,7 +76,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.2.0.exe`
+  `installer_output\BitAxeTool_Setup_v2.3.0.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten

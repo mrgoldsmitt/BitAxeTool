@@ -1,5 +1,5 @@
 /**
- * BitAxeTool v2.2.0 - Modern iOS Liquid Glass Controller & Reactive Dashboard
+ * BitAxeTool v2.3.0 - Modern iOS Liquid Glass Controller & Reactive Dashboard
  */
 
 let socket = null;
@@ -896,12 +896,38 @@ function refreshDashboard() {
 
 function openModal(id) {
     const el = document.getElementById(id);
-    if (el) el.classList.add("active");
+    if (el) {
+        el.classList.add("active");
+        document.body.classList.add("modal-open");
+    }
 }
 
 function closeModal(id) {
     const el = document.getElementById(id);
-    if (el) el.classList.remove("active");
+    if (el) {
+        el.classList.remove("active");
+        const anyActive = document.querySelector(".modal-overlay.active");
+        if (!anyActive) {
+            document.body.classList.remove("modal-open");
+        }
+    }
+}
+
+function switchMinerEditTab(tabName) {
+    const tabs = ["tuning", "pools", "hardware"];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tabbtn-miner-${t}`);
+        const pane = document.getElementById(`pane-miner-${t}`);
+        if (btn) btn.classList.toggle("active", t === tabName);
+        if (pane) pane.style.display = (t === tabName) ? "block" : "none";
+    });
+}
+
+function toggleFanManualInputs(isAuto) {
+    const row = document.getElementById("fan-manual-row");
+    if (row) {
+        row.style.opacity = isAuto ? "0.45" : "1";
+    }
 }
 
 function openAddMinerModal() {
@@ -936,12 +962,15 @@ async function submitAddMiner(e) {
     }
 }
 
-function openEditModal(ip) {
+async function openEditModal(ip) {
     activeEditingIp = ip;
     const miner = knownMiners.find(m => m.ip === ip);
     if (!miner) return;
 
-    document.getElementById("edit-ip-display").textContent = `${miner.nickname || miner.ip} (${miner.ip})`;
+    // Reset to first tab
+    switchMinerEditTab("tuning");
+
+    document.getElementById("edit-ip-display").textContent = `${miner.nickname || miner.ip} (${miner.ip}) • ${miner.model || miner.asic_model}`;
     document.getElementById("edit-target-temp").value = miner.target_temp;
     document.getElementById("edit-temp-tolerance").value = miner.temp_tolerance;
     document.getElementById("edit-max-temp").value = miner.max_temp;
@@ -960,14 +989,95 @@ function openEditModal(ip) {
     document.getElementById("edit-flatline-toggle").checked = miner.flatline_watchdog;
     document.getElementById("edit-enabled-toggle").checked = miner.enabled;
 
+    // Multi-miner broadcast info calculation
+    const sameModelMiners = knownMiners.filter(m => (m.asic_model && m.asic_model === miner.asic_model) || (m.model && m.model === miner.model));
+    const modelName = miner.model || miner.asic_model || "dieses Modells";
+    const labelEl = document.getElementById("edit-apply-same-model-label");
+    const hintEl = document.getElementById("edit-apply-same-model-hint");
+    if (labelEl) {
+        labelEl.textContent = `Auf alle ${sameModelMiners.length} ${modelName}-Miner anwenden`;
+    }
+    if (hintEl) {
+        hintEl.textContent = `Übernimmt geänderte Tuning-, Pool- und Hardware-Parameter synchron auf alle ${sameModelMiners.length} erkannten Geräte dieses Typs.`;
+    }
+    const applyCheckbox = document.getElementById("edit-apply-same-model");
+    if (applyCheckbox) applyCheckbox.checked = false;
+
+    // Default / cached values for AxeOS fields
+    document.getElementById("edit-stratum-url").value = miner.stratum_url || "";
+    document.getElementById("edit-stratum-port").value = miner.stratum_port || "";
+    document.getElementById("edit-stratum-user").value = miner.stratum_user || "";
+    document.getElementById("edit-stratum-pass").value = "";
+    document.getElementById("edit-stratum-diff").value = "";
+
+    document.getElementById("edit-fallback-url").value = miner.fallback_stratum_url || "";
+    document.getElementById("edit-fallback-port").value = miner.fallback_stratum_port || "";
+    document.getElementById("edit-fallback-user").value = miner.fallback_stratum_user || "";
+    document.getElementById("edit-fallback-pass").value = "";
+    document.getElementById("edit-fallback-diff").value = "";
+
+    document.getElementById("edit-hostname").value = miner.hostname || "";
+    document.getElementById("edit-autofan-toggle").checked = miner.autofanspeed === 1;
+    document.getElementById("edit-fanspeed").value = miner.fanspeed || 100;
+    document.getElementById("edit-min-fanspeed").value = 25;
+    document.getElementById("edit-invertscreen-toggle").checked = false;
+    document.getElementById("edit-display-timeout").value = 0;
+
     openModal("modal-edit-miner");
+
+    // Fetch live system info directly from miner via backend proxy
+    try {
+        const res = await fetch(`/api/miners/${ip}/system_info`);
+        if (res.ok) {
+            const info = await res.json();
+            if (info.stratumURL) document.getElementById("edit-stratum-url").value = info.stratumURL;
+            if (info.stratumPort) document.getElementById("edit-stratum-port").value = info.stratumPort;
+            if (info.stratumUser) document.getElementById("edit-stratum-user").value = info.stratumUser;
+            if (info.stratumSuggestedDifficulty) document.getElementById("edit-stratum-diff").value = info.stratumSuggestedDifficulty;
+
+            if (info.fallbackStratumURL) document.getElementById("edit-fallback-url").value = info.fallbackStratumURL;
+            if (info.fallbackStratumPort) document.getElementById("edit-fallback-port").value = info.fallbackStratumPort;
+            if (info.fallbackStratumUser) document.getElementById("edit-fallback-user").value = info.fallbackStratumUser;
+            if (info.fallbackStratumSuggestedDifficulty) document.getElementById("edit-fallback-diff").value = info.fallbackStratumSuggestedDifficulty;
+
+            const activePoolText = document.getElementById("pool-active-text");
+            if (activePoolText) {
+                if (info.isUsingFallbackStratum === 1) {
+                    activePoolText.textContent = "Achtung: Miner nutzt aktuell den Fallback-Pool!";
+                    activePoolText.style.color = "var(--accent-orange)";
+                } else {
+                    activePoolText.textContent = "Miner verbindet sich regulär mit dem primären Pool.";
+                    activePoolText.style.color = "var(--accent-green)";
+                }
+            }
+
+            if (info.hostname) document.getElementById("edit-hostname").value = info.hostname;
+            const autoFan = !!info.autofanspeed;
+            document.getElementById("edit-autofan-toggle").checked = autoFan;
+            toggleFanManualInputs(autoFan);
+            if (info.fanspeed !== undefined) document.getElementById("edit-fanspeed").value = info.fanspeed;
+            if (info.minFanSpeed !== undefined) document.getElementById("edit-min-fanspeed").value = info.minFanSpeed;
+            if (info.invertscreen !== undefined) document.getElementById("edit-invertscreen-toggle").checked = !!info.invertscreen;
+            if (info.displayTimeout !== undefined) document.getElementById("edit-display-timeout").value = info.displayTimeout;
+        }
+    } catch (e) {
+        console.warn("Konnte Live-AxeOS-Info für", ip, "nicht laden:", e);
+    }
 }
 
 async function saveMinerSettings(e) {
     e.preventDefault();
     if (!activeEditingIp) return;
 
+    const btnSave = document.getElementById("btn-save-miner-settings");
+    const origHtml = btnSave ? btnSave.innerHTML : "Speichern";
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span style="display:inline-flex;align-items:center;gap:6px;">Wird gespeichert...</span>`;
+    }
+
     const payload = {
+        // Governor & Thermal
         target_temp: parseFloat(document.getElementById("edit-target-temp").value),
         temp_tolerance: parseFloat(document.getElementById("edit-temp-tolerance").value),
         max_temp: parseFloat(document.getElementById("edit-max-temp").value),
@@ -981,7 +1091,32 @@ async function saveMinerSettings(e) {
         voltage_step: parseInt(document.getElementById("edit-volt-step").value),
         tuning_cooldown: parseInt(document.getElementById("edit-cooldown").value),
         flatline_watchdog: document.getElementById("edit-flatline-toggle").checked,
-        enabled: document.getElementById("edit-enabled-toggle").checked
+        enabled: document.getElementById("edit-enabled-toggle").checked,
+
+        // Multi-miner broadcast option
+        apply_to_same_model: document.getElementById("edit-apply-same-model") ? document.getElementById("edit-apply-same-model").checked : false,
+
+        // AxeOS Stratum Pools
+        stratumURL: document.getElementById("edit-stratum-url").value.trim(),
+        stratumPort: document.getElementById("edit-stratum-port").value ? parseInt(document.getElementById("edit-stratum-port").value) : null,
+        stratumUser: document.getElementById("edit-stratum-user").value.trim(),
+        stratumPassword: document.getElementById("edit-stratum-pass").value.trim() || undefined,
+        stratumSuggestedDifficulty: document.getElementById("edit-stratum-diff").value ? parseInt(document.getElementById("edit-stratum-diff").value) : null,
+
+        // AxeOS Fallback Pool
+        fallbackStratumURL: document.getElementById("edit-fallback-url").value.trim(),
+        fallbackStratumPort: document.getElementById("edit-fallback-port").value ? parseInt(document.getElementById("edit-fallback-port").value) : null,
+        fallbackStratumUser: document.getElementById("edit-fallback-user").value.trim(),
+        fallbackStratumPassword: document.getElementById("edit-fallback-pass").value.trim() || undefined,
+        fallbackStratumSuggestedDifficulty: document.getElementById("edit-fallback-diff").value ? parseInt(document.getElementById("edit-fallback-diff").value) : null,
+
+        // Hardware & Display
+        hostname: document.getElementById("edit-hostname").value.trim() || undefined,
+        autofanspeed: document.getElementById("edit-autofan-toggle").checked ? 1 : 0,
+        fanspeed: document.getElementById("edit-fanspeed").value ? parseInt(document.getElementById("edit-fanspeed").value) : 100,
+        minFanSpeed: document.getElementById("edit-min-fanspeed").value ? parseInt(document.getElementById("edit-min-fanspeed").value) : 25,
+        invertscreen: document.getElementById("edit-invertscreen-toggle").checked ? 1 : 0,
+        displayTimeout: document.getElementById("edit-display-timeout").value ? parseInt(document.getElementById("edit-display-timeout").value) : 0
     };
 
     try {
@@ -991,13 +1126,21 @@ async function saveMinerSettings(e) {
             body: JSON.stringify(payload)
         });
         if (res.ok) {
+            const data = await res.json();
             closeModal("modal-edit-miner");
             await loadMiners();
+            console.log("Speichern erfolgreich:", data);
         } else {
-            alert("Fehler beim Speichern der Einstellungen.");
+            const err = await res.json();
+            alert(`Fehler beim Speichern: ${err.detail || "Unbekannter Fehler"}`);
         }
     } catch (e) {
-        alert("Netzwerkfehler beim Speichern.");
+        alert("Netzwerkfehler beim Speichern der Miner-Einstellungen.");
+    } finally {
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = origHtml;
+        }
     }
 }
 

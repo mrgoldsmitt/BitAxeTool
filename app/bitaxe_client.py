@@ -52,6 +52,17 @@ class BitAxeClient:
         except Exception as e:
             return False, f"Connection error: {str(e)}"
 
+    async def update_system_settings(self, settings: Dict[str, Any]) -> Tuple[bool, str]:
+        """Update miner system settings (pools, fallback pools, fan, display, hostname, etc.) via PATCH /api/system."""
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                resp = await client.patch(f"{self.base_url}/api/system", json=settings)
+                if resp.status_code == 200:
+                    return True, "Einstellungen erfolgreich an Miner übertragen."
+                return False, f"HTTP {resp.status_code}: {resp.text}"
+        except Exception as e:
+            return False, f"Verbindungsfehler zu {self.ip}: {str(e)}"
+
     async def restart(self) -> Tuple[bool, str]:
         """Reboot the Bitaxe miner cleanly via POST /api/system/restart."""
         try:

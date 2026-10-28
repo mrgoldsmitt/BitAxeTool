@@ -4,6 +4,29 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.0] - 2026-10-28
+
+### 🚀 Highlights & Neuerungen
+- **Vollständige Miner-Optionen & Stratum-Pool-Setup:**
+  - **Primärer Mining-Pool:** Konfiguration von Pool-URL, Stratum-Port, Worker / Bitcoin-Auszahlungsadresse, Passwort und vorgeschlagener Difficulty direkt in der App.
+  - **Fallback-Mining-Pool:** Vollständige Konfiguration des Ausfall-Pools (URL, Port, Worker, Passwort, Difficulty) zur Maximierung der Verfügbarkeit.
+  - **Hardware-, Lüfter- & Display-Optionen:** Konfiguration von Miner-Hostname, automatischer vs. manueller Lüfterdrehzahl, Mindestdrehzahl, 180°-Display-Invertierung und Bildschirm-Timeout.
+  - **Live-Synchronisation mit AxeOS:** Alle Einstellungen werden direkt über die native AxeOS REST-API (`PATCH /api/system`) an die Miner übertragen.
+
+- **Einstellungen synchron auf alle Miner derselben Art übernehmen:**
+  - Neue Broadcast-Funktion: Mit nur einem Klick können Tuning-, Pool- und Hardware-Parameter synchron auf alle erkannten Miner desselben Modells (z. B. alle BM1370 / Bitaxe Gamma 601) angewendet werden.
+
+- **Behebung von Scroll-Problemen & Hängern (Freeze Fix auf iOS):**
+  - **Z-Index-Hierarchie korrigiert:** Modale Dialoge liegen nun mit `z-index: 100000` sicher über dem schwebenden Bottom Dock (`z-index: 9999`), sodass Buttons ("Löschen", "Abbrechen", "Speichern") jederzeit uneingeschränkt sichtbar und bedienbar sind.
+  - **Scroll-Containment (`overscroll-behavior: contain`):** Verhindert das Chaining von Scrollgesten auf den Hintergrund und beseitigt das Einfrieren von Safari/WebKit am Scroll-Ende.
+  - **Body-Scroll-Lock:** Sperrt Hintergrund-Scrolling sauber während geöffnete Dialoge aktiv sind.
+
+- **Formular-Breite & Responsive-Design:**
+  - `minmax(0, 1fr)` und `min-width: 0` auf allen Grid-Spalten und Eingabefeldern verhindern jegliches horizontales Abschneiden von Feldern oder Beschriftungen auf Smartphone-Displays.
+  - Segmentierte Reiter-Navigation (`Tuning & Thermik`, `Mining-Pools`, `Lüfter & Display`) sorgt für extrem kompakte, übersichtliche Dialoge ohne endloses Scrollen.
+
+---
+
 ## [2.2.0] - 2026-10-27
 
 ### 🚀 Highlights & Neuerungen
