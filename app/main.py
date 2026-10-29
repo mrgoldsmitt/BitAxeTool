@@ -279,9 +279,10 @@ def main():
                     clr.AddReference("System.Drawing")
                     from System.Windows.Forms import (
                         NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
-                        ToolTipIcon, MouseButtons
+                        ToolTipIcon, MouseButtons, Cursor
                     )
-                    from System.Drawing import Icon
+                    from System.Drawing import Icon, Font, FontStyle
+                    from System.Reflection import BindingFlags
 
                     tray = NotifyIcon()
                     if icon_path and os.path.exists(icon_path):
@@ -290,14 +291,20 @@ def main():
 
                     menu = ContextMenuStrip()
                     item_open = ToolStripMenuItem("BitAxeTool öffnen")
+                    item_open.Font = Font(item_open.Font, FontStyle.Bold)
                     item_browser = ToolStripMenuItem("Im Web-Browser öffnen")
                     sep1 = ToolStripSeparator()
-                    item_exit = ToolStripMenuItem("Beenden")
+                    item_exit = ToolStripMenuItem("Komplett schließen")
+
+                    show_context_menu_method = clr.GetClrType(NotifyIcon).GetMethod(
+                        "ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic
+                    )
 
                     def on_restore_clicked(sender=None, e=None):
                         try:
                             window.show()
                             window.restore()
+                            window.focus()
                         except Exception as ex:
                             logger.debug(f"Tray restore error: {ex}")
 
@@ -314,14 +321,28 @@ def main():
                                 tray.Dispose()
                         except Exception:
                             pass
+                        if "server" in server_holder and server_holder["server"]:
+                            server_holder["server"].should_exit = True
                         try:
                             window.destroy()
                         except Exception:
                             pass
+                        import os
+                        os._exit(0)
 
                     def on_tray_mouse_click(sender, e):
+                        # Bei Linksklick oder Rechtsklick das Auswahlmenü (Öffnen / Komplett schließen) anzeigen
                         if e.Button == MouseButtons.Left:
-                            on_restore_clicked()
+                            try:
+                                if show_context_menu_method:
+                                    show_context_menu_method.Invoke(tray, None)
+                                else:
+                                    menu.Show(Cursor.Position)
+                            except Exception:
+                                try:
+                                    menu.Show(Cursor.Position)
+                                except Exception:
+                                    on_restore_clicked()
 
                     item_open.Click += on_restore_clicked
                     item_browser.Click += on_browser_clicked
@@ -343,9 +364,9 @@ def main():
                             if tray:
                                 tray.Visible = True
                                 tray.ShowBalloonTip(
-                                    2000,
+                                    2500,
                                     "BitAxeTool minimiert",
-                                    "BitAxeTool läuft im System-Tray weiter. Klicke auf das Symbol, um die App wieder zu öffnen.",
+                                    "BitAxeTool läuft im System-Tray. Klicke auf das Symbol zum Öffnen oder Beenden.",
                                     ToolTipIcon.Info
                                 )
                         except Exception as ex:

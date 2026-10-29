@@ -1346,9 +1346,13 @@ async function addDiscoveredMiner(ip, hostname, model) {
 
 async function loadNetworkInfo() {
     try {
-        const res = await fetch("/api/network-info");
-        if (res.ok) {
-            const data = await res.json();
+        const [netRes, verRes] = await Promise.allSettled([
+            fetch("/api/network-info"),
+            fetch("/api/version")
+        ]);
+
+        if (netRes.status === "fulfilled" && netRes.value.ok) {
+            const data = await netRes.value.json();
             const el = document.getElementById("qr-lan-url");
             if (el) el.textContent = data.lan_url;
 
@@ -1358,8 +1362,18 @@ async function loadNetworkInfo() {
                 portBadge.style.display = "inline-block";
             }
         }
+
+        if (verRes.status === "fulfilled" && verRes.value.ok) {
+            const verData = await verRes.value.json();
+            if (verData && verData.version) {
+                document.title = `BitAxeTool v${verData.version} - Multi-AutoTuner & Safety Governor`;
+                document.querySelectorAll(".ios-header-ver").forEach(el => {
+                    el.textContent = `v${verData.version}`;
+                });
+            }
+        }
     } catch (e) {
-        console.error("Network info error:", e);
+        console.error("Network/Version info error:", e);
     }
 }
 

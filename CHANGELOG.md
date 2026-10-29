@@ -6,6 +6,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ## [2.3.5] - 2026-10-29
 
+### 🪟 Windows System-Tray Menü & Titel-Synchronisation
+- **System-Tray Klick- und Rechtsklick-Menü:**
+  - Beim Klick (Linksklick) oder Rechtsklick auf das BitAxeTool-Icon im Windows System-Tray öffnet sich nun direkt das Auswahlmenü mit den Optionen:
+    - **„BitAxeTool öffnen“** (fokussiert und stellt das Desktop-Fenster sofort in den Vordergrund)
+    - **„Im Web-Browser öffnen“**
+    - **„Komplett schließen“** (beendet die Anwendung, den Webserver und alle Hintergrund-Threads vollständig)
+- **Vollständige Versionsnummern-Synchronisation im Fenstertitel & Dashboard:**
+  - Konsistente Darstellung von `v2.3.5` in der Windows-Titelleiste, im HTML-Titel, Header-Badge und Changelog-Modal.
+  - Dynamischer Abgleich via `/api/version` stellt sicher, dass Fenstertitel und Header-Badges immer exakt mit der Backend-Version übereinstimmen.
+
 ### 🚀 Integriertes Firmware-Update-System (AxeOS / ESP-Miner Over-The-Air)
 - **Update-Möglichkeit pro Miner & für alle Miner gleichzeitig:**
   - **1-Klick Rolling Update:** Alle aktiven Miner können mit einem einzigen Klick vollautomatisch nacheinander (sequentielles Rolling Update zur Schonung des Netzteils und Netzwerks) aktualisiert werden.

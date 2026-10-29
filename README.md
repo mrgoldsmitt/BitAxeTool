@@ -10,6 +10,9 @@ Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche fü
 
 ## ⚡ Neu in Version 2.3.5
 
+- 🪟 **System-Tray Auswahlmenü & Versions-Synchronisation:**
+  - Klick oder Rechtsklick auf das System-Tray-Icon öffnet das Menü mit Direktoptionen zum Öffnen des Tools oder zum vollständigen Beenden.
+  - Nahtlose Versionsanzeige (`v2.3.5`) im Fenstertitel, im Browser und in allen UI-Headern.
 - 🚀 **Integriertes Firmware-Update-System (AxeOS / ESP-Miner Over-The-Air):**
   - **Einzeln & für alle Miner gleichzeitig:** Firmware-Updates können nun wahlweise für ein einzelnes Gerät oder als sequentielles Rolling Update für alle konfigurierten Bitaxe-Miner im LAN mit einem Klick ausgeführt werden.
   - **1-Klick GitHub Release-Download:** Automatisches Abfragen und Herunterladen der neuesten offiziellen AxeOS-Firmware (`esp-miner.bin`) von GitHub (`bitaxeorg/ESP-Miner`) ohne manuelles Suchen.
@@ -128,7 +131,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.3.4.exe`
+  `installer_output\BitAxeTool_Setup_v2.3.5.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten
