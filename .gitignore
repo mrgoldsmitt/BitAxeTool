@@ -39,3 +39,4 @@ ota_updater.py
 # OS files
 .DS_Store
 Thumbs.db
+run_desktop.py
