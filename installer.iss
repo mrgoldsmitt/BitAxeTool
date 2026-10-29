@@ -2,7 +2,7 @@
 ; Produces a modern installer with desktop shortcut, start menu entry, and uninstaller.
 
 #define MyAppName "BitAxeTool"
-#define MyAppVersion "2.3.4"
+#define MyAppVersion "2.3.5"
 #define MyAppPublisher "mrgoldsmitt"
 #define MyAppPublisherURL "https://mrgoldsmitt.work"
 #define MyAppURL "https://github.com/mrgoldsmitt/BitAxeTool"

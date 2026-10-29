@@ -8,10 +8,11 @@ import time
 import socket
 import logging
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request, Body
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
 import qrcode
 from contextlib import asynccontextmanager
 
@@ -23,7 +24,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.3.4"
+APP_VERSION = "2.3.5"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -600,6 +601,218 @@ async def manual_tune_miner(ip: str, req: ManualTuneRequest):
     ok, msg = await client.apply_tuning(req.frequency, req.voltage)
     add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="info" if ok else "error", miner_ip=ip, message=f"Manuelle Taktung: {msg}"))
     return {"success": ok, "message": msg}
+
+
+async def fetch_github_latest_release() -> Dict[str, Any]:
+    """Fetch latest release info from bitaxeorg/ESP-Miner GitHub releases."""
+    headers = {"User-Agent": "BitAxeTool"}
+    for url in [
+        "https://api.github.com/repos/bitaxeorg/ESP-Miner/releases/latest",
+        "https://api.github.com/repos/skot/ESP-Miner/releases/latest"
+    ]:
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0)) as client:
+                resp = await client.get(url, headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    tag = data.get("tag_name", "")
+                    name = data.get("name", tag)
+                    body = data.get("body", "")
+                    esp_bin_url = None
+                    esp_bin_size = None
+                    for asset in data.get("assets", []):
+                        if asset.get("name") == "esp-miner.bin":
+                            esp_bin_url = asset.get("browser_download_url")
+                            esp_bin_size = asset.get("size")
+                            break
+                    return {
+                        "success": True,
+                        "version": tag,
+                        "name": name,
+                        "download_url": esp_bin_url,
+                        "size": esp_bin_size,
+                        "release_notes": body[:800] if body else ""
+                    }
+        except Exception as e:
+            logger.debug(f"GitHub release check failed on {url}: {e}")
+    return {"success": False, "error": "Konnte GitHub Release nicht abrufen (Offline oder API-Limit)."}
+
+
+async def flash_single_miner(ip: str, binary_data: bytes, filename: str = "esp-miner.bin") -> Dict[str, Any]:
+    """Perform OTA flash and reboot check for a single Bitaxe miner."""
+    client = BitAxeClient(ip)
+    pre_info = await client.get_system_info()
+    old_version = pre_info.get("version", "Unbekannt") if pre_info else "Offline"
+    hostname = pre_info.get("hostname", ip) if pre_info else ip
+
+    add_log(LogEntry(
+        timestamp=time.strftime("%H:%M:%S"),
+        level="info",
+        miner_ip=ip,
+        message=f"[OTA] Starte Firmware-Flash für {hostname} ({ip}) mit {filename} ({len(binary_data):,} Bytes)..."
+    ))
+
+    is_www = "www" in filename.lower()
+    if is_www:
+        ok, msg = await client.perform_www_update(binary_data)
+    else:
+        ok, msg = await client.perform_ota_update(binary_data)
+
+    if not ok:
+        add_log(LogEntry(
+            timestamp=time.strftime("%H:%M:%S"),
+            level="error",
+            miner_ip=ip,
+            message=f"[OTA] Übertragung an {hostname} fehlgeschlagen: {msg}"
+        ))
+        return {
+            "ip": ip,
+            "hostname": hostname,
+            "success": False,
+            "old_version": old_version,
+            "new_version": old_version,
+            "message": f"Upload fehlgeschlagen: {msg}"
+        }
+
+    add_log(LogEntry(
+        timestamp=time.strftime("%H:%M:%S"),
+        level="success",
+        miner_ip=ip,
+        message=f"[OTA] Firmware erfolgreich auf {hostname} übertragen. Miner startet neu..."
+    ))
+
+    # Wait for reboot
+    await asyncio.sleep(6.0)
+    new_version = old_version
+    back_online = False
+    for _ in range(12):
+        await asyncio.sleep(2.5)
+        post_info = await client.get_system_info()
+        if post_info:
+            new_version = post_info.get("version", "Aktiv")
+            back_online = True
+            break
+
+    if back_online:
+        add_log(LogEntry(
+            timestamp=time.strftime("%H:%M:%S"),
+            level="success",
+            miner_ip=ip,
+            message=f"[OTA] {hostname} ({ip}) ist erfolgreich wieder online! Version: {new_version}"
+        ))
+        return {
+            "ip": ip,
+            "hostname": hostname,
+            "success": True,
+            "old_version": old_version,
+            "new_version": new_version,
+            "message": f"Erfolgreich aktualisiert auf {new_version}"
+        }
+    else:
+        add_log(LogEntry(
+            timestamp=time.strftime("%H:%M:%S"),
+            level="warning",
+            miner_ip=ip,
+            message=f"[OTA] {hostname} ({ip}) geflasht, Neustart läuft noch."
+        ))
+        return {
+            "ip": ip,
+            "hostname": hostname,
+            "success": True,
+            "old_version": old_version,
+            "new_version": "Neustart läuft...",
+            "message": "Flashen erfolgreich, Neustart läuft noch."
+        }
+
+
+@app.get("/api/ota/latest")
+async def get_latest_ota_version():
+    """Retrieve the latest official AxeOS firmware release metadata from GitHub."""
+    data = await fetch_github_latest_release()
+    return data
+
+
+async def _run_rolling_ota(target_ip: str, binary_data: bytes, filename: str) -> Dict[str, Any]:
+    """Helper to perform sequential rolling OTA update for one or all miners."""
+    if len(binary_data) < 100 * 1024:
+        raise HTTPException(status_code=400, detail="Die Firmware-Datei ist ungültig oder zu klein (< 100 KB).")
+
+    config = load_config()
+    target_ips = []
+    if target_ip == "all":
+        target_ips = [m.ip for m in config.miners if m.enabled]
+        if not target_ips:
+            target_ips = [m.ip for m in config.miners]
+    else:
+        target_ips = [target_ip]
+
+    if not target_ips:
+        raise HTTPException(status_code=404, detail="Keine Ziel-Miner für das Update gefunden.")
+
+    results = []
+    add_log(LogEntry(
+        timestamp=time.strftime("%H:%M:%S"),
+        level="info",
+        message=f"[OTA] Starte Firmware-Update für {len(target_ips)} Miner ({filename}, {len(binary_data):,} Bytes)..."
+    ))
+
+    # Sequential rolling update
+    for ip in target_ips:
+        res = await flash_single_miner(ip, binary_data, filename)
+        results.append(res)
+
+    total_success = sum(1 for r in results if r.get("success"))
+    summary = f"OTA-Update abgeschlossen: {total_success}/{len(results)} Miner erfolgreich aktualisiert."
+    add_log(LogEntry(
+        timestamp=time.strftime("%H:%M:%S"),
+        level="success" if total_success == len(results) else "warning",
+        message=f"[OTA] {summary}"
+    ))
+
+    return {
+        "status": "complete",
+        "summary": summary,
+        "filename": filename,
+        "file_size": len(binary_data),
+        "results": results
+    }
+
+
+@app.post("/api/ota/update-from-github")
+async def ota_update_from_github(req: Dict[str, Any] = Body(default={})):
+    """Download latest AxeOS release from GitHub and flash to targeted or all miners."""
+    target_ip = req.get("target_ip", "all")
+    release_info = await fetch_github_latest_release()
+    if not release_info.get("success") or not release_info.get("download_url"):
+        raise HTTPException(status_code=400, detail=f"Konnte GitHub Release nicht ermitteln: {release_info.get('error')}")
+
+    url = release_info["download_url"]
+    version_tag = release_info.get("version", "latest")
+    add_log(LogEntry(
+        timestamp=time.strftime("%H:%M:%S"),
+        level="info",
+        message=f"[OTA] Lade neueste AxeOS Firmware {version_tag} von GitHub herunter ({url})..."
+    ))
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(45.0)) as dl_client:
+            resp = await dl_client.get(url, headers={"User-Agent": "BitAxeTool"})
+            if resp.status_code == 200:
+                binary_data = resp.content
+            else:
+                raise HTTPException(status_code=502, detail=f"GitHub Download fehlgeschlagen (HTTP {resp.status_code})")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Download-Fehler von GitHub: {str(e)}")
+
+    return await _run_rolling_ota(target_ip, binary_data, f"esp-miner-{version_tag}.bin")
+
+
+@app.post("/api/ota/upload")
+async def ota_upload_file(request: Request, target_ip: str = "all", filename: str = "esp-miner.bin"):
+    """Accept binary stream upload and flash to targeted or all miners."""
+    binary_data = await request.body()
+    if not binary_data:
+        raise HTTPException(status_code=400, detail="Keine Binärdaten empfangen.")
+    return await _run_rolling_ota(target_ip, binary_data, filename)
 
 
 @app.get("/api/network-info")

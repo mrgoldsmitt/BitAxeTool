@@ -111,6 +111,21 @@ class BitAxeClient:
         except Exception as e:
             return False, f"OTA-Fehler bei {self.ip}: {str(e)}"
 
+    async def perform_www_update(self, binary_data: bytes, timeout: float = 120.0) -> Tuple[bool, str]:
+        """Perform an Over-The-Air (OTA) Web UI flash via POST /api/system/OTAWWW."""
+        try:
+            headers = {
+                "Content-Type": "application/octet-stream",
+                "Content-Length": str(len(binary_data))
+            }
+            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=5.0)) as client:
+                resp = await client.post(f"{self.base_url}/api/system/OTAWWW", content=binary_data, headers=headers)
+                if resp.status_code == 200:
+                    return True, resp.text.strip()
+                return False, f"HTTP {resp.status_code}: {resp.text}"
+        except Exception as e:
+            return False, f"WWW-OTA-Fehler bei {self.ip}: {str(e)}"
+
     async def restart(self) -> Tuple[bool, str]:
         """Reboot the Bitaxe miner cleanly via POST /api/system/restart."""
         try:

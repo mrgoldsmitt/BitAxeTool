@@ -90,7 +90,7 @@ def test_api_version_and_changelog():
     ver_res = client.get("/api/version")
     assert ver_res.status_code == 200
     ver_data = ver_res.json()
-    assert ver_data["version"] == "2.3.4"
+    assert ver_data["version"] == "2.3.5"
     assert ver_data["appName"] == "BitAxeTool"
     assert ver_data["author"] == "mrgoldsmitt"
     assert ver_data["website"] == "https://mrgoldsmitt.work"
@@ -98,7 +98,7 @@ def test_api_version_and_changelog():
 
     cl_res = client.get("/api/changelog")
     assert cl_res.status_code == 200
-    assert "2.3.4" in cl_res.text
+    assert "2.3.5" in cl_res.text
     assert "mrgoldsmitt" in cl_res.text
 
     lic_res = client.get("/api/license")
@@ -115,3 +115,28 @@ def test_api_logs_download_and_clear():
     clear_res = client.post("/api/logs/clear")
     assert clear_res.status_code == 200
     assert clear_res.json()["status"] == "success"
+
+
+def test_api_ota_endpoints(monkeypatch):
+    """Verify OTA firmware update endpoints (latest metadata and upload)."""
+    # 1. Test latest version check
+    res = client.get("/api/ota/latest")
+    assert res.status_code == 200
+    assert "success" in res.json()
+
+    # 2. Test binary upload validation (too small)
+    small_upload = client.post("/api/ota/upload?target_ip=192.168.188.197&filename=esp-miner.bin", content=b"short")
+    assert small_upload.status_code == 400
+
+    # 3. Test binary upload with mock valid binary (> 100 KB)
+    dummy_bin = b"X" * (120 * 1024)
+    upload_res = client.post(
+        "/api/ota/upload?target_ip=192.168.188.197&filename=esp-miner.bin",
+        content=dummy_bin,
+        headers={"Content-Type": "application/octet-stream"}
+    )
+    assert upload_res.status_code == 200
+    data = upload_res.json()
+    assert data["status"] == "complete"
+    assert len(data["results"]) == 1
+    assert data["results"][0]["success"] is True

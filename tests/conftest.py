@@ -42,9 +42,13 @@ def mock_bitaxe_client():
     with patch("app.bitaxe_client.BitAxeClient.update_system_settings", new_callable=AsyncMock) as m_update, \
          patch("app.bitaxe_client.BitAxeClient.apply_tuning", new_callable=AsyncMock) as m_tune, \
          patch("app.bitaxe_client.BitAxeClient.restart", new_callable=AsyncMock) as m_restart, \
-         patch("app.bitaxe_client.BitAxeClient.get_system_info", new_callable=AsyncMock) as m_info:
+         patch("app.bitaxe_client.BitAxeClient.get_system_info", new_callable=AsyncMock) as m_info, \
+         patch("app.bitaxe_client.BitAxeClient.perform_ota_update", new_callable=AsyncMock) as m_ota, \
+         patch("app.bitaxe_client.BitAxeClient.perform_www_update", new_callable=AsyncMock) as m_www:
         m_update.return_value = (True, "Mocked OK")
         m_tune.return_value = (True, "Mocked Applied")
         m_restart.return_value = (True, "Mocked Reboot")
-        m_info.return_value = {"hostname": "MockMiner", "hashRate": 1500.0, "temp": 60.0}
+        m_info.return_value = {"hostname": "MockMiner", "version": "v2.15.4", "hashRate": 1500.0, "temp": 60.0}
+        m_ota.return_value = (True, "Mocked Flash OK")
+        m_www.return_value = (True, "Mocked WWW Flash OK")
         yield

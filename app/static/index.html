@@ -27,12 +27,21 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.4</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.5</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
 
         <div class="ios-header-actions">
+            <!-- Firmware OTA Update Button -->
+            <button id="btn-ota" class="ios-circle-btn" onclick="openOtaModal()" title="Firmware-Update (AxeOS / ESP-Miner)">
+                <svg class="ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </button>
+
             <!-- Unmissable Circular Frosted Glass Notification Bell Button -->
             <button id="btn-notifications" class="ios-circle-btn" onclick="openNotificationModal()" title="Benachrichtigungen & PWA Alarm einrichten">
                 <svg class="ios-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -254,7 +263,7 @@
         <!-- Bottom Page Footer with Author Copyright & CC License -->
         <footer class="ios-page-footer">
             <div class="ios-footer-content">
-                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.4</strong></span>
+                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.5</strong></span>
                 <span class="ios-footer-sep">&bull;</span>
                 <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
                 <span class="ios-footer-sep">&bull;</span>
@@ -358,6 +367,91 @@
         </div>
     </div>
 
+    <!-- Modal: Firmware OTA Update -->
+    <div class="modal-overlay" id="modal-ota-update" style="z-index: 100045;">
+        <div class="modal-box ios-glass-modal" style="max-width: 560px;">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">Firmware-Update (AxeOS)</div>
+                    <div style="font-size: 13px; color: var(--ios-text-secondary); margin-top: 2px;">Over-The-Air (OTA) Flash für Bitaxe-Miner</div>
+                </div>
+                <button class="modal-close" onclick="closeModal('modal-ota-update')">&times;</button>
+            </div>
+
+            <!-- 1. Target Selection -->
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Ziel-Miner</span>
+                    <span style="font-size: 11px; color: var(--ios-accent-teal); font-weight: 500;">Sequential Rolling Update</span>
+                </label>
+                <select id="ota-target-select" class="form-select">
+                    <option value="all">⚡ Alle aktiven Miner (Rolling Update)</option>
+                </select>
+            </div>
+
+            <!-- 2. Source Selection (GitHub vs File) -->
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label">Firmware-Quelle</label>
+                <div class="ios-segmented-control" style="margin-bottom: 12px; display: flex; gap: 6px; background: rgba(255,255,255,0.06); padding: 3px; border-radius: 8px;">
+                    <button type="button" class="btn btn-sm btn-secondary active" id="btn-ota-source-github" onclick="switchOtaSource('github')" style="flex: 1;">GitHub Release (Empfohlen)</button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="btn-ota-source-upload" onclick="switchOtaSource('upload')" style="flex: 1;">Eigene Datei (.bin)</button>
+                </div>
+
+                <!-- GitHub Release Card -->
+                <div id="ota-source-github-panel" class="ios-info-card" style="padding: 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 600; font-size: 14px;" id="ota-github-version">Prüfe GitHub...</span>
+                            <span class="badge badge-success" id="ota-github-badge">Aktuell</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-xs" onclick="fetchLatestOtaRelease()" title="Neu prüfen">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </button>
+                    </div>
+                    <div style="font-size: 12px; color: var(--ios-text-secondary); line-height: 1.4;" id="ota-github-desc">
+                        Lade neueste offizielle Release-Informationen von bitaxeorg/ESP-Miner...
+                    </div>
+                    <div style="font-size: 11px; color: var(--ios-text-tertiary); margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;">
+                        ℹ️ <strong>AxeOS v2.15+:</strong> Das Webinterface (<code>www.bin</code>) ist ab Version 2.15 fest in <code>esp-miner.bin</code> integriert. Es ist nur ein einziger Flash-Vorgang erforderlich.
+                    </div>
+                </div>
+
+                <!-- File Upload Panel -->
+                <div id="ota-source-upload-panel" style="display: none; padding: 18px 14px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.18); text-align: center;">
+                    <input type="file" id="ota-file-input" accept=".bin" style="display: none;" onchange="handleOtaFileSelect(event)">
+                    <label for="ota-file-input" style="cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0;">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ios-accent-teal)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <span style="font-size: 13px; font-weight: 500;" id="ota-file-name">Klicken, um esp-miner.bin oder www.bin auszuwählen</span>
+                        <span style="font-size: 11px; color: var(--ios-text-tertiary);">Unterstützt .bin Binärdateien bis 16 MB</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 3. Progress and Live Status View -->
+            <div id="ota-progress-section" style="display: none; margin-top: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 12px; font-weight: 600;" id="ota-progress-title">Firmware-Flash läuft...</span>
+                    <span style="font-size: 12px; color: var(--ios-text-secondary);" id="ota-progress-pct">0%</span>
+                </div>
+                <div style="height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 12px;">
+                    <div id="ota-progress-fill" style="height: 100%; width: 0%; background: #30d158; transition: width 0.3s ease;"></div>
+                </div>
+                <div id="ota-results-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+                    <!-- Results dynamically appended here -->
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-ota-update')" id="btn-ota-cancel">Abbrechen</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="startOtaUpdate()" id="btn-ota-start" style="background: #30d158; border-color: #30d158; color: #000; font-weight: 600;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Firmware-Update starten
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Settings & Action Sheet Menu -->
     <div class="modal-overlay" id="modal-menu">
         <div class="modal-box ios-glass-modal">
@@ -366,6 +460,20 @@
                 <button class="modal-close" onclick="closeModal('modal-menu')">&times;</button>
             </div>
             <div class="ios-menu-grid">
+                <button class="ios-menu-item" onclick="closeModal('modal-menu'); openOtaModal();">
+                    <div class="ios-menu-icon" style="background: rgba(48, 209, 88, 0.15); color: #30d158;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div class="ios-menu-text">
+                        <div class="ios-menu-title">Firmware-Update (AxeOS)</div>
+                        <div class="ios-menu-sub">Einzelne oder alle Miner auf neue AxeOS-Version flashen</div>
+                    </div>
+                </button>
+
                 <button class="ios-menu-item" onclick="closeModal('modal-menu'); openScanModal();">
                     <div class="ios-menu-icon icon-blue">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -418,7 +526,7 @@
                     </div>
                     <div class="ios-menu-text">
                         <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
-                        <div class="ios-menu-sub">Version 2.3.4 • Alle Neuerungen &amp; Updates</div>
+                        <div class="ios-menu-sub">Version 2.3.5 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
 
@@ -440,7 +548,7 @@
             <div class="ios-menu-footer-card">
                 <div class="footer-card-row">
                     <div class="footer-card-info">
-                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.4</span></div>
+                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.5</span></div>
                         <div class="footer-author-text">
                             &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
                         </div>

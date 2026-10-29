@@ -809,6 +809,10 @@ function createMinerCardHtml(miner) {
                 <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
                 Takt-Test
             </button>
+            <button onclick="openOtaModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="AxeOS Firmware Over-The-Air aktualisieren">
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Update
+            </button>
             <button onclick="restartMiner('${miner.ip}')" class="btn btn-secondary btn-sm" title="Miner neu starten">
                 <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
                 Reboot
@@ -1983,5 +1987,251 @@ function registerServiceWorker() {
                     console.warn("[PWA] Service Worker Fehler:", err);
                 });
         });
+    }
+}
+
+// ==========================================
+// --- Firmware OTA Update System (v2.3.5) ---
+// ==========================================
+let otaLatestRelease = null;
+let otaSelectedFile = null;
+let otaCurrentSource = 'github'; // 'github' or 'upload'
+
+async function openOtaModal(targetIp = 'all') {
+    const modal = document.getElementById('modal-ota-update');
+    if (!modal) return;
+
+    // Populate select with current known miners
+    const select = document.getElementById('ota-target-select');
+    if (select) {
+        select.innerHTML = '<option value="all">⚡ Alle aktiven Miner (Rolling Update)</option>';
+        if (knownMiners && knownMiners.length > 0) {
+            knownMiners.forEach(m => {
+                const name = m.nickname || m.hostname || m.ip;
+                const opt = document.createElement('option');
+                opt.value = m.ip;
+                opt.textContent = `${name} (${m.ip})`;
+                select.appendChild(opt);
+            });
+        }
+        select.value = targetIp || 'all';
+    }
+
+    // Reset view
+    otaSelectedFile = null;
+    const fileNameEl = document.getElementById('ota-file-name');
+    if (fileNameEl) {
+        fileNameEl.textContent = "Klicken, um esp-miner.bin oder www.bin auszuwählen";
+    }
+    const progSec = document.getElementById('ota-progress-section');
+    if (progSec) progSec.style.display = 'none';
+
+    const startBtn = document.getElementById('btn-ota-start');
+    if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: text-bottom; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Firmware-Update starten
+        `;
+    }
+
+    switchOtaSource('github');
+    modal.classList.add('active');
+
+    // Fetch latest GitHub release info
+    fetchLatestOtaRelease();
+}
+
+function switchOtaSource(source) {
+    otaCurrentSource = source;
+    const btnGithub = document.getElementById('btn-ota-source-github');
+    const btnUpload = document.getElementById('btn-ota-source-upload');
+    const panelGithub = document.getElementById('ota-source-github-panel');
+    const panelUpload = document.getElementById('ota-source-upload-panel');
+
+    if (source === 'github') {
+        if (btnGithub) btnGithub.classList.add('active');
+        if (btnUpload) btnUpload.classList.remove('active');
+        if (panelGithub) panelGithub.style.display = 'block';
+        if (panelUpload) panelUpload.style.display = 'none';
+    } else {
+        if (btnGithub) btnGithub.classList.remove('active');
+        if (btnUpload) btnUpload.classList.add('active');
+        if (panelGithub) panelGithub.style.display = 'none';
+        if (panelUpload) panelUpload.style.display = 'block';
+    }
+}
+
+async function fetchLatestOtaRelease() {
+    const verEl = document.getElementById('ota-github-version');
+    const descEl = document.getElementById('ota-github-desc');
+    const badgeEl = document.getElementById('ota-github-badge');
+    if (verEl) verEl.textContent = "Prüfe GitHub...";
+    if (badgeEl) badgeEl.textContent = "Suche...";
+
+    try {
+        const res = await fetch('/api/ota/latest');
+        const data = await res.json();
+        if (data.success) {
+            otaLatestRelease = data;
+            if (verEl) verEl.textContent = `AxeOS ${data.version}`;
+            if (badgeEl) {
+                badgeEl.textContent = "Aktuell";
+                badgeEl.className = "badge badge-success";
+            }
+            const sizeMb = data.size ? (data.size / (1024 * 1024)).toFixed(2) + " MB" : "2.7 MB";
+            if (descEl) {
+                descEl.innerHTML = `Offizielles Release: <strong>${data.name || data.version}</strong> (Datei: <code>esp-miner.bin</code>, ${sizeMb})<br><span style="color:#30d158; font-weight:500;">✓ Bereit für 1-Klick OTA Flash</span>`;
+            }
+        } else {
+            if (verEl) verEl.textContent = "GitHub API nicht erreichbar";
+            if (badgeEl) {
+                badgeEl.textContent = "Offline";
+                badgeEl.className = "badge badge-warning";
+            }
+            if (descEl) descEl.textContent = data.error || "GitHub Release-Prüfung fehlgeschlagen. Bitte eigene Datei hochladen.";
+        }
+    } catch (e) {
+        if (verEl) verEl.textContent = "Fehler bei Versionsprüfung";
+        if (badgeEl) {
+            badgeEl.textContent = "Fehler";
+            badgeEl.className = "badge badge-danger";
+        }
+        if (descEl) descEl.textContent = "Verbindung zu GitHub fehlgeschlagen. Bitte manuellen Upload nutzen.";
+    }
+}
+
+function handleOtaFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        otaSelectedFile = file;
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+        const nameEl = document.getElementById('ota-file-name');
+        if (nameEl) {
+            nameEl.innerHTML = `<strong>${file.name}</strong> (${sizeMb} MB ausgewählt)`;
+        }
+    }
+}
+
+async function startOtaUpdate() {
+    const targetSelect = document.getElementById('ota-target-select');
+    const targetIp = targetSelect ? targetSelect.value : 'all';
+    const progressSection = document.getElementById('ota-progress-section');
+    const progressTitle = document.getElementById('ota-progress-title');
+    const progressFill = document.getElementById('ota-progress-fill');
+    const progressPct = document.getElementById('ota-progress-pct');
+    const resultsList = document.getElementById('ota-results-list');
+    const startBtn = document.getElementById('btn-ota-start');
+    const cancelBtn = document.getElementById('btn-ota-cancel');
+
+    const targetName = targetIp === 'all' ? "ALLE aktiven Miner" : `Miner ${targetIp}`;
+    if (!confirm(`Soll das Firmware-Update für ${targetName} jetzt wirklich gestartet werden?\n\nDie Geräte werden nacheinander geflasht und neu gestartet.`)) {
+        return;
+    }
+
+    if (progressSection) progressSection.style.display = 'block';
+    if (resultsList) resultsList.innerHTML = '<div style="font-size:12px; color:var(--ios-text-secondary); padding: 4px;">Initialisiere Flash-Vorgang...</div>';
+    if (progressTitle) progressTitle.textContent = "Firmware-Flash läuft...";
+    if (progressFill) progressFill.style.width = '15%';
+    if (progressPct) progressPct.textContent = '15%';
+    if (startBtn) startBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+
+    try {
+        let res;
+        if (otaCurrentSource === 'github') {
+            if (progressTitle) progressTitle.textContent = "Lade Firmware von GitHub herunter...";
+            if (progressFill) progressFill.style.width = '30%';
+            if (progressPct) progressPct.textContent = '30%';
+
+            res = await fetch('/api/ota/update-from-github', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_ip: targetIp })
+            });
+        } else {
+            if (!otaSelectedFile) {
+                alert("Bitte wählen Sie zuerst eine .bin Datei aus!");
+                if (progressSection) progressSection.style.display = 'none';
+                if (startBtn) startBtn.disabled = false;
+                if (cancelBtn) cancelBtn.disabled = false;
+                return;
+            }
+            if (progressTitle) progressTitle.textContent = `Übertrage ${otaSelectedFile.name}...`;
+            if (progressFill) progressFill.style.width = '30%';
+            if (progressPct) progressPct.textContent = '30%';
+
+            res = await fetch(`/api/ota/upload?target_ip=${encodeURIComponent(targetIp)}&filename=${encodeURIComponent(otaSelectedFile.name)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/octet-stream' },
+                body: otaSelectedFile
+            });
+        }
+
+        if (progressFill) progressFill.style.width = '85%';
+        if (progressPct) progressPct.textContent = '85%';
+        if (progressTitle) progressTitle.textContent = "Verarbeite Rückmeldung der Miner...";
+
+        const data = await res.json();
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressPct) progressPct.textContent = '100%';
+
+        if (res.ok && data.status === 'complete') {
+            if (progressTitle) progressTitle.textContent = data.summary || "Update abgeschlossen!";
+            if (resultsList) {
+                resultsList.innerHTML = '';
+                (data.results || []).forEach(r => {
+                    const item = document.createElement('div');
+                    item.style.padding = '8px 10px';
+                    item.style.borderRadius = '8px';
+                    item.style.background = r.success ? 'rgba(52, 199, 89, 0.12)' : 'rgba(255, 69, 58, 0.12)';
+                    item.style.border = `1px solid ${r.success ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255, 69, 58, 0.3)'}`;
+                    item.style.fontSize = '12px';
+                    item.innerHTML = `
+                        <div style="font-weight:600; display:flex; justify-content:space-between;">
+                            <span>${r.hostname || r.ip} (${r.ip})</span>
+                            <span style="color:${r.success ? '#30d158' : 'var(--ios-accent-red)'}">
+                                ${r.success ? '✓ Erfolgreich' : '✗ Fehlgeschlagen'}
+                            </span>
+                        </div>
+                        <div style="color:var(--ios-text-secondary); margin-top:3px;">
+                            Version: ${r.old_version} &rarr; <strong>${r.new_version}</strong> • ${r.message}
+                        </div>
+                    `;
+                    resultsList.appendChild(item);
+                });
+            }
+            if (typeof showDynamicIsland === "function") {
+                showDynamicIsland("Firmware-Update", data.summary, "success");
+            }
+        } else {
+            if (progressTitle) progressTitle.textContent = "Update fehlgeschlagen";
+            if (progressFill) progressFill.style.background = "var(--ios-accent-red)";
+            if (resultsList) {
+                resultsList.innerHTML = `<div style="color:var(--ios-accent-red); font-size:12px; padding: 4px;">Fehler: ${data.detail || "Unbekannter Fehler"}</div>`;
+            }
+            if (typeof showDynamicIsland === "function") {
+                showDynamicIsland("Fehler", data.detail || "Update fehlgeschlagen", "error");
+            }
+        }
+    } catch (e) {
+        if (progressTitle) progressTitle.textContent = "Netzwerkfehler beim Update";
+        if (progressFill) progressFill.style.background = "var(--ios-accent-red)";
+        if (resultsList) {
+            resultsList.innerHTML = `<div style="color:var(--ios-accent-red); font-size:12px; padding: 4px;">Verbindungsfehler: ${e.message}</div>`;
+        }
+        if (typeof showDynamicIsland === "function") {
+            showDynamicIsland("Netzwerkfehler", e.message, "error");
+        }
+    } finally {
+        if (cancelBtn) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = "Schließen";
+        }
+        if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.textContent = "Erneut ausführen";
+        }
+        await loadMiners();
     }
 }

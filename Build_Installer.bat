@@ -41,7 +41,7 @@ if defined ISCC (
         echo.
         echo ========================================================
         echo [FERTIG!] Der fertige Windows-Installer liegt in:
-        echo          installer_output\BitAxeTool_Setup_v2.3.4.exe
+        echo          installer_output\BitAxeTool_Setup_v2.3.5.exe
         echo ========================================================
     ) else (
         echo [WARNUNG] Inno Setup Kompilierung meldete einen Fehler.

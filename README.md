@@ -1,10 +1,25 @@
-# BitAxeTool v2.3.4 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.5 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
 Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.3.5
+
+- 🚀 **Integriertes Firmware-Update-System (AxeOS / ESP-Miner Over-The-Air):**
+  - **Einzeln & für alle Miner gleichzeitig:** Firmware-Updates können nun wahlweise für ein einzelnes Gerät oder als sequentielles Rolling Update für alle konfigurierten Bitaxe-Miner im LAN mit einem Klick ausgeführt werden.
+  - **1-Klick GitHub Release-Download:** Automatisches Abfragen und Herunterladen der neuesten offiziellen AxeOS-Firmware (`esp-miner.bin`) von GitHub (`bitaxeorg/ESP-Miner`) ohne manuelles Suchen.
+  - **Manuelle Datei-Auswahl:** Möglichkeit zum Upload lokaler `.bin`-Dateien (`esp-miner.bin` oder `www.bin`).
+  - **AxeOS 2.15+ Architektur-Unterstützung:** Volle Kompatibilität mit der Zusammenführung von Web-Frontend und Firmware in `esp-miner.bin` ab Version 2.15 sowie Anbindung an die neue Pool-API `PUT /api/system/pools/*`.
+  - **Live-Status & Verifikation:** Detaillierte Fortschrittsanzeige mit Reboot-Überwachung und Versionsprüfung.
+- 🛡️ **ASIC-Error Runaway Guard:**
+  - Schutz vor 100% Hardware-Fehlern: Steigt die ASIC-Fehlerrate über 15 %, senkt der Governor Takt und Spannung sofort schrittweise ab.
+- 🧪 **Vollständiges Mocking in Tests:**
+  - `tests/conftest.py` fängt alle Netzwerkaufrufe an reale Miner im LAN sicher ab.
 
 ---
 

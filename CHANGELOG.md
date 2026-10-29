@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.5] - 2026-10-29
+
+### 🚀 Integriertes Firmware-Update-System (AxeOS / ESP-Miner Over-The-Air)
+- **Update-Möglichkeit pro Miner & für alle Miner gleichzeitig:**
+  - **1-Klick Rolling Update:** Alle aktiven Miner können mit einem einzigen Klick vollautomatisch nacheinander (sequentielles Rolling Update zur Schonung des Netzteils und Netzwerks) aktualisiert werden.
+  - **Gezieltes Einzel-Update:** Firmware kann auch selektiv für einen einzelnen ausgewählten Miner geflasht werden (direkt über den neuen *Update*-Button auf der jeweiligen Miner-Karte oder über das Menü).
+  - **1-Klick GitHub Release-Download:** Automatisches Abfragen und Herunterladen der neuesten offiziellen AxeOS-Firmware (`esp-miner.bin`) von GitHub (`bitaxeorg/ESP-Miner`) ohne manuelles Suchen.
+  - **Manuelle Datei-Auswahl:** Unterstützung für den Upload beliebiger lokaler `.bin`-Dateien (`esp-miner.bin` oder `www.bin`).
+  - **AxeOS 2.15+ Architektur-Unterstützung:** Volle Kompatibilität mit der Zusammenführung von Web-Frontend und Firmware in `esp-miner.bin` sowie Anbindung an die neue Pool-API `PUT /api/system/pools/*`.
+  - **Live-Status & Verifikation:** Echtzeit-Fortschrittsanzeige in der Benutzeroberfläche, automatische Überwachung des Miner-Reboots und Prüfung der neuen Versionsnummer.
+
+### 🛡️ ASIC-Error Runaway Guard
+- **Schutz vor 100% Hardware-Fehlern:** Wenn ein übertakteter ASIC-Chip in einen Fehlerzustand gerät (> 15% ASIC-Fehlerrate nach Startphase), senkt der Governor Takt und Spannung sofort schrittweise ab, anstatt die Hashrate fälschlicherweise als optimal zu bewerten.
+
+### 🧪 Test- & Netzwerk-Isolation
+- **Vollständiges Hardware-Mocking in Tests:** `tests/conftest.py` fängt alle Netzwerk- und Update-Aufrufe an reale Miner im lokalen Netzwerk sicher ab.
+
+---
+
 ## [2.3.4] - 2026-10-29
 
 ### 🚨 Präzise Alarme & Geräte-spezifische Konfiguration
