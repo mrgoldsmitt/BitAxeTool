@@ -37,6 +37,12 @@ def set_active_port(port: int) -> None:
 def get_active_port() -> int:
     return ACTIVE_PORT
 
+RESTORE_WINDOW_CALLBACK = None
+
+def set_restore_window_callback(cb) -> None:
+    global RESTORE_WINDOW_CALLBACK
+    RESTORE_WINDOW_CALLBACK = cb
+
 # Persistent disk logging
 def _get_base_dir() -> str:
     if getattr(sys, "frozen", False):
@@ -300,6 +306,18 @@ def get_resource_file_content(filename: str) -> str:
 
 
 # --- REST API Endpoints ---
+
+@app.get("/api/restore-window")
+async def api_restore_window():
+    """Trigger restoration of desktop window from system tray."""
+    if RESTORE_WINDOW_CALLBACK:
+        try:
+            RESTORE_WINDOW_CALLBACK()
+            return {"status": "ok", "message": "Window restore requested"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+    return {"status": "noop", "message": "No window callback registered"}
+
 
 @app.get("/api/version")
 async def get_version_info():

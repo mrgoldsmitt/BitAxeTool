@@ -208,6 +208,28 @@ def main():
     host = args.host or cfg.host or "0.0.0.0"
     requested_port = args.port or cfg.web_port or 21420
 
+    # Single-instance check for desktop GUI mode (Windows)
+    single_instance_mutex = None
+    if sys.platform.startswith("win") and not args.headless:
+        try:
+            import ctypes
+            ERROR_ALREADY_EXISTS = 183
+            kernel32 = ctypes.windll.kernel32
+            single_instance_mutex = kernel32.CreateMutexW(None, False, "Global\\BitAxeTool_SingleInstance_Mutex")
+            if kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
+                logger.info("BitAxeTool läuft bereits im Hintergrund. Aktiviere vorhandenes Fenster...")
+                try:
+                    import urllib.request
+                    urllib.request.urlopen(f"http://127.0.0.1:{requested_port}/api/restore-window", timeout=2)
+                except Exception:
+                    try:
+                        webbrowser.open(f"http://127.0.0.1:{requested_port}")
+                    except Exception:
+                        pass
+                sys.exit(0)
+        except Exception as ex:
+            logger.debug(f"Single instance check exception: {ex}")
+
     # Ensure port is not colliding with other programs (like vulkan / dev servers)
     port = find_available_port(requested_port, host)
     set_active_port(port)
@@ -272,123 +294,140 @@ def main():
                 text_select=True
             )
 
-            # Windows System Tray Integration (Minimieren in Infobereich)
+            # Windows System Tray Integration (Minimieren in Infobereich via UI-Thread)
             tray_holder = {"tray": None}
 
             def setup_tray():
                 if not sys.platform.startswith("win"):
                     return
                 try:
+                    # Wait until Form is created and shown on the UI thread
+                    window.events.shown.wait(5)
+                    form = window.native
+                    if not form:
+                        logger.warning("Konnte natives WinForms-Fenster nicht finden.")
+                        return
+
                     import clr
                     clr.AddReference("System.Windows.Forms")
                     clr.AddReference("System.Drawing")
                     from System.Windows.Forms import (
                         NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
-                        ToolTipIcon, MouseButtons, Cursor
+                        ToolTipIcon, MouseButtons, Cursor, FormWindowState
                     )
                     from System.Drawing import Icon, Font, FontStyle
                     from System.Reflection import BindingFlags
+                    from System import Action
 
-                    tray = NotifyIcon()
-                    tray_holder["tray"] = tray
-                    if icon_path and os.path.exists(icon_path):
-                        tray.Icon = Icon(icon_path)
-                    tray.Text = f"BitAxeTool v{APP_VERSION}"
-
-                    menu = ContextMenuStrip()
-                    item_open = ToolStripMenuItem("BitAxeTool öffnen")
-                    item_open.Font = Font(item_open.Font, FontStyle.Bold)
-                    item_browser = ToolStripMenuItem("Im Web-Browser öffnen")
-                    sep1 = ToolStripSeparator()
-                    item_exit = ToolStripMenuItem("Komplett schließen")
-
-                    show_context_menu_method = clr.GetClrType(NotifyIcon).GetMethod(
-                        "ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic
-                    )
-
-                    def on_restore_clicked(sender=None, e=None):
-                        try:
-                            window.show()
-                            window.restore()
-                            window.focus()
-                        except Exception as ex:
-                            logger.debug(f"Tray restore error: {ex}")
-
-                    def on_browser_clicked(sender=None, e=None):
-                        try:
-                            webbrowser.open(app_url)
-                        except Exception as ex:
-                            logger.debug(f"Open browser error: {ex}")
-
-                    def on_exit_clicked(sender=None, e=None):
-                        try:
-                            if tray:
-                                tray.Visible = False
-                                tray.Dispose()
-                        except Exception:
-                            pass
-                        if "server" in server_holder and server_holder["server"]:
-                            server_holder["server"].should_exit = True
-                        try:
-                            window.destroy()
-                        except Exception:
-                            pass
-                        import os
-                        os._exit(0)
-
-                    def on_tray_mouse_click(sender, e):
-                        # Bei Linksklick oder Rechtsklick das Auswahlmenü (Öffnen / Komplett schließen) anzeigen
-                        if e.Button == MouseButtons.Left:
+                    def init_tray_on_ui():
+                        tray = NotifyIcon()
+                        tray_holder["tray"] = tray
+                        if icon_path and os.path.exists(icon_path):
                             try:
-                                if show_context_menu_method:
-                                    show_context_menu_method.Invoke(tray, None)
-                                else:
-                                    menu.Show(Cursor.Position)
+                                tray.Icon = Icon(icon_path)
                             except Exception:
-                                try:
-                                    menu.Show(Cursor.Position)
-                                except Exception:
-                                    on_restore_clicked()
+                                pass
+                        tray.Text = f"BitAxeTool v{APP_VERSION}"
 
-                    item_open.Click += on_restore_clicked
-                    item_browser.Click += on_browser_clicked
-                    item_exit.Click += on_exit_clicked
-                    tray.MouseClick += on_tray_mouse_click
-                    tray.DoubleClick += on_restore_clicked
-                    tray.BalloonTipClicked += on_restore_clicked
+                        menu = ContextMenuStrip()
+                        item_open = ToolStripMenuItem("BitAxeTool öffnen")
+                        item_open.Font = Font(item_open.Font, FontStyle.Bold)
+                        item_browser = ToolStripMenuItem("Im Web-Browser öffnen")
+                        sep1 = ToolStripSeparator()
+                        item_exit = ToolStripMenuItem("Komplett schließen")
 
-                    menu.Items.Add(item_open)
-                    menu.Items.Add(item_browser)
-                    menu.Items.Add(sep1)
-                    menu.Items.Add(item_exit)
-                    tray.ContextMenuStrip = menu
-                    tray.Visible = True
+                        show_context_menu_method = clr.GetClrType(NotifyIcon).GetMethod(
+                            "ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic
+                        )
 
-                    def on_minimized(*a):
-                        try:
-                            window.hide()
-                            if tray:
-                                tray.Visible = True
-                                tray.ShowBalloonTip(
-                                    2500,
-                                    "BitAxeTool minimiert",
-                                    "BitAxeTool läuft im System-Tray. Klicke auf das Symbol zum Öffnen oder Beenden.",
-                                    ToolTipIcon.Info
-                                )
-                        except Exception as ex:
-                            logger.debug(f"Minimizing to tray error: {ex}")
+                        def do_restore(sender=None, e=None):
+                            try:
+                                form.Show()
+                                form.WindowState = FormWindowState.Normal
+                                form.ShowInTaskbar = True
+                                form.BringToFront()
+                                form.Activate()
+                            except Exception as ex:
+                                logger.debug(f"Restore error: {ex}")
 
-                    def on_closing(*a):
-                        try:
-                            if tray:
+                        def on_browser_clicked(sender=None, e=None):
+                            try:
+                                webbrowser.open(app_url)
+                            except Exception as ex:
+                                logger.debug(f"Open browser error: {ex}")
+
+                        def on_exit_clicked(sender=None, e=None):
+                            try:
                                 tray.Visible = False
                                 tray.Dispose()
-                        except Exception:
-                            pass
+                            except Exception:
+                                pass
+                            if "server" in server_holder and server_holder["server"]:
+                                server_holder["server"].should_exit = True
+                            try:
+                                form.Close()
+                            except Exception:
+                                pass
+                            import os
+                            os._exit(0)
 
-                    window.events.minimized += on_minimized
-                    window.events.closing += on_closing
-                    logger.info("Windows System-Tray minimieren erfolgreich aktiviert.")
+                        def on_tray_mouse_click(sender, e):
+                            # Bei Linksklick oder Rechtsklick das Auswahlmenü (Öffnen / Komplett schließen) anzeigen
+                            if e.Button == MouseButtons.Left or e.Button == MouseButtons.Right:
+                                try:
+                                    if show_context_menu_method:
+                                        show_context_menu_method.Invoke(tray, None)
+                                    else:
+                                        menu.Show(Cursor.Position)
+                                except Exception:
+                                    try:
+                                        menu.Show(Cursor.Position)
+                                    except Exception:
+                                        do_restore()
+
+                        item_open.Click += do_restore
+                        item_browser.Click += on_browser_clicked
+                        item_exit.Click += on_exit_clicked
+                        tray.MouseClick += on_tray_mouse_click
+                        tray.DoubleClick += do_restore
+                        tray.BalloonTipClicked += do_restore
+
+                        menu.Items.Add(item_open)
+                        menu.Items.Add(item_browser)
+                        menu.Items.Add(sep1)
+                        menu.Items.Add(item_exit)
+                        tray.ContextMenuStrip = menu
+                        tray.Visible = True
+
+                        def on_form_resize(sender, e):
+                            if form.WindowState == FormWindowState.Minimized:
+                                form.ShowInTaskbar = False
+                                form.Hide()
+                                if tray.Visible:
+                                    tray.ShowBalloonTip(
+                                        3000,
+                                        "BitAxeTool im Infobereich",
+                                        "BitAxeTool läuft im System-Tray (ggf. im '∧'-Menü der Taskleiste). Klicke auf das Symbol oder starte die App erneut zum Öffnen.",
+                                        ToolTipIcon.Info
+                                    )
+
+                        def on_form_closing(sender, e):
+                            try:
+                                tray.Visible = False
+                                tray.Dispose()
+                            except Exception:
+                                pass
+
+                        form.Resize += on_form_resize
+                        form.FormClosing += on_form_closing
+
+                        # Registriere Callback für Wiederherstellung von Zweit-Instanzen
+                        from app.server import set_restore_window_callback
+                        set_restore_window_callback(lambda: form.Invoke(Action(do_restore)))
+                        logger.info("Windows System-Tray Integration auf UI-Thread erfolgreich aktiviert.")
+
+                    form.Invoke(Action(init_tray_on_ui))
+
                 except Exception as ex:
                     logger.warning(f"Konnte System-Tray nicht initialisieren ({ex}). Standard-Minimieren aktiv.")
 
