@@ -273,26 +273,24 @@ def main():
             )
 
             # Windows System Tray Integration (Minimieren in Infobereich)
-            tray = None
-            if sys.platform.startswith("win"):
+            tray_holder = {"tray": None}
+
+            def setup_tray():
+                if not sys.platform.startswith("win"):
+                    return
                 try:
                     import clr
                     clr.AddReference("System.Windows.Forms")
                     clr.AddReference("System.Drawing")
                     from System.Windows.Forms import (
-                        Application, NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
+                        NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
                         ToolTipIcon, MouseButtons, Cursor
                     )
                     from System.Drawing import Icon, Font, FontStyle
                     from System.Reflection import BindingFlags
 
-                    # SetCompatibleTextRenderingDefault must be called before the first control/handle is created
-                    try:
-                        Application.SetCompatibleTextRenderingDefault(False)
-                    except Exception:
-                        pass
-
                     tray = NotifyIcon()
+                    tray_holder["tray"] = tray
                     if icon_path and os.path.exists(icon_path):
                         tray.Icon = Icon(icon_path)
                     tray.Text = f"BitAxeTool v{APP_VERSION}"
@@ -394,7 +392,8 @@ def main():
                 except Exception as ex:
                     logger.warning(f"Konnte System-Tray nicht initialisieren ({ex}). Standard-Minimieren aktiv.")
 
-            webview.start(icon=icon_path)
+            webview.start(setup_tray, icon=icon_path)
+            tray = tray_holder["tray"]
             if tray:
                 try:
                     tray.Visible = False
