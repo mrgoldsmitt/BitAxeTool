@@ -55,12 +55,22 @@ def test_api_add_and_remove_miner():
         "stratumURL": "solo.ckpool.org",
         "stratumPort": 3333,
         "stratumUser": "bc1qtest123",
+        "alarm_enabled": False,
+        "alarm_temp_threshold": 74.0,
+        "alarm_vr_threshold": 87.0,
+        "alarm_offline": False,
+        "alarm_reboot": True,
         "apply_to_same_model": True
     })
     assert put_res.status_code == 200
     assert put_res.json()["target_temp"] == 59.0
     assert put_res.json()["stratum_url"] == "solo.ckpool.org"
     assert put_res.json()["stratum_port"] == 3333
+    assert put_res.json()["alarm_enabled"] is False
+    assert put_res.json()["alarm_temp_threshold"] == 74.0
+    assert put_res.json()["alarm_vr_threshold"] == 87.0
+    assert put_res.json()["alarm_offline"] is False
+    assert put_res.json()["alarm_reboot"] is True
 
     # Delete miner
     del_res = client.delete(f"/api/miners/{test_ip}")
@@ -80,7 +90,7 @@ def test_api_version_and_changelog():
     ver_res = client.get("/api/version")
     assert ver_res.status_code == 200
     ver_data = ver_res.json()
-    assert ver_data["version"] == "2.3.3"
+    assert ver_data["version"] == "2.3.4"
     assert ver_data["appName"] == "BitAxeTool"
     assert ver_data["author"] == "mrgoldsmitt"
     assert ver_data["website"] == "https://mrgoldsmitt.work"
@@ -88,7 +98,7 @@ def test_api_version_and_changelog():
 
     cl_res = client.get("/api/changelog")
     assert cl_res.status_code == 200
-    assert "2.3.3" in cl_res.text
+    assert "2.3.4" in cl_res.text
     assert "mrgoldsmitt" in cl_res.text
 
     lic_res = client.get("/api/license")

@@ -8,16 +8,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
-    <title>BitAxeTool v2.3.2 - Multi-AutoTuner & Safety Governor</title>
+    <title>BitAxeTool v2.3.4 - Multi-AutoTuner & Safety Governor</title>
     
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.2">
-    <script src="/static/js/chart.min.js?v=2.3.2"></script>
-    <script src="/static/js/app.js?v=2.3.2" defer></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.4">
+    <script src="/static/js/chart.min.js?v=2.3.4"></script>
+    <script src="/static/js/app.js?v=2.3.4" defer></script>
 </head>
 <body>
 
@@ -27,7 +27,7 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.2</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.4</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
@@ -254,7 +254,7 @@
         <!-- Bottom Page Footer with Author Copyright & CC License -->
         <footer class="ios-page-footer">
             <div class="ios-footer-content">
-                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.2</strong></span>
+                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.4</strong></span>
                 <span class="ios-footer-sep">&bull;</span>
                 <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
                 <span class="ios-footer-sep">&bull;</span>
@@ -418,7 +418,7 @@
                     </div>
                     <div class="ios-menu-text">
                         <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
-                        <div class="ios-menu-sub">Version 2.3.2 • Alle Neuerungen &amp; Updates</div>
+                        <div class="ios-menu-sub">Version 2.3.4 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
 
@@ -440,7 +440,7 @@
             <div class="ios-menu-footer-card">
                 <div class="footer-card-row">
                     <div class="footer-card-info">
-                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.2</span></div>
+                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.4</span></div>
                         <div class="footer-author-text">
                             &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
                         </div>
@@ -546,6 +546,10 @@
                 <button type="button" class="miner-tab-btn" id="tabbtn-miner-hardware" data-miner-tab="hardware" onclick="switchMinerEditTab('hardware')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                     <span>Lüfter &amp; Display</span>
+                </button>
+                <button type="button" class="miner-tab-btn" id="tabbtn-miner-alarms" data-miner-tab="alarms" onclick="switchMinerEditTab('alarms')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tab-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span>Alarme</span>
                 </button>
             </div>
 
@@ -770,6 +774,51 @@
                         </div>
                     </div>
 
+                    <!-- TAB 4: Alarme & Benachrichtigungen (Geräte-spezifisch) -->
+                    <div class="miner-edit-pane" id="pane-miner-alarms" style="display: none;">
+                        <div class="settings-group-title" style="margin-top: 4px;">Geräte-spezifische Alarm-Einstellungen</div>
+                        <div class="form-group">
+                            <label class="switch-label">
+                                <span>Alarme für diesen Miner aktivieren</span>
+                                <input type="checkbox" id="edit-alarm-enabled" class="switch-input" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="helper-text">Schaltet Warntöne, Banner und Push-Mitteilungen für dieses spezifische Gerät ein oder aus.</span>
+                        </div>
+
+                        <div class="settings-group-title" style="margin-top: 14px;">Individuelle Alarmschwellen</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Überhitzungsalarm ab (°C)</label>
+                                <input type="number" step="0.5" id="edit-alarm-temp-threshold" placeholder="70.0">
+                                <span class="helper-text">Warnton erst ab dieser Temperatur (Standard: 70°C; sicher ab 65°C+)</span>
+                            </div>
+                            <div class="form-group">
+                                <label>VRM-Spannungswandler Alarm (°C)</label>
+                                <input type="number" step="0.5" id="edit-alarm-vr-threshold" placeholder="86.0">
+                                <span class="helper-text">Kritische VRM-Temperatur (Standard: 86°C)</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-group-title" style="margin-top: 14px;">Ereignis-Benachrichtigungen</div>
+                        <div class="form-group">
+                            <label class="switch-label">
+                                <span>Alarm bei Miner-Ausfall / Offline</span>
+                                <input type="checkbox" id="edit-alarm-offline" class="switch-input" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="helper-text">Benachrichtigung, wenn dieses Gerät im LAN nicht mehr erreichbar ist.</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="switch-label">
+                                <span>Alarm bei Watchdog-Reboot (0 GH/s Freeze)</span>
+                                <input type="checkbox" id="edit-alarm-reboot" class="switch-input" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="helper-text">Benachrichtigung, wenn der Watchdog den Miner bei einem Freeze neu startet.</span>
+                        </div>
+                    </div>
+
                     <!-- Multi-Miner Broadcast Card (Auf alle Miner der selben Art übertragen) -->
                     <div class="apply-same-model-card" style="margin-top: 12px;">
                         <label class="switch-label">
@@ -951,7 +1000,7 @@
             <!-- Modal Footer -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Version 2.3.2 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
+                    Version 2.3.4 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
                 </span>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
             </div>
@@ -1053,6 +1102,13 @@
                             <strong>Akustischer Alarmton &amp; Smartphone-Vibration</strong>
                         </span>
                     </label>
+                </div>
+
+                <div class="ios-info-callout" style="margin-top: 12px; margin-bottom: 0;">
+                    <svg class="ios-mini-icon accent-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <div>
+                        <strong>Individuelle Miner-Alarme:</strong> Überhitzungsschwellen und Alarme können pro Gerät im Bearbeiten-Menü jedes Miners (Stift-Symbol &rarr; Reiter <em>„Alarme“</em>) angepasst oder stummgeschaltet werden.
+                    </div>
                 </div>
 
                 <div class="notif-pwa-guide">

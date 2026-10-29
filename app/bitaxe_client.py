@@ -53,15 +53,63 @@ class BitAxeClient:
             return False, f"Connection error: {str(e)}"
 
     async def update_system_settings(self, settings: Dict[str, Any]) -> Tuple[bool, str]:
-        """Update miner system settings (pools, fallback pools, fan, display, hostname, etc.) via PATCH /api/system."""
+        """Update miner system settings (pools, fallback pools, fan, display, hostname, etc.) via PATCH /api/system
+        and PUT /api/system/pools/* for AxeOS 2.15+ compatibility.
+        """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
+                # 1. Update AxeOS general system settings via PATCH /api/system
                 resp = await client.patch(f"{self.base_url}/api/system", json=settings)
+                
+                # 2. For AxeOS 2.15+, pool configurations are managed via PUT /api/system/pools/{0,1}
+                has_primary = "stratumURL" in settings and "stratumPort" in settings and "stratumUser" in settings
+                if has_primary and settings.get("stratumURL"):
+                    p0 = {
+                        "stratumURL": str(settings["stratumURL"]),
+                        "stratumPort": int(settings["stratumPort"]),
+                        "stratumUser": str(settings["stratumUser"]),
+                    }
+                    if "stratumPassword" in settings and settings["stratumPassword"]:
+                        p0["password"] = settings["stratumPassword"]
+                    try:
+                        await client.put(f"{self.base_url}/api/system/pools/0", json=p0)
+                    except Exception:
+                        pass
+
+                has_fallback = "fallbackStratumURL" in settings and "fallbackStratumPort" in settings and "fallbackStratumUser" in settings
+                if has_fallback and settings.get("fallbackStratumURL"):
+                    p1 = {
+                        "stratumURL": str(settings["fallbackStratumURL"]),
+                        "stratumPort": int(settings["fallbackStratumPort"]),
+                        "stratumUser": str(settings["fallbackStratumUser"]),
+                    }
+                    if "fallbackStratumPassword" in settings and settings["fallbackStratumPassword"]:
+                        p1["password"] = settings["fallbackStratumPassword"]
+                    try:
+                        await client.put(f"{self.base_url}/api/system/pools/1", json=p1)
+                    except Exception:
+                        pass
+
                 if resp.status_code == 200:
                     return True, "Einstellungen erfolgreich an Miner übertragen."
                 return False, f"HTTP {resp.status_code}: {resp.text}"
         except Exception as e:
             return False, f"Verbindungsfehler zu {self.ip}: {str(e)}"
+
+    async def perform_ota_update(self, binary_data: bytes, timeout: float = 120.0) -> Tuple[bool, str]:
+        """Perform an Over-The-Air (OTA) firmware flash via POST /api/system/OTA."""
+        try:
+            headers = {
+                "Content-Type": "application/octet-stream",
+                "Content-Length": str(len(binary_data))
+            }
+            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=5.0)) as client:
+                resp = await client.post(f"{self.base_url}/api/system/OTA", content=binary_data, headers=headers)
+                if resp.status_code == 200:
+                    return True, resp.text.strip()
+                return False, f"HTTP {resp.status_code}: {resp.text}"
+        except Exception as e:
+            return False, f"OTA-Fehler bei {self.ip}: {str(e)}"
 
     async def restart(self) -> Tuple[bool, str]:
         """Reboot the Bitaxe miner cleanly via POST /api/system/restart."""

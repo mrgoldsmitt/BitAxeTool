@@ -1,10 +1,28 @@
-# BitAxeTool v2.3.3 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.4 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
 Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.3.4
+
+- 🚨 **Präzise Alarme & Geräte-spezifische Konfiguration:**
+  - Jeder Miner verfügt im Bearbeiten-Dialog (`modal-edit-miner`) über einen eigenen Reiter **„Alarme“**, in dem Alarme und Benachrichtigungen individuell für das jeweilige Gerät konfiguriert oder stummgeschaltet werden können.
+  - **Individuelle Alarmschwellen:** Einstellbare Überhitzungsschwelle (`alarm_temp_threshold`, z.B. 70°C) und VRM-Spannungswandler-Schwelle (`alarm_vr_threshold`, z.B. 86°C) pro Gerät.
+  - **Ereignisfilter pro Miner:** Offline-Ausfallalarm und Watchdog-Reboot-Alarm können für jedes Gerät separat festgelegt werden.
+- 🛡️ **Beseitigung von Fehlalarmen bei Normaltemperatur (> 58°C):**
+  - **Sicherheits-Puffer:** Chiptemperaturen unter 65°C sind gesunde Betriebstemperaturen und lösen garantiert niemals mehr einen Überhitzungsalarm oder Sirenenton aus.
+  - **Saubere Trennung von Leistungs- und Notdrosselung:** Wenn das Watt-Limit erreicht wird, meldet der Governor nun präzise `POWER_THROTTLE` bzw. `POWER_LIMITED` anstelle eines irreführenden thermischen `EMERGENCY_THROTTLE`.
+  - **Headroom-Hysterese (1.5W Puffer):** Verhindert wiederholtes Pendeln an der Leistungsgrenze zwischen 750 und 775 MHz.
+  - Sanfte Takt-Absenkungen bei leichter Überschreitung des Zieltemperatur-Bandes werden im Protokoll nun sauber als `[INFO]` (Regelungsschritt) statt `[WARNING]` klassifiziert.
+- 🪟 **Windows System-Tray Minimierung:**
+  - Das Minimieren des Desktop-Fensters blendet die Anwendung vollständig aus der Windows-Taskleiste aus und hält sie ressourcenschonend im System-Tray aktiv.
+  - Info-Ballonhinweis beim Minimieren informiert über die Hintergrundausführung.
+  - **1-Klick-Wiederherstellung & Kontextmenü:** Linksklick oder Doppelklick auf das Tray-Icon stellt das Fenster sofort wieder her; Kontextmenü mit Optionen zum Öffnen im Browser oder sauberen Beenden.
 
 ---
 
@@ -95,7 +113,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.3.3.exe`
+  `installer_output\BitAxeTool_Setup_v2.3.4.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten

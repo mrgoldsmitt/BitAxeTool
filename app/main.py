@@ -269,7 +269,109 @@ def main():
                 background_color="#0B0F17",
                 text_select=True
             )
+
+            # Windows System Tray Integration (Minimieren in Infobereich)
+            tray = None
+            if sys.platform.startswith("win"):
+                try:
+                    import clr
+                    clr.AddReference("System.Windows.Forms")
+                    clr.AddReference("System.Drawing")
+                    from System.Windows.Forms import (
+                        NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
+                        ToolTipIcon, MouseButtons
+                    )
+                    from System.Drawing import Icon
+
+                    tray = NotifyIcon()
+                    if icon_path and os.path.exists(icon_path):
+                        tray.Icon = Icon(icon_path)
+                    tray.Text = f"BitAxeTool v{APP_VERSION}"
+
+                    menu = ContextMenuStrip()
+                    item_open = ToolStripMenuItem("BitAxeTool öffnen")
+                    item_browser = ToolStripMenuItem("Im Web-Browser öffnen")
+                    sep1 = ToolStripSeparator()
+                    item_exit = ToolStripMenuItem("Beenden")
+
+                    def on_restore_clicked(sender=None, e=None):
+                        try:
+                            window.show()
+                            window.restore()
+                        except Exception as ex:
+                            logger.debug(f"Tray restore error: {ex}")
+
+                    def on_browser_clicked(sender=None, e=None):
+                        try:
+                            webbrowser.open(app_url)
+                        except Exception as ex:
+                            logger.debug(f"Open browser error: {ex}")
+
+                    def on_exit_clicked(sender=None, e=None):
+                        try:
+                            if tray:
+                                tray.Visible = False
+                                tray.Dispose()
+                        except Exception:
+                            pass
+                        try:
+                            window.destroy()
+                        except Exception:
+                            pass
+
+                    def on_tray_mouse_click(sender, e):
+                        if e.Button == MouseButtons.Left:
+                            on_restore_clicked()
+
+                    item_open.Click += on_restore_clicked
+                    item_browser.Click += on_browser_clicked
+                    item_exit.Click += on_exit_clicked
+                    tray.MouseClick += on_tray_mouse_click
+                    tray.DoubleClick += on_restore_clicked
+                    tray.BalloonTipClicked += on_restore_clicked
+
+                    menu.Items.Add(item_open)
+                    menu.Items.Add(item_browser)
+                    menu.Items.Add(sep1)
+                    menu.Items.Add(item_exit)
+                    tray.ContextMenuStrip = menu
+                    tray.Visible = True
+
+                    def on_minimized(*a):
+                        try:
+                            window.hide()
+                            if tray:
+                                tray.Visible = True
+                                tray.ShowBalloonTip(
+                                    2000,
+                                    "BitAxeTool minimiert",
+                                    "BitAxeTool läuft im System-Tray weiter. Klicke auf das Symbol, um die App wieder zu öffnen.",
+                                    ToolTipIcon.Info
+                                )
+                        except Exception as ex:
+                            logger.debug(f"Minimizing to tray error: {ex}")
+
+                    def on_closing(*a):
+                        try:
+                            if tray:
+                                tray.Visible = False
+                                tray.Dispose()
+                        except Exception:
+                            pass
+
+                    window.events.minimized += on_minimized
+                    window.events.closing += on_closing
+                    logger.info("Windows System-Tray minimieren erfolgreich aktiviert.")
+                except Exception as ex:
+                    logger.warning(f"Konnte System-Tray nicht initialisieren ({ex}). Standard-Minimieren aktiv.")
+
             webview.start(icon=icon_path)
+            if tray:
+                try:
+                    tray.Visible = False
+                    tray.Dispose()
+                except Exception:
+                    pass
             if "server" in server_holder and server_holder["server"]:
                 server_holder["server"].should_exit = True
             sys.exit(0)

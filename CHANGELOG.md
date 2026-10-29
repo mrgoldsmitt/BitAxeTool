@@ -4,6 +4,32 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.4] - 2026-10-29
+
+### 🚨 Präzise Alarme & Geräte-spezifische Konfiguration
+- **Geräte-spezifische Alarmeinstellungen (Reiter „Alarme“ pro Miner):**
+  - Jeder Miner besitzt nun im Bearbeiten-Dialog einen eigenen Reiter **„Alarme“**, in dem Alarme individuell für das jeweilige Gerät aktiviert oder stummgeschaltet werden können.
+  - **Individuelle Alarmschwellen:** Einstellbare Überhitzungs-Alarmschwelle (`alarm_temp_threshold`, z.B. 70°C) und VRM-Spannungswandler-Schwelle (`alarm_vr_threshold`, z.B. 86°C) pro Gerät.
+  - **Ereignisfilter pro Gerät:** Offline-Alarm und Watchdog-Reboot-Alarm können für jeden Miner separat ein- oder ausgeschaltet werden.
+  - Vollständige Persistierung der Parameter in `config.json` und sofortige Synchronisation mit dem Hintergrund-Governor.
+
+- **Beseitigung von Fehlalarmen bei Normaltemperatur (> 58°C):**
+  - **Sicherheits-Puffer:** Chiptemperaturen unter 65°C sind gesunde Betriebstemperaturen und lösen garantiert niemals mehr einen Überhitzungsalarm oder Sirenenton aus.
+  - **Saubere Trennung von Leistungs- und Notdrosselung:** Wenn das konfigurierte Watt-Limit erreicht oder überschritten wird, meldet der Governor nun präzise `POWER_THROTTLE` bzw. `POWER_LIMITED` anstelle eines irreführenden thermischen `EMERGENCY_THROTTLE`.
+  - **Headroom-Hysterese (1.5W Puffer):** Verhindert permanentes Pendeln und wiederholtes Anschlagen der Leistungsgrenze zwischen 750 und 775 MHz.
+  - Sanfte Takt-Absenkungen bei leichter Überschreitung des Zieltemperatur-Bandes werden im Protokoll nun sauber als `[INFO]` (Regelungsschritt) statt `[WARNING]` klassifiziert.
+
+### 🪟 Windows System-Tray Minimierung
+- **Minimieren in den Windows Infobereich (System-Tray):**
+  - Das Minimieren des Hauptfensters blendet die App vollständig aus der Windows-Taskleiste aus und hält sie ressourcenschonend im System-Tray aktiv.
+  - Info-Ballonhinweis beim Minimieren informiert über die Hintergrundausführung.
+  - **Tray-Kontextmenü & 1-Klick-Wiederherstellung:**
+    - Linksklick oder Doppelklick auf das BitAxeTool-Icon im Infobereich bringt das Anwendungsfenster sofort wieder in den Vordergrund (`show` & `restore`).
+    - Kontextmenü mit Optionen: *BitAxeTool öffnen*, *Im Web-Browser öffnen* und *Beenden*.
+    - Beim regulären Beenden über das Tray-Menü werden der Hintergrund-Webserver und alle Worker-Threads sauber heruntergefahren.
+
+---
+
 ## [2.3.3] - 2026-10-28
 
 ### 🚨 Zuverlässiges Feedback beim Test-Alarm („Einstellungen testen“)

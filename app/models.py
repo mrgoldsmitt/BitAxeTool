@@ -34,6 +34,13 @@ class MinerConfig(BaseModel):
     flatline_cycles: int = 6          # Number of consecutive 0 GH/s readings to trigger reboot
     enforce_safe_tiers: bool = True   # Follow calibrated voltage-frequency pairing curve
 
+    # Per-device Alarm & Notification Configuration
+    alarm_enabled: bool = True
+    alarm_temp_threshold: Optional[float] = None     # Overheat alarm threshold (°C, default None -> uses max_temp or 70.0)
+    alarm_vr_threshold: Optional[float] = None       # Specific VRM alarm threshold (°C, default None -> uses max_vr_temp - 2.0 or 86.0)
+    alarm_offline: bool = True                       # Alarm when miner goes offline
+    alarm_reboot: bool = True                        # Alarm on watchdog freeze reboot
+
     # AxeOS Network, Pool & Fan Parameters (Synced with AxeOS)
     stratum_url: Optional[str] = None
     stratum_port: Optional[int] = None
@@ -72,7 +79,7 @@ class MinerTelemetry(BaseModel):
     best_session_diff: Optional[int] = 0
 
     # Governor state
-    governor_status: str = "IDLE"   # "OPTIMAL", "RAMPING_UP", "COOLING_DOWN", "EMERGENCY_THROTTLE", "STABILIZING", "OFFLINE"
+    governor_status: str = "IDLE"   # "OPTIMAL", "RAMPING_UP", "COOLING_DOWN", "EMERGENCY_THROTTLE", "POWER_THROTTLE", "POWER_LIMITED", "STABILIZING", "OFFLINE"
     governor_message: str = "Warte auf erste Messung..."
     last_tuned_at: float = 0.0
 

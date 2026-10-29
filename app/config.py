@@ -19,21 +19,30 @@ def _get_base_dir() -> str:
 BASE_DIR = _get_base_dir()
 CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
 CONFIG_BACKUP_PATH = os.path.join(BASE_DIR, "config.json.bak")
+USER_CONFIG_PATH = os.path.join(BASE_DIR, "config.user.json")
+
+
+def get_active_config_path() -> str:
+    """Return user override config path if present, otherwise default config path."""
+    if os.path.exists(USER_CONFIG_PATH):
+        return USER_CONFIG_PATH
+    return CONFIG_PATH
 
 
 def load_config() -> AppConfig:
     """Load configuration from disk. Recovers from backup if main file is corrupted."""
-    if not os.path.exists(CONFIG_PATH):
+    cfg_file = get_active_config_path()
+    if not os.path.exists(cfg_file):
         default_cfg = AppConfig()
         save_config(default_cfg)
         return default_cfg
 
     try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        with open(cfg_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             return AppConfig(**data)
     except Exception as e:
-        logger.warning(f"Error parsing config.json ({e}). Checking backup...")
+        logger.warning(f"Error parsing {cfg_file} ({e}). Checking backup...")
         if os.path.exists(CONFIG_BACKUP_PATH):
             try:
                 with open(CONFIG_BACKUP_PATH, "r", encoding="utf-8") as bf:
@@ -50,19 +59,21 @@ def load_config() -> AppConfig:
 def save_config(config: AppConfig) -> bool:
     """Atomically save configuration to disk with backup creation."""
     try:
+        cfg_file = get_active_config_path()
+        backup_file = f"{cfg_file}.bak"
         # Create backup if original exists
-        if os.path.exists(CONFIG_PATH):
+        if os.path.exists(cfg_file):
             try:
-                shutil.copy2(CONFIG_PATH, CONFIG_BACKUP_PATH)
+                shutil.copy2(cfg_file, backup_file)
             except Exception:
                 pass
 
-        temp_path = f"{CONFIG_PATH}.tmp"
+        temp_path = f"{cfg_file}.tmp"
         with open(temp_path, "w", encoding="utf-8") as f:
             f.write(config.model_dump_json(indent=2))
 
         # Atomic replace
-        os.replace(temp_path, CONFIG_PATH)
+        os.replace(temp_path, cfg_file)
         return True
     except Exception as e:
         logger.error(f"Failed to save configuration: {e}")
@@ -92,5 +103,10 @@ def get_or_create_miner_config(ip: str, model: str = "Unknown", nickname: str = 
         monitor_interval=4,
         tuning_cooldown=30,
         flatline_watchdog=True,
-        enforce_safe_tiers=True
+        enforce_safe_tiers=True,
+        alarm_enabled=True,
+        alarm_temp_threshold=profile.max_safe_temp,
+        alarm_vr_threshold=profile.max_safe_vr_temp - 2.0,
+        alarm_offline=True,
+        alarm_reboot=True
     )

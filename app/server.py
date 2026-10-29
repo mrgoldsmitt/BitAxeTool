@@ -23,7 +23,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.3.3"
+APP_VERSION = "2.3.4"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking

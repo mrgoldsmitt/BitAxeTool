@@ -914,7 +914,7 @@ function closeModal(id) {
 }
 
 function switchMinerEditTab(tabName) {
-    const tabs = ["tuning", "pools", "hardware"];
+    const tabs = ["tuning", "pools", "hardware", "alarms"];
     tabs.forEach(t => {
         const btn = document.getElementById(`tabbtn-miner-${t}`);
         const pane = document.getElementById(`pane-miner-${t}`);
@@ -1025,6 +1025,22 @@ async function openEditModal(ip) {
     document.getElementById("edit-invertscreen-toggle").checked = false;
     document.getElementById("edit-display-timeout").value = 0;
 
+    // Per-device Alarm Settings
+    const alarmEnabledEl = document.getElementById("edit-alarm-enabled");
+    if (alarmEnabledEl) alarmEnabledEl.checked = miner.alarm_enabled !== false;
+
+    const alarmTempEl = document.getElementById("edit-alarm-temp-threshold");
+    if (alarmTempEl) alarmTempEl.value = (miner.alarm_temp_threshold != null) ? miner.alarm_temp_threshold : (miner.max_temp || 70.0);
+
+    const alarmVrEl = document.getElementById("edit-alarm-vr-threshold");
+    if (alarmVrEl) alarmVrEl.value = (miner.alarm_vr_threshold != null) ? miner.alarm_vr_threshold : (miner.max_vr_temp ? (miner.max_vr_temp - 2.0) : 86.0);
+
+    const alarmOfflineEl = document.getElementById("edit-alarm-offline");
+    if (alarmOfflineEl) alarmOfflineEl.checked = miner.alarm_offline !== false;
+
+    const alarmRebootEl = document.getElementById("edit-alarm-reboot");
+    if (alarmRebootEl) alarmRebootEl.checked = miner.alarm_reboot !== false;
+
     openModal("modal-edit-miner");
 
     // Fetch live system info directly from miner via backend proxy
@@ -1094,6 +1110,13 @@ async function saveMinerSettings(e) {
         tuning_cooldown: parseInt(document.getElementById("edit-cooldown").value) || 30,
         flatline_watchdog: document.getElementById("edit-flatline-toggle").checked,
         enabled: document.getElementById("edit-enabled-toggle").checked,
+
+        // Per-device Alarm settings
+        alarm_enabled: document.getElementById("edit-alarm-enabled") ? document.getElementById("edit-alarm-enabled").checked : true,
+        alarm_temp_threshold: parseFloat(document.getElementById("edit-alarm-temp-threshold").value) || 70.0,
+        alarm_vr_threshold: parseFloat(document.getElementById("edit-alarm-vr-threshold").value) || 86.0,
+        alarm_offline: document.getElementById("edit-alarm-offline") ? document.getElementById("edit-alarm-offline").checked : true,
+        alarm_reboot: document.getElementById("edit-alarm-reboot") ? document.getElementById("edit-alarm-reboot").checked : true,
 
         // Multi-miner broadcast option
         apply_to_same_model: document.getElementById("edit-apply-same-model") ? document.getElementById("edit-apply-same-model").checked : false,
@@ -1845,18 +1868,28 @@ function checkNotificationTriggers(telemetryList) {
         const minerCfg = knownMiners.find(m => m.ip === ip);
         const name = (minerCfg && minerCfg.nickname) ? minerCfg.nickname : ip;
 
-        if (prev) {
+        // Check if alarms are explicitly disabled for this specific miner
+        const alarmsActive = (!minerCfg || minerCfg.alarm_enabled !== false);
+
+        if (prev && alarmsActive) {
             // 1. Überhitzung / Notdrosselung
             if (notifSettings.overheat) {
-                const isThrottling = t.governor_status === "EMERGENCY_THROTTLE";
-                const isOverMax = t.temp && minerCfg && minerCfg.max_temp && (t.temp >= minerCfg.max_temp);
-                if (isThrottling || isOverMax) {
+                const alarmThreshold = (minerCfg && minerCfg.alarm_temp_threshold != null)
+                    ? minerCfg.alarm_temp_threshold
+                    : (minerCfg && minerCfg.max_temp ? minerCfg.max_temp : 70.0);
+
+                // Safe threshold check: Temperature must be >= threshold AND safely >= 65.0°C.
+                // 58°C or anything below 65°C is completely normal operating temperature and NEVER an overheat alarm!
+                const isActualOverheat = t.temp && (t.temp >= alarmThreshold) && (t.temp >= 65.0);
+                const isThermalEmergency = (t.governor_status === "EMERGENCY_THROTTLE") && (t.temp && t.temp >= 65.0);
+
+                if (isActualOverheat || isThermalEmergency) {
                     const alertKey = `overheat-${ip}`;
                     if (!lastAlertTimestamps[alertKey] || (now - lastAlertTimestamps[alertKey] > 120000)) {
                         lastAlertTimestamps[alertKey] = now;
                         sendNotification(
                             `ALARM: ${name} überhitzt!`,
-                            `Chip-Temperatur liegt bei ${t.temp ? t.temp.toFixed(1) : '--'}°C. Notdrosselung aktiv!`,
+                            `Chip-Temperatur liegt bei ${t.temp ? t.temp.toFixed(1) : '--'}°C (Schwelle: ${alarmThreshold.toFixed(1)}°C). Notdrosselung aktiv!`,
                             alertKey,
                             true
                         );
@@ -1865,14 +1898,18 @@ function checkNotificationTriggers(telemetryList) {
             }
 
             // 2. VR-Temperatur (Spannungswandler)
-            if (notifSettings.vr && t.vr_temp && minerCfg && minerCfg.max_vr_temp) {
-                if (t.vr_temp >= (minerCfg.max_vr_temp - 2.0)) {
+            if (notifSettings.vr && t.vr_temp) {
+                const vrThreshold = (minerCfg && minerCfg.alarm_vr_threshold != null)
+                    ? minerCfg.alarm_vr_threshold
+                    : (minerCfg && minerCfg.max_vr_temp ? (minerCfg.max_vr_temp - 2.0) : 86.0);
+
+                if (t.vr_temp >= vrThreshold) {
                     const alertKey = `vr-${ip}`;
                     if (!lastAlertTimestamps[alertKey] || (now - lastAlertTimestamps[alertKey] > 120000)) {
                         lastAlertTimestamps[alertKey] = now;
                         sendNotification(
                             `VR-WARNUNG: ${name}`,
-                            `Spannungswandler erreicht kritische ${t.vr_temp.toFixed(1)}°C (Limit: ${minerCfg.max_vr_temp}°C)!`,
+                            `Spannungswandler erreicht kritische ${t.vr_temp.toFixed(1)}°C (Limit: ${vrThreshold.toFixed(1)}°C)!`,
                             alertKey,
                             true
                         );
@@ -1881,7 +1918,7 @@ function checkNotificationTriggers(telemetryList) {
             }
 
             // 3. Miner Offline / Ausfall
-            if (notifSettings.offline) {
+            if (notifSettings.offline && (!minerCfg || minerCfg.alarm_offline !== false)) {
                 if (prev.connected === true && t.connected === false) {
                     sendNotification(
                         `AUSFALL: ${name} ist OFFLINE!`,
@@ -1900,7 +1937,7 @@ function checkNotificationTriggers(telemetryList) {
             }
 
             // 4. Flatline Watchdog Reboot
-            if (notifSettings.reboot) {
+            if (notifSettings.reboot && (!minerCfg || minerCfg.alarm_reboot !== false)) {
                 if (t.governor_status === "RESTARTING" && prev.governor_status !== "RESTARTING") {
                     sendNotification(
                         `WATCHDOG: ${name} startet neu`,
@@ -1912,7 +1949,7 @@ function checkNotificationTriggers(telemetryList) {
             }
 
             // 5. Auto-Tuning Taktsteigerung
-            if (notifSettings.tuning) {
+            if (notifSettings.tuning && (minerCfg && minerCfg.alarm_tuning === true)) {
                 if (t.frequency && prev.frequency && t.frequency > prev.frequency) {
                     sendNotification(
                         `TUNING: ${name} gesteigert`,

@@ -51,6 +51,9 @@ def test_miner_config_defaults():
     assert cfg.max_vr_temp == 88.0
     assert cfg.min_freq == 450
     assert cfg.max_freq == 950
+    assert cfg.alarm_enabled is True
+    assert cfg.alarm_temp_threshold == 72.0
+    assert cfg.alarm_offline is True
 
 
 @pytest.mark.asyncio
@@ -88,6 +91,38 @@ async def test_governor_emergency_throttle():
 
     assert worker.telemetry.governor_status == "EMERGENCY_THROTTLE"
     assert "Temperatur" in worker.telemetry.governor_message or "Drosselung" in worker.telemetry.governor_message
+
+
+@pytest.mark.asyncio
+async def test_governor_power_throttle():
+    """Verify that power limit triggers POWER_THROTTLE without triggering thermal emergency."""
+    cfg = MinerConfig(
+        ip="127.0.0.1",
+        target_temp=66.0,
+        temp_tolerance=2.0,
+        max_temp=72.0,
+        max_watts=28.0,
+        min_freq=450,
+        max_freq=775,
+        freq_step=25,
+        min_voltage=1060,
+        max_voltage=1200
+    )
+    worker = MinerWorker(cfg, log_callback=lambda l: None)
+    now = time.time()
+    info = {
+        "temp": 58.0,  # 58.0°C is completely safe!
+        "vrTemp": 54.0,
+        "power": 28.6,  # Exceeds max_watts (28.0)
+        "frequency": 775,
+        "coreVoltage": 1190,
+        "hashRate": 1500.0
+    }
+    worker._update_telemetry(info, now)
+    await worker._evaluate_governor(now)
+
+    assert worker.telemetry.governor_status == "POWER_THROTTLE"
+    assert "Leistungs-Drosselung" in worker.telemetry.governor_message
 
 
 @pytest.mark.asyncio

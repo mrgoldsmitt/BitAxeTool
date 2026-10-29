@@ -2,7 +2,7 @@
 chcp 65001 >nul
 title BitAxeTool - Windows Firewall Freigabe
 echo ====================================================================
-echo   BitAxeTool v2.1.0 - Windows Firewall Freigabe für lokales Netzwerk
+echo   BitAxeTool - Windows Firewall Freigabe für lokales Netzwerk
 echo ====================================================================
 echo.
 echo Dieses Skript richtet eine Firewall-Ausnahmeregel für Port 21420 ein,

@@ -31,6 +31,10 @@ logs/
 # User config local backups
 config.json.bak
 config.json.tmp
+config.user.json
+config.user.json.*
+ota_updater.py
+*.bin
 
 # OS files
 .DS_Store

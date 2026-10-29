@@ -307,24 +307,22 @@ class MinerWorker:
         is_over_vr = vr_temp is not None and vr_temp >= self.config.max_vr_temp
         is_over_power = power is not None and power >= self.config.max_watts
 
-        if is_over_temp or is_over_vr or is_over_power:
+        if is_over_temp or is_over_vr:
             reason = []
             if is_over_temp:
                 reason.append(f"Chip-Temperatur {temp:.1f}°C >= Limit {self.config.max_temp:.1f}°C")
             if is_over_vr:
                 reason.append(f"VR-Temperatur {vr_temp:.1f}°C >= Limit {self.config.max_vr_temp:.1f}°C")
-            if is_over_power:
-                reason.append(f"Leistung {power:.1f}W >= Limit {self.config.max_watts:.1f}W")
 
             self.telemetry.governor_status = "EMERGENCY_THROTTLE"
-            self.telemetry.governor_message = f"Sicherheits-Drosselung aktiv: {', '.join(reason)}"
+            self.telemetry.governor_message = f"Thermische Notdrosselung aktiv: {', '.join(reason)}"
 
             # Step frequency down immediately
             new_freq = self._get_next_lower_frequency(current_freq)
             new_volt = self._get_safe_voltage(new_freq)
 
             if new_freq < current_freq or new_volt < current_volt:
-                self.log(f"Notdrosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "warning")
+                self.log(f"Thermische Notdrosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "warning")
                 ok, msg = await self.client.apply_tuning(new_freq, new_volt)
                 if ok:
                     self._last_applied_freq = new_freq
@@ -333,8 +331,58 @@ class MinerWorker:
                     self.telemetry.voltage = new_volt
                 self._last_tune_time = now
             else:
-                self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Kühlung oder Netzteil prüfen!", "error")
+                self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Kühlung oder Lüfter prüfen!", "error")
             return
+
+        if is_over_power:
+            reason = [f"Leistung {power:.1f}W >= Limit {self.config.max_watts:.1f}W"]
+            self.telemetry.governor_status = "POWER_THROTTLE"
+            self.telemetry.governor_message = f"Leistungs-Drosselung aktiv: {', '.join(reason)}"
+
+            # Step frequency down immediately
+            new_freq = self._get_next_lower_frequency(current_freq)
+            new_volt = self._get_safe_voltage(new_freq)
+
+            if new_freq < current_freq or new_volt < current_volt:
+                self.log(f"Leistungs-Drosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "info")
+                ok, msg = await self.client.apply_tuning(new_freq, new_volt)
+                if ok:
+                    self._last_applied_freq = new_freq
+                    self._last_applied_volt = new_volt
+                    self.telemetry.frequency = new_freq
+                    self.telemetry.voltage = new_volt
+                self._last_tune_time = now
+            else:
+                self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Netzteil prüfen!", "error")
+            return
+
+        # 2b. Excessive ASIC error rate safeguard (overclock instability / runaway)
+        err_pct = self.telemetry.error_percentage
+        uptime_s = self.telemetry.uptime_seconds or 0
+        if uptime_s > 60 and err_pct is not None and err_pct > 15.0:
+            if now - self._last_tune_time >= self.config.tuning_cooldown:
+                new_freq = self._get_next_lower_frequency(current_freq)
+                new_volt = self._get_safe_voltage(new_freq)
+                if new_freq < current_freq:
+                    self.log(
+                        f"ASIC-Fehlerrate zu hoch ({err_pct:.1f}% > 15.0%). "
+                        f"Reduziere Takt auf {new_freq} MHz @ {new_volt} mV zur Stabilisierung",
+                        "warning"
+                    )
+                    ok, msg = await self.client.apply_tuning(new_freq, new_volt)
+                    if ok:
+                        self._last_applied_freq = new_freq
+                        self._last_applied_volt = new_volt
+                        self.telemetry.frequency = new_freq
+                        self.telemetry.voltage = new_volt
+                    self._last_tune_time = now
+                    self.telemetry.governor_status = "STABILIZING"
+                    self.telemetry.governor_message = f"Hohe Fehlerrate ({err_pct:.1f}%). Takt auf {new_freq} MHz gesenkt."
+                    return
+                else:
+                    self.telemetry.governor_status = "MIN_CLOCK"
+                    self.telemetry.governor_message = f"ASIC-Fehlerrate hoch ({err_pct:.1f}%), aber bereits auf Minimaltakt ({current_freq} MHz)."
+                    return
 
         # 3. Symmetrical Deadband around Target Temperature
         lower_bound = self.config.target_temp - self.config.temp_tolerance
@@ -357,7 +405,7 @@ class MinerWorker:
             new_freq = self._get_next_lower_frequency(current_freq)
             new_volt = self._get_safe_voltage(new_freq)
             if new_freq < current_freq or new_volt < current_volt:
-                self.log(f"Temperatur {temp:.1f}°C über Zielband ({upper_bound:.1f}°C). Senke vorsichtig auf {new_freq} MHz @ {new_volt} mV", "warning")
+                self.log(f"Temperatur {temp:.1f}°C über Zielband ({upper_bound:.1f}°C). Senke vorsichtig auf {new_freq} MHz @ {new_volt} mV", "info")
                 ok, msg = await self.client.apply_tuning(new_freq, new_volt)
                 if ok:
                     self._last_applied_freq = new_freq
@@ -380,8 +428,8 @@ class MinerWorker:
                 self.telemetry.governor_message = f"Maximaler konfigurierter Takt ({current_freq} MHz) erreicht."
                 return
 
-            # Check electrical headroom (leave at least 0.5W margin before max_watts)
-            if power is not None and power >= (self.config.max_watts - 0.5):
+            # Check electrical headroom (leave at least 1.5W margin before max_watts to prevent oscillation)
+            if power is not None and power >= (self.config.max_watts - 1.5):
                 self.telemetry.governor_status = "POWER_LIMITED"
                 self.telemetry.governor_message = f"Leistungsgrenze ({power:.1f}W / {self.config.max_watts:.1f}W) erreicht. Halte Takt."
                 return
