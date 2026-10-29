@@ -7,6 +7,7 @@ import socket
 import logging
 import argparse
 import threading
+import multiprocessing
 import webbrowser
 import subprocess
 
@@ -195,6 +196,7 @@ def run_web_server(host: str, port: int, server_holder: dict):
 
 
 def main():
+    multiprocessing.freeze_support()
     parser = argparse.ArgumentParser(description=f"BitAxeTool v{APP_VERSION} - Multi-AutoTuner for Bitaxe Solo Miners")
     parser.add_argument("--host", default=None, help="Binding host address")
     parser.add_argument("--port", type=int, default=None, help="Port to listen on (default: 21420)")
@@ -278,11 +280,17 @@ def main():
                     clr.AddReference("System.Windows.Forms")
                     clr.AddReference("System.Drawing")
                     from System.Windows.Forms import (
-                        NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
+                        Application, NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
                         ToolTipIcon, MouseButtons, Cursor
                     )
                     from System.Drawing import Icon, Font, FontStyle
                     from System.Reflection import BindingFlags
+
+                    # SetCompatibleTextRenderingDefault must be called before the first control/handle is created
+                    try:
+                        Application.SetCompatibleTextRenderingDefault(False)
+                    except Exception:
+                        pass
 
                     tray = NotifyIcon()
                     if icon_path and os.path.exists(icon_path):
