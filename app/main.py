@@ -322,11 +322,25 @@ def main():
                     def init_tray_on_ui():
                         tray = NotifyIcon()
                         tray_holder["tray"] = tray
-                        if icon_path and os.path.exists(icon_path):
+
+                        # Icon setzen: Bevorzuge form.Icon, ansonsten icon_path, mit SystemIcons Fallback
+                        try:
+                            if form.Icon:
+                                tray.Icon = form.Icon
+                        except Exception:
+                            pass
+                        if not tray.Icon and icon_path and os.path.exists(icon_path):
                             try:
                                 tray.Icon = Icon(icon_path)
                             except Exception:
                                 pass
+                        if not tray.Icon:
+                            try:
+                                from System.Drawing import SystemIcons
+                                tray.Icon = SystemIcons.Application
+                            except Exception:
+                                pass
+
                         tray.Text = f"BitAxeTool v{APP_VERSION}"
 
                         menu = ContextMenuStrip()
@@ -342,11 +356,19 @@ def main():
 
                         def do_restore(sender=None, e=None):
                             try:
-                                form.Show()
                                 form.WindowState = FormWindowState.Normal
                                 form.ShowInTaskbar = True
+                                form.Show()
                                 form.BringToFront()
                                 form.Activate()
+                                try:
+                                    import ctypes
+                                    user32 = ctypes.windll.user32
+                                    SW_RESTORE = 9
+                                    user32.ShowWindowAsync(int(form.Handle), SW_RESTORE)
+                                    user32.SetForegroundWindow(int(form.Handle))
+                                except Exception:
+                                    pass
                             except Exception as ex:
                                 logger.debug(f"Restore error: {ex}")
 
