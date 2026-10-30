@@ -461,8 +461,11 @@ class MinerWorker:
                     return
 
         # 3. Symmetrical Deadband around Target Temperature
-        lower_bound = self.config.target_temp - self.config.temp_tolerance
         upper_bound = self.config.target_temp + self.config.temp_tolerance
+        # Lower sweet spot boundary: tight deadband (max 1.0°C below target) so cold-running miners
+        # (e.g. Noctua setups) don't get stuck prematurely below target when power/clock headroom exists.
+        lower_sweet_spot = max(self.config.target_temp - 1.0, self.config.target_temp - self.config.temp_tolerance)
+        lower_bound = self.config.target_temp - self.config.temp_tolerance
 
         # Check if below configured minimum frequency
         if current_freq < self.config.min_freq:
@@ -488,12 +491,6 @@ class MinerWorker:
                 self.telemetry.governor_status = "RAMPING_UP"
                 self.telemetry.governor_message = f"Takt angehoben auf {target_step} MHz @ {target_volt} mV (Ziel: Mindesttakt {self.config.min_freq} MHz)."
                 return
-
-        # Optimal target equilibrium
-        if temp is not None and temp > 10.0 and lower_bound <= temp <= upper_bound:
-            self.telemetry.governor_status = "OPTIMAL"
-            self.telemetry.governor_message = f"Optimal: {temp:.1f}°C liegt im Zielband ({lower_bound:.1f}°C - {upper_bound:.1f}°C)"
-            return
 
         # 4. Over Target Band (Warm, but below hard emergency max_temp)
         if temp is not None and temp > 10.0 and temp > upper_bound:
@@ -521,8 +518,8 @@ class MinerWorker:
                 self.telemetry.governor_message = f"Bereits auf Minimaltakt ({current_freq} MHz). Kühlung prüfen!"
             return
 
-        # 5. Under Target Band (Cool, thermal headroom available to ramp up)
-        if temp is not None and temp > 10.0 and temp < lower_bound:
+        # 5. Under Target Sweet Spot (Cool, thermal headroom available to ramp up)
+        if temp is not None and temp > 10.0 and temp < lower_sweet_spot:
             # Check maximum configured clock limit
             if current_freq >= self.config.max_freq:
                 self.telemetry.governor_status = "MAX_CLOCK"
@@ -551,7 +548,7 @@ class MinerWorker:
             if now - self._last_tune_time < self.config.tuning_cooldown:
                 self.telemetry.governor_status = "STABILIZING"
                 remaining = int(self.config.tuning_cooldown - (now - self._last_tune_time))
-                self.telemetry.governor_message = f"Thermischer Spielraum ({temp:.1f}°C < {lower_bound:.1f}°C). Stabilisiere ({remaining}s)"
+                self.telemetry.governor_message = f"Thermischer Spielraum ({temp:.1f}°C < {lower_sweet_spot:.1f}°C). Stabilisiere ({remaining}s)"
                 return
 
             # All checks passed: Step up frequency safely
@@ -559,7 +556,7 @@ class MinerWorker:
             new_volt = self._get_safe_voltage(new_freq)
 
             if new_freq > current_freq:
-                self.log(f"Thermischer Spielraum vorhanden ({temp:.1f}°C < {lower_bound:.1f}°C). Erhöhe Takt auf {new_freq} MHz @ {new_volt} mV (Ziel: {self.config.target_temp:.1f}°C)", "info")
+                self.log(f"Thermischer Spielraum vorhanden ({temp:.1f}°C < {lower_sweet_spot:.1f}°C). Erhöhe Takt auf {new_freq} MHz @ {new_volt} mV (Ziel: {self.config.target_temp:.1f}°C)", "info")
                 ok, msg = await self.client.apply_tuning(new_freq, new_volt)
                 if ok:
                     self._last_applied_freq = new_freq
@@ -576,6 +573,13 @@ class MinerWorker:
             else:
                 self.telemetry.governor_status = "MAX_CLOCK"
                 self.telemetry.governor_message = f"Höchster verfügbarer Takt ({current_freq} MHz) erreicht."
+            return
+
+        # Optimal target equilibrium: temp is within sweet spot band [lower_sweet_spot, upper_bound]
+        if temp is not None and temp > 10.0 and lower_sweet_spot <= temp <= upper_bound:
+            self.telemetry.governor_status = "OPTIMAL"
+            self.telemetry.governor_message = f"Optimal: {temp:.1f}°C liegt im Zielband ({lower_sweet_spot:.1f}°C - {upper_bound:.1f}°C)"
+            return
 
     def _get_next_higher_frequency(self, current_freq: int) -> int:
         """Find the next safe frequency step upwards."""

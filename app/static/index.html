@@ -15,9 +15,9 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.7">
-    <script src="/static/js/chart.min.js?v=2.3.7"></script>
-    <script src="/static/js/app.js?v=2.3.7" defer></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.8">
+    <script src="/static/js/chart.min.js?v=2.3.8"></script>
+    <script src="/static/js/app.js?v=2.3.8" defer></script>
 </head>
 <body>
 
@@ -662,7 +662,7 @@
             </div>
 
             <!-- Scrollable Content Body with Form -->
-            <form id="form-edit-miner" class="modal-scroll-form">
+            <form id="form-edit-miner" class="modal-scroll-form" novalidate onsubmit="saveMinerSettings(event); return false;">
                 <div class="modal-scroll-body" id="edit-miner-scroll-body">
                     <!-- TAB 1: Tuning & Thermik -->
                     <div class="miner-edit-pane active" id="pane-miner-tuning">
@@ -689,12 +689,12 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Zieltemperatur (°C)</label>
-                                <input type="number" step="0.5" id="edit-target-temp">
+                                <input type="number" step="any" id="edit-target-temp">
                                 <span class="helper-text">Sollwert (z.B. 62°C)</span>
                             </div>
                             <div class="form-group">
                                 <label>Toleranzband (±°C)</label>
-                                <input type="number" step="0.5" id="edit-temp-tolerance">
+                                <input type="number" step="any" id="edit-temp-tolerance">
                                 <span class="helper-text">Deadband ohne Taktwechsel</span>
                             </div>
                         </div>
@@ -702,19 +702,19 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Max. Chip-Temperatur (°C)</label>
-                                <input type="number" step="0.5" id="edit-max-temp">
+                                <input type="number" step="any" id="edit-max-temp">
                                 <span class="helper-text">Notdrosselung (Standard: 72°C)</span>
                             </div>
                             <div class="form-group">
                                 <label>Max. VRM-Temperatur (°C)</label>
-                                <input type="number" step="0.5" id="edit-max-vr-temp">
+                                <input type="number" step="any" id="edit-max-vr-temp">
                                 <span class="helper-text">Spannungsregler-Limit (88°C)</span>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label>Max. Leistungsaufnahme (Watts)</label>
-                            <input type="number" step="0.5" id="edit-max-watts">
+                            <input type="number" step="any" id="edit-max-watts">
                             <span class="helper-text">Schützt Netzteil &amp; VR vor Überlast (Standard: 26–28W)</span>
                         </div>
 
@@ -907,12 +907,12 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Überhitzungsalarm ab (°C)</label>
-                                <input type="number" step="0.5" id="edit-alarm-temp-threshold" placeholder="70.0">
+                                <input type="number" step="any" id="edit-alarm-temp-threshold" placeholder="70.0">
                                 <span class="helper-text">Warnton erst ab dieser Temperatur (Standard: 70°C; sicher ab 65°C+)</span>
                             </div>
                             <div class="form-group">
                                 <label>VRM-Spannungswandler Alarm (°C)</label>
-                                <input type="number" step="0.5" id="edit-alarm-vr-threshold" placeholder="86.0">
+                                <input type="number" step="any" id="edit-alarm-vr-threshold" placeholder="86.0">
                                 <span class="helper-text">Kritische VRM-Temperatur (Standard: 86°C)</span>
                             </div>
                         </div>
@@ -960,7 +960,7 @@
                     </button>
                     <div style="display: flex; gap: 8px; margin-left: auto;">
                         <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit-miner')">Abbrechen</button>
-                        <button type="submit" id="btn-save-miner-settings" class="btn btn-primary btn-sm">
+                        <button type="button" id="btn-save-miner-settings" onclick="saveMinerSettings(event)" class="btn btn-primary btn-sm">
                             <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                             Speichern
                         </button>

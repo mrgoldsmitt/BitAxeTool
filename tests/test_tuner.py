@@ -240,3 +240,38 @@ async def test_timed_manual_test_mode():
     assert worker._test_mode is False
     assert worker.telemetry.test_mode is False
     assert worker.telemetry.governor_status == "STABILIZING"
+
+
+@pytest.mark.asyncio
+async def test_governor_active_ramp_up_headroom():
+    """Verify that when temp is below the sweet spot and power/clock headroom exists, governor ramps up."""
+    cfg = MinerConfig(
+        ip="192.168.188.197",
+        target_temp=66.0,
+        temp_tolerance=2.0,
+        max_temp=75.0,
+        max_watts=35.0,
+        min_freq=525,
+        max_freq=900,
+        freq_step=25,
+        tuning_cooldown=30
+    )
+    worker = MinerWorker(cfg, log_callback=lambda l: None)
+    now = time.time()
+    worker._last_tune_time = now - 40.0  # Cooldown elapsed
+
+    # Satoshi scenario: 64.2°C (< 65.0°C), 26.8W (< 33.5W), 775 MHz (< 900 MHz)
+    info = {
+        "temp": 64.2,
+        "vrTemp": 62.0,
+        "power": 26.8,
+        "frequency": 775,
+        "coreVoltage": 1180,
+        "hashRate": 1600.0
+    }
+    worker._update_telemetry(info, now)
+    await worker._evaluate_governor(now)
+
+    # Must ramp up towards max_freq
+    assert worker.telemetry.governor_status == "RAMPING_UP"
+    assert worker.telemetry.frequency > 775

@@ -1,10 +1,24 @@
-# BitAxeTool v2.3.7 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.8 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
 Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.3.8
+
+- 🔧 **Zuverlässiges Speichern von Watt- und Takt-Grenzen:**
+  - Formularvalidierung entkoppelt (`novalidate` & unblockierter Action-Button), sodass versteckte Tab-Felder (Lüfter/Display) das Abspeichern in WebView2/Chromium nie wieder blockieren.
+  - Sichere Konvertierung deutscher Kommazahlen (z.B. `35,0`) und beliebiger Zahlenwerte ohne stilles Zurückspringen auf Standardwerte.
+- 🚀 **Aktives Overclock-Hochtakten bei kühlem Setup:**
+  - Der Autotuner-Governor nutzt vorhandenen thermischen und elektrischen Spielraum (`max_watts` / `max_freq`) aktiv zum schrittweisen Hochtakten, wenn Miner dank starker Kühlung (z.B. 3x Noctua) unter der Zieltemperatur laufen.
+- 📊 **Transparente Anzeige konfigurierter Obergrenzen:**
+  - Dashboard-Karten zeigen konfigurierte Grenzwerte permanent neben den Live-Werten an (z.B. `21.4 J/TH • Max: 35.0 W` und `1180 mV • Max: 900 MHz`).
+- ⚡ **Aktualisierte Schnell-Vorlagen:**
+  - Profil „Power (66°C)“ setzt die Leistungsgrenze auf `max_watts = 40.0 W` und `max_freq = 900 MHz`.
 
 ---
 

@@ -4,6 +4,24 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.8] - 2026-10-31
+
+### 🔧 Fix: Zuverlässiges Speichern von Watt- und Takt-Grenzen & Aktives Overclocking
+- **HTML5-Formular-Entkopplung (`novalidate` & unblockiertes Speichern):**
+  - `<form id="form-edit-miner">` verwendet nun `novalidate` und einen direkten Action-Trigger (`type="button"` mit `saveMinerSettings(event)`), wodurch Chromium/WebView2-Formularabbrüche durch inaktive Tabs (z.B. Lüfter- & Display-Felder) restlos eliminiert wurden.
+  - Alle Gleitkomma-Eingabefelder unterstützen nun `step="any"` und verarbeiten deutsche Kommazahlen (z.B. `35,0`) sowie reine Ganzzahlen ohne stilles Zurückspringen auf Standardwerte.
+- **Aktives Hochtakten bei thermischem & elektrischem Spielraum:**
+  - Der Autotuner-Governor verharrt bei kühleren Minern (z.B. Setups mit 3 Noctua-Lüftern bei 64,2 °C) nicht mehr fälschlicherweise im toten Band unterhalb der Zieltemperatur (`target_temp`), sondern nutzt vorhandenen thermischen und elektrischen Spielraum (`max_watts` / `max_freq`) aktiv zum schrittweisen Hochtakten.
+  - Erst beim Erreichen des Sweet Spots (Zieltemperatur ± Toleranz) oder der konfigurierten Obergrenzen (`max_freq`, `max_watts - 1.5W`) stabilisiert sich der Takt.
+- **Transparente Anzeige der Obergrenzen auf den Miner-Karten:**
+  - Auf den Dashboard-Karten werden konfigurierte Maxima nun permanent neben den Live-Werten dargestellt (z.B. `21.4 J/TH • Max: 35.0 W` und `1180 mV • Max: 900 MHz`), sodass vorgenommene Einstellungen stets verifizierbar sind.
+- **Aktualisierte Schnell-Vorlagen (Presets):**
+  - Die Vorlage „Power (66°C)“ setzt die Leistungsgrenze nun zeitgemäß auf `max_watts = 40.0 W` und `max_freq = 900 MHz` (zuvor hartkodiert 28 W / 775 MHz).
+- **Visuelles Feedback bei erfolgreichem Speichern:**
+  - Nach erfolgreichem Speichern von Einstellungen wird eine Bestätigung via iOS-Toast-Banner direkt im Dashboard eingeblendet.
+
+---
+
 ## [2.3.7] - 2026-10-30
 
 ### 🚀 Freie Wertebereiche nach oben & Unbeschränkte Taktung (z.B. 900 MHz+)

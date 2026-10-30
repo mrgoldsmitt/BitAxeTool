@@ -354,7 +354,10 @@ function updateMinerCard(telemetry) {
         freqVal.textContent = telemetry.frequency ? `${telemetry.frequency} MHz` : "--";
     }
     if (freqSub) {
-        freqSub.textContent = telemetry.voltage ? `${telemetry.voltage} mV Kernspannung` : "-- mV";
+        const minerCfg = knownMiners.find(m => m.ip === telemetry.ip);
+        const maxFStr = (minerCfg && minerCfg.max_freq) ? `Max: ${minerCfg.max_freq} MHz` : "";
+        const voltStr = telemetry.voltage ? `${telemetry.voltage} mV` : "-- mV";
+        freqSub.textContent = maxFStr ? `${voltStr} • ${maxFStr}` : voltStr;
     }
 
     // 4. Power & Efficiency Tile
@@ -364,7 +367,14 @@ function updateMinerCard(telemetry) {
         pwrVal.textContent = telemetry.power ? `${telemetry.power.toFixed(1)} W` : "--";
     }
     if (pwrSub) {
-        pwrSub.textContent = telemetry.efficiency_j_th ? `${telemetry.efficiency_j_th} J/TH Effizienz` : "-- J/TH";
+        const minerCfg = knownMiners.find(m => m.ip === telemetry.ip);
+        const maxWStr = (minerCfg && minerCfg.max_watts) ? `Max: ${minerCfg.max_watts} W` : "";
+        const effStr = telemetry.efficiency_j_th ? `${telemetry.efficiency_j_th} J/TH` : "";
+        if (effStr && maxWStr) {
+            pwrSub.textContent = `${effStr} • ${maxWStr}`;
+        } else {
+            pwrSub.textContent = effStr || maxWStr || "--";
+        }
     }
 
     // 5. Best Difficulty directly on Miner Card
@@ -1121,8 +1131,22 @@ async function openEditModal(ip) {
     }
 }
 
+function parseNum(val, fallback) {
+    if (val === null || val === undefined) return fallback;
+    const str = String(val).trim().replace(",", ".");
+    const num = parseFloat(str);
+    return isNaN(num) ? fallback : num;
+}
+
+function parseIntNum(val, fallback) {
+    if (val === null || val === undefined) return fallback;
+    const str = String(val).trim().replace(",", ".");
+    const num = parseInt(str, 10);
+    return isNaN(num) ? fallback : num;
+}
+
 async function saveMinerSettings(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!activeEditingIp) return;
 
     const btnSave = document.getElementById("btn-save-miner-settings");
@@ -1133,26 +1157,26 @@ async function saveMinerSettings(e) {
     }
 
     const payload = {
-        // Governor & Thermal (with fallback defaults if blank)
-        target_temp: parseFloat(document.getElementById("edit-target-temp").value) || 62.0,
-        temp_tolerance: parseFloat(document.getElementById("edit-temp-tolerance").value) || 2.0,
-        max_temp: parseFloat(document.getElementById("edit-max-temp").value) || 72.0,
-        max_vr_temp: parseFloat(document.getElementById("edit-max-vr-temp").value) || 88.0,
-        max_watts: parseFloat(document.getElementById("edit-max-watts").value) || 26.0,
-        min_freq: parseInt(document.getElementById("edit-min-freq").value) || 450,
-        max_freq: parseInt(document.getElementById("edit-max-freq").value) || 750,
-        freq_step: parseInt(document.getElementById("edit-freq-step").value) || 25,
-        min_voltage: parseInt(document.getElementById("edit-min-volt").value) || 1050,
-        max_voltage: parseInt(document.getElementById("edit-max-volt").value) || 1250,
-        voltage_step: parseInt(document.getElementById("edit-volt-step").value) || 10,
-        tuning_cooldown: parseInt(document.getElementById("edit-cooldown").value) || 30,
+        // Governor & Thermal (with robust parsing supporting comma & unconstrained values)
+        target_temp: parseNum(document.getElementById("edit-target-temp").value, 62.0),
+        temp_tolerance: parseNum(document.getElementById("edit-temp-tolerance").value, 2.0),
+        max_temp: parseNum(document.getElementById("edit-max-temp").value, 95.0),
+        max_vr_temp: parseNum(document.getElementById("edit-max-vr-temp").value, 110.0),
+        max_watts: parseNum(document.getElementById("edit-max-watts").value, 35.0),
+        min_freq: parseIntNum(document.getElementById("edit-min-freq").value, 450),
+        max_freq: parseIntNum(document.getElementById("edit-max-freq").value, 1200),
+        freq_step: parseIntNum(document.getElementById("edit-freq-step").value, 25),
+        min_voltage: parseIntNum(document.getElementById("edit-min-volt").value, 1050),
+        max_voltage: parseIntNum(document.getElementById("edit-max-volt").value, 1350),
+        voltage_step: parseIntNum(document.getElementById("edit-volt-step").value, 10),
+        tuning_cooldown: parseIntNum(document.getElementById("edit-cooldown").value, 30),
         flatline_watchdog: document.getElementById("edit-flatline-toggle").checked,
         enabled: document.getElementById("edit-enabled-toggle").checked,
 
         // Per-device Alarm settings
         alarm_enabled: document.getElementById("edit-alarm-enabled") ? document.getElementById("edit-alarm-enabled").checked : true,
-        alarm_temp_threshold: parseFloat(document.getElementById("edit-alarm-temp-threshold").value) || 70.0,
-        alarm_vr_threshold: parseFloat(document.getElementById("edit-alarm-vr-threshold").value) || 86.0,
+        alarm_temp_threshold: parseNum(document.getElementById("edit-alarm-temp-threshold") ? document.getElementById("edit-alarm-temp-threshold").value : 95.0, 95.0),
+        alarm_vr_threshold: parseNum(document.getElementById("edit-alarm-vr-threshold") ? document.getElementById("edit-alarm-vr-threshold").value : 108.0, 108.0),
         alarm_offline: document.getElementById("edit-alarm-offline") ? document.getElementById("edit-alarm-offline").checked : true,
         alarm_reboot: document.getElementById("edit-alarm-reboot") ? document.getElementById("edit-alarm-reboot").checked : true,
 
@@ -1162,25 +1186,25 @@ async function saveMinerSettings(e) {
 
         // AxeOS Stratum Pools
         stratumURL: document.getElementById("edit-stratum-url").value.trim(),
-        stratumPort: document.getElementById("edit-stratum-port").value ? parseInt(document.getElementById("edit-stratum-port").value) : null,
+        stratumPort: document.getElementById("edit-stratum-port").value ? parseIntNum(document.getElementById("edit-stratum-port").value, null) : null,
         stratumUser: document.getElementById("edit-stratum-user").value.trim(),
         stratumPassword: document.getElementById("edit-stratum-pass").value.trim() || undefined,
-        stratumSuggestedDifficulty: document.getElementById("edit-stratum-diff").value ? parseInt(document.getElementById("edit-stratum-diff").value) : null,
+        stratumSuggestedDifficulty: document.getElementById("edit-stratum-diff").value ? parseIntNum(document.getElementById("edit-stratum-diff").value, null) : null,
 
         // AxeOS Fallback Pool
         fallbackStratumURL: document.getElementById("edit-fallback-url").value.trim(),
-        fallbackStratumPort: document.getElementById("edit-fallback-port").value ? parseInt(document.getElementById("edit-fallback-port").value) : null,
+        fallbackStratumPort: document.getElementById("edit-fallback-port").value ? parseIntNum(document.getElementById("edit-fallback-port").value, null) : null,
         fallbackStratumUser: document.getElementById("edit-fallback-user").value.trim(),
         fallbackStratumPassword: document.getElementById("edit-fallback-pass").value.trim() || undefined,
-        fallbackStratumSuggestedDifficulty: document.getElementById("edit-fallback-diff").value ? parseInt(document.getElementById("edit-fallback-diff").value) : null,
+        fallbackStratumSuggestedDifficulty: document.getElementById("edit-fallback-diff").value ? parseIntNum(document.getElementById("edit-fallback-diff").value, null) : null,
 
         // Hardware & Display
         hostname: document.getElementById("edit-hostname").value.trim() || undefined,
         autofanspeed: document.getElementById("edit-autofan-toggle").checked ? 1 : 0,
-        fanspeed: document.getElementById("edit-fanspeed").value ? parseInt(document.getElementById("edit-fanspeed").value) : 100,
-        minFanSpeed: document.getElementById("edit-min-fanspeed").value ? parseInt(document.getElementById("edit-min-fanspeed").value) : 25,
+        fanspeed: document.getElementById("edit-fanspeed").value ? parseIntNum(document.getElementById("edit-fanspeed").value, 100) : 100,
+        minFanSpeed: document.getElementById("edit-min-fanspeed").value ? parseIntNum(document.getElementById("edit-min-fanspeed").value, 25) : 25,
         invertscreen: document.getElementById("edit-invertscreen-toggle").checked ? 1 : 0,
-        displayTimeout: document.getElementById("edit-display-timeout").value ? parseInt(document.getElementById("edit-display-timeout").value) : 0
+        displayTimeout: document.getElementById("edit-display-timeout").value ? parseIntNum(document.getElementById("edit-display-timeout").value, 0) : 0
     };
 
     try {
@@ -1193,6 +1217,7 @@ async function saveMinerSettings(e) {
             const data = await res.json();
             closeModal("modal-edit-miner");
             await loadMiners();
+            showToastBanner("Einstellungen gespeichert", `Werte für ${activeEditingIp} erfolgreich aktualisiert.`);
             console.log("Speichern erfolgreich:", data);
         } else {
             const err = await res.json();
@@ -1251,10 +1276,10 @@ function applyPreset(name) {
     } else if (name === "oc") {
         document.getElementById("edit-target-temp").value = 66.0;
         document.getElementById("edit-temp-tolerance").value = 2.0;
-        document.getElementById("edit-max-temp").value = 72.0;
+        document.getElementById("edit-max-temp").value = 75.0;
         document.getElementById("edit-min-freq").value = 525;
-        document.getElementById("edit-max-freq").value = 775;
-        document.getElementById("edit-max-watts").value = 28.0;
+        document.getElementById("edit-max-freq").value = 900;
+        document.getElementById("edit-max-watts").value = 40.0;
     }
 
     // Visual feedback highlight

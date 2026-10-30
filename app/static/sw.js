@@ -3,13 +3,13 @@
  * Provides offline shell caching, background notification delivery, and PWA installation support.
  */
 
-const CACHE_NAME = 'bitaxetool-v2.3.2';
+const CACHE_NAME = 'bitaxetool-v2.3.8';
 const STATIC_ASSETS = [
     '/',
     '/manifest.json',
-    '/static/css/style.css?v=2.3.2',
-    '/static/js/app.js?v=2.3.2',
-    '/static/js/chart.min.js?v=2.3.2',
+    '/static/css/style.css?v=2.3.8',
+    '/static/js/app.js?v=2.3.8',
+    '/static/js/chart.min.js?v=2.3.8',
     '/static/icons/icon-192.png',
     '/static/icons/icon-512.png',
     '/static/icons/icon-maskable-512.png',
