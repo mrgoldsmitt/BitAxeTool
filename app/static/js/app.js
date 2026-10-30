@@ -271,14 +271,45 @@ function updateMinerCard(telemetry) {
     const govMsg = card.querySelector(".gov-msg");
 
     if (govStatus) {
-        const statusText = telemetry.governor_status || "IDLE";
+        let statusText = telemetry.governor_status || "IDLE";
+        if (telemetry.test_mode) {
+            statusText = "TEST_MODE";
+        }
         govStatus.textContent = statusText;
         govStatus.className = `gov-status ${statusText.toLowerCase()}`;
     }
 
     if (govMsg) {
-        govMsg.textContent = telemetry.governor_message || "";
-        govMsg.title = telemetry.governor_message || "";
+        let msg = telemetry.governor_message || "";
+        if (telemetry.test_mode && telemetry.test_remaining_seconds !== null && telemetry.test_remaining_seconds !== undefined) {
+            const m = Math.floor(telemetry.test_remaining_seconds / 60);
+            const s = telemetry.test_remaining_seconds % 60;
+            msg = `Test aktiv: ${telemetry.test_freq || telemetry.frequency} MHz @ ${telemetry.test_volt || telemetry.voltage} mV (noch ${m}:${s < 10 ? '0' : ''}${s} Min)`;
+        }
+        govMsg.textContent = msg;
+        govMsg.title = msg;
+    }
+
+    // Toggle Takt-Test button between "Takt-Test" and "Test beenden"
+    const tuneBtn = card.querySelector(`#btn-tune-${safeId}`);
+    if (tuneBtn) {
+        if (telemetry.test_mode) {
+            tuneBtn.className = "btn btn-danger btn-sm";
+            tuneBtn.title = "Test sofort beenden und Autotuning aktivieren";
+            tuneBtn.setAttribute("onclick", `stopManualTune('${telemetry.ip}')`);
+            tuneBtn.innerHTML = `
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
+                <span class="btn-tune-text">Test beenden</span>
+            `;
+        } else {
+            tuneBtn.className = "btn btn-secondary btn-sm";
+            tuneBtn.title = "Manuellen Frequenz- und Spannungstest ausführen";
+            tuneBtn.setAttribute("onclick", `openManualTuneModal('${telemetry.ip}')`);
+            tuneBtn.innerHTML = `
+                <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                <span class="btn-tune-text">Takt-Test</span>
+            `;
+        }
     }
 
     // 1. Hashrate Tile
@@ -805,9 +836,9 @@ function createMinerCardHtml(miner) {
                 <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 Optionen
             </button>
-            <button onclick="openManualTuneModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Manuellen Frequenz- und Spannungstest ausführen">
+            <button id="btn-tune-${safeId}" onclick="openManualTuneModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="Manuellen Frequenz- und Spannungstest ausführen">
                 <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
-                Takt-Test
+                <span class="btn-tune-text">Takt-Test</span>
             </button>
             <button onclick="openOtaModal('${miner.ip}')" class="btn btn-secondary btn-sm" title="AxeOS Firmware Over-The-Air aktualisieren">
                 <svg class="ios-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -1232,13 +1263,34 @@ function applyPreset(name) {
     });
 }
 
-// --- Manual Tuning ---
+// --- Manual Tuning & Timed Test Mode ---
 
 function openManualTuneModal(ip) {
     activeEditingIp = ip;
     document.getElementById("manual-tune-ip").textContent = ip;
-    document.getElementById("manual-tune-freq").value = 550;
-    document.getElementById("manual-tune-volt").value = 1100;
+    
+    // Auto pre-fill with current frequency and voltage if available on card
+    const safeId = ip.replace(/\./g, "-");
+    const card = document.getElementById(`miner-card-${safeId}`);
+    let curFreq = 550;
+    let curVolt = 1150;
+    if (card) {
+        const freqElem = card.querySelector(".card-val-freq");
+        const voltElem = card.querySelector(".card-sub-freq");
+        if (freqElem && freqElem.textContent) {
+            const parsedF = parseInt(freqElem.textContent);
+            if (!isNaN(parsedF) && parsedF > 0) curFreq = parsedF;
+        }
+        if (voltElem && voltElem.textContent) {
+            const parsedV = parseInt(voltElem.textContent);
+            if (!isNaN(parsedV) && parsedV > 0) curVolt = parsedV;
+        }
+    }
+
+    document.getElementById("manual-tune-freq").value = curFreq;
+    document.getElementById("manual-tune-volt").value = curVolt;
+    const durInput = document.getElementById("manual-tune-duration");
+    if (durInput) durInput.value = 5;
     openModal("modal-manual-tune");
 }
 
@@ -1248,18 +1300,39 @@ async function submitManualTune(e) {
 
     const freq = parseInt(document.getElementById("manual-tune-freq").value);
     const volt = parseInt(document.getElementById("manual-tune-volt").value);
+    const durInput = document.getElementById("manual-tune-duration");
+    const duration = durInput ? (parseInt(durInput.value) || 5) : 5;
 
     try {
         const res = await fetch(`/api/miner/${activeEditingIp}/tune`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ frequency: freq, voltage: volt })
+            body: JSON.stringify({ frequency: freq, voltage: volt, duration_minutes: duration })
         });
         const data = await res.json();
-        alert(data.message || "Taktbefehl übermittelt.");
         closeModal("modal-manual-tune");
+        if (data.success) {
+            showToastBanner("Takt-Test gestartet", data.message || `Test aktiv für ${duration} Minuten.`);
+        } else {
+            alert(data.message || "Fehler beim Anwenden der Test-Einstellung.");
+        }
     } catch (e) {
         alert("Fehler bei manueller Takteinstellung.");
+    }
+}
+
+async function stopManualTune(ip) {
+    if (!confirm(`Soll der Testmodus für ${ip} beendet und das automatische Autotuning sofort wieder aktiviert werden?`)) return;
+    try {
+        const res = await fetch(`/api/miner/${ip}/tune/stop`, { method: "POST" });
+        const data = await res.json();
+        if (data.success) {
+            showToastBanner("Test beendet", data.message || "Autotuner übernimmt wieder die Regelung.");
+        } else {
+            alert(data.message || "Fehler beim Beenden des Testmodus.");
+        }
+    } catch (e) {
+        alert("Fehler beim Beenden des Testmodus.");
     }
 }
 

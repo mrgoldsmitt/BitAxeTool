@@ -87,6 +87,12 @@ class MinerTelemetry(BaseModel):
     frequency_options: List[int] = Field(default_factory=list)
     voltage_options: List[int] = Field(default_factory=list)
 
+    # Test Mode State
+    test_mode: bool = False
+    test_remaining_seconds: Optional[int] = None
+    test_freq: Optional[int] = None
+    test_volt: Optional[int] = None
+
 
 class AppConfig(BaseModel):
     web_port: int = 21420
@@ -106,6 +112,7 @@ class LogEntry(BaseModel):
 class ManualTuneRequest(BaseModel):
     frequency: int
     voltage: int
+    duration_minutes: Optional[int] = 5
 
 
 class ScanRequest(BaseModel):

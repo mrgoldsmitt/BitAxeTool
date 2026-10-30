@@ -535,6 +535,7 @@ body {
 .gov-status.ramping_up { color: var(--accent-cyan); }
 .gov-status.throttling { color: var(--accent-red); }
 .gov-status.stabilizing { color: var(--accent-orange); }
+.gov-status.test_mode { color: #ff9f0a; font-weight: 800; text-shadow: 0 0 8px rgba(255, 159, 10, 0.4); }
 
 .gov-msg {
   color: var(--text-muted);

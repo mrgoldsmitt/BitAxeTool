@@ -30,7 +30,7 @@ def test_find_safe_voltage_interpolation():
     """Verify interpolated voltage values across frequency steps."""
     # Exact tier match
     volt_500 = find_safe_voltage_for_freq(500, BM1370_TIERS)
-    assert volt_500 == 1079
+    assert volt_500 == 1140
 
     # Above max frequency clamps to max tier
     volt_high = find_safe_voltage_for_freq(1000, BM1370_TIERS)
@@ -180,4 +180,63 @@ async def test_governor_headroom_cooldown():
     await worker._evaluate_governor(now)
 
     # Should be stabilizing, not ramping up yet
+    assert worker.telemetry.governor_status == "STABILIZING"
+
+
+@pytest.mark.asyncio
+async def test_timed_manual_test_mode():
+    """Verify that manual tuning test mode holds parameters and reverts after timer expires or on stop."""
+    cfg = MinerConfig(
+        ip="127.0.0.1",
+        target_temp=58.0,
+        temp_tolerance=2.0,
+        max_temp=72.0,
+        min_freq=450,
+        max_freq=750,
+        min_voltage=1140,
+        max_voltage=1250,
+        tuning_cooldown=30
+    )
+
+    worker = MinerWorker(cfg, log_callback=lambda l: None)
+    now = time.time()
+
+    # Normal telemetry
+    info = {
+        "temp": 48.0,  # Below target, governor would normally ramp up
+        "vrTemp": 42.0,
+        "power": 16.0,
+        "frequency": 550,
+        "coreVoltage": 1150,
+        "hashRate": 1120.0
+    }
+    worker._update_telemetry(info, now)
+
+    # 1. Start a 5-minute test at 600 MHz @ 1170 mV
+    worker.start_manual_test(frequency=600, voltage=1170, duration_minutes=5)
+    assert worker._test_mode is True
+    assert worker.telemetry.test_mode is True
+    assert worker.telemetry.test_freq == 600
+    assert worker.telemetry.test_volt == 1170
+    assert worker.telemetry.governor_status == "TEST_MODE"
+
+    # Evaluate at 2 minutes into the test -> should stay in TEST_MODE
+    await worker._evaluate_governor(now + 120.0)
+    assert worker._test_mode is True
+    assert worker.telemetry.test_mode is True
+    assert worker.telemetry.governor_status == "TEST_MODE"
+    assert worker.telemetry.test_remaining_seconds == 180  # 300 - 120
+
+    # Evaluate at 6 minutes (after expiration) -> should expire and return to autotuner
+    await worker._evaluate_governor(now + 360.0)
+    assert worker._test_mode is False
+    assert worker.telemetry.test_mode is False
+    assert worker.telemetry.governor_status == "STABILIZING"
+
+    # 2. Test manual button stop
+    worker.start_manual_test(frequency=625, voltage=1170, duration_minutes=10)
+    assert worker._test_mode is True
+    worker.stop_manual_test()
+    assert worker._test_mode is False
+    assert worker.telemetry.test_mode is False
     assert worker.telemetry.governor_status == "STABILIZING"

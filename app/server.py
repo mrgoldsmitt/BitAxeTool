@@ -24,7 +24,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.3.5"
+APP_VERSION = "2.3.6"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -617,8 +617,30 @@ async def identify_miner(ip: str):
 async def manual_tune_miner(ip: str, req: ManualTuneRequest):
     client = BitAxeClient(ip)
     ok, msg = await client.apply_tuning(req.frequency, req.voltage)
-    add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="info" if ok else "error", miner_ip=ip, message=f"Manuelle Taktung: {msg}"))
-    return {"success": ok, "message": msg}
+    if ok:
+        duration = req.duration_minutes if req.duration_minutes is not None and req.duration_minutes > 0 else 5
+        tuner_mgr.start_manual_test(ip, req.frequency, req.voltage, duration)
+        success_msg = f"Test-Einstellung aktiv: {req.frequency} MHz @ {req.voltage} mV ({duration} Min). Autotuner übernimmt danach wieder."
+        add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="info", miner_ip=ip, message=success_msg))
+        return {"success": True, "message": success_msg, "duration_minutes": duration}
+    else:
+        add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="error", miner_ip=ip, message=f"Test-Einstellung fehlgeschlagen: {msg}"))
+        return {"success": False, "message": msg}
+
+
+@app.post("/api/miner/{ip}/tune/stop")
+async def stop_manual_tune_miner(ip: str):
+    """Stop active manual test and immediately resume normal autotuning."""
+    stopped = tuner_mgr.stop_manual_test(ip)
+    if stopped:
+        add_log(LogEntry(
+            timestamp=time.strftime("%H:%M:%S"),
+            level="info",
+            miner_ip=ip,
+            message="Test-Einstellung beendet. Autotuning wieder aktiv."
+        ))
+        return {"success": True, "message": "Test beendet. Autotuner ist wieder aktiv."}
+    return {"success": False, "message": "Kein aktiver Testmodus für diesen Miner gefunden."}
 
 
 async def fetch_github_latest_release() -> Dict[str, Any]:

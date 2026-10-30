@@ -90,7 +90,7 @@ def test_api_version_and_changelog():
     ver_res = client.get("/api/version")
     assert ver_res.status_code == 200
     ver_data = ver_res.json()
-    assert ver_data["version"] == "2.3.5"
+    assert ver_data["version"] == "2.3.6"
     assert ver_data["appName"] == "BitAxeTool"
     assert ver_data["author"] == "mrgoldsmitt"
     assert ver_data["website"] == "https://mrgoldsmitt.work"
@@ -98,7 +98,7 @@ def test_api_version_and_changelog():
 
     cl_res = client.get("/api/changelog")
     assert cl_res.status_code == 200
-    assert "2.3.5" in cl_res.text
+    assert "2.3.6" in cl_res.text
     assert "mrgoldsmitt" in cl_res.text
 
     lic_res = client.get("/api/license")
@@ -140,3 +140,41 @@ def test_api_ota_endpoints(monkeypatch):
     assert data["status"] == "complete"
     assert len(data["results"]) == 1
     assert data["results"][0]["success"] is True
+
+
+def test_api_manual_tune_and_stop(monkeypatch):
+    """Verify manual tuning test mode and premature stop endpoints."""
+    from app.bitaxe_client import BitAxeClient
+
+    async def mock_apply(self, frequency, voltage):
+        return True, f"Mock Applied: {frequency} MHz @ {voltage} mV"
+
+    monkeypatch.setattr(BitAxeClient, "apply_tuning", mock_apply)
+
+    test_ip = "192.168.1.188"
+    # Ensure miner is registered
+    client.post("/api/miners", json={
+        "ip": test_ip,
+        "nickname": "Test Tune Miner",
+        "model": "Bitaxe Gamma 601 (BM1370)"
+    })
+
+    # Start timed test for 8 minutes
+    tune_res = client.post(f"/api/miner/{test_ip}/tune", json={
+        "frequency": 600,
+        "voltage": 1160,
+        "duration_minutes": 8
+    })
+    assert tune_res.status_code == 200
+    t_data = tune_res.json()
+    assert t_data["success"] is True
+    assert t_data["duration_minutes"] == 8
+
+    # Stop test early
+    stop_res = client.post(f"/api/miner/{test_ip}/tune/stop")
+    assert stop_res.status_code == 200
+    s_data = stop_res.json()
+    assert s_data["success"] is True
+
+    # Clean up
+    client.delete(f"/api/miners/{test_ip}")

@@ -1,10 +1,25 @@
-# BitAxeTool v2.3.5 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.6 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
 Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.3.6
+
+- ⏱️ **Zeitgesteuerter Test-Modus & Test-Beendigung:**
+  - **Automatische Rückkehr zum Autotuner:** Manuelle Test-Einstellungen (`/api/miner/{ip}/tune`) laufen standardmäßig für konfigurierbare $x$ Minuten (Standard: 5 min; Schnellwahl für 2m, 5m, 15m, 30m). Nach Ablauf der Zeit übernimmt der Autotuner nahtlos wieder die Regelung.
+  - **Sofortiger Abbruch-Button („Test beenden“):** Auf der Miner-Karte erscheint während eines aktiven Tests ein auffälliger roter Button, mit dem der Test jederzeit vorzeitig beendet werden kann.
+  - **Live-Countdown:** Im Dashboard wird die verbleibende Testzeit in Minuten und Sekunden in Echtzeit angezeigt (`Test-Modus aktiv: noch Xm Ys`).
+- 🛡️ **BM1370 Spannungs-Sicherheitsboden (1140 mV):**
+  - Feste Untergrenze von mindestens 1140 mV für BM1370-ASICs (Bitaxe Gamma) in allen Profilstufen. Verhindert fatales Untervolten (1080–1100 mV) bei Fehlern, wodurch zuvor massive ASIC-Fehlerraten (> 40 %) ausgelöst wurden.
+- 🧊 **Tuner-Schutzmechanismen & Kaskaden-Sperre:**
+  - **Drossel-Cooldown (15s):** Begrenzt Notdrosselungen auf maximal einen Schritt alle 15 Sekunden, um ein Einfrieren der ASIC-Takt-PLL durch zu schnelle Frequenzänderungen zu verhindern.
+  - **Boot-Grace-Period (5 min):** Schützt frische Reboots vor vorzeitigem Eingreifen des Error-Runaway-Wächters.
+  - **Boot-Temperatur-Filter:** Ignoriert Sensor-Ausreißer (< 10.0 °C) während des ESP32-Bootvorgangs.
 
 ---
 

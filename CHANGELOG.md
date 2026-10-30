@@ -4,6 +4,32 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.6] - 2026-10-30
+
+### ⏱️ Zeitgesteuerter Test-Modus für manuelle Einstellungen & Test-Beendigung
+- **Konfigurierbare Test-Dauer für manuelle Taktung:**
+  - Manuelle Test-Einstellungen (`/api/miner/{ip}/tune`) überschreiben den Autotuner nun nicht mehr dauerhaft unbemerkt.
+  - Im Dialog „Manuelle Frequenz / Spannung“ kann eine Test-Dauer in Minuten gewählt werden (Standard: 5 Minuten, mit Schnellwahltasten: 2m, 5m, 15m, 30m).
+  - Nach Ablauf der gewählten Testdauer übernimmt der automatische Governor nahtlos wieder die Regelung und optimiert Frequenz und Spannung nach den hinterlegten Regeln.
+- **Sofortiger Test-Abbruch & Rückkehr zur Automatik:**
+  - Solange ein manueller Test aktiv ist, wechselt der „Testen“-Button auf der Miner-Karte dynamisch zu einem auffälligen roten Button **„Test beenden“**.
+  - Ein Klick auf diesen Button oder Aufruf von `POST /api/miner/{ip}/tune/stop` beendet den Test-Modus sofort und übergibt die Kontrolle wieder an den Autotuner.
+- **Echtzeit-Countdown & Statusanzeige:**
+  - Das Dashboard zeigt während des Tests live verbleibende Minuten und Sekunden an (`Test-Modus aktiv: noch Xm Ys`).
+  - Farbliche Hervorhebung des Status als aktiver manueller Test.
+
+### 🛡️ BM1370 Spannungs-Sicherheitsboden & Governor-Härtung
+- **Minimale Betriebsspannung für BM1370 (Bitaxe Gamma):**
+  - Sicherheitsuntergrenze von 1140 mV für BM1370-Taktstufen eingeführt (Factory Default 1150 mV). Verhindert, dass der Autotuner den Chip bei Fehlern auf 1080–1100 mV untervoltet, was zu extremen ASIC-Fehlerraten (> 40 %) und PLL-Instabilitäten geführt hatte.
+- **Drossel-Cooldown (15s Mindestabstand):**
+  - Notabschläge bei thermischen Spitzen oder Watt-Überschreitungen werden nun auf maximal einen Schritt alle 15 Sekunden gedrosselt. Dies verhindert Kaskadeneffekte (z.B. 8 Taktsenkungen innerhalb von 29 Sekunden), die den PLL-Taktgenerator des ASIC einfrieren ließen.
+- **Boot-Grace-Period (5 Minuten) für Error Runaway:**
+  - Die Fehlerraten-Überwachung greift erst ab 300 Sekunden Uptime, um normale Initialisierungsfehler nach Kaltstarts oder Reboots nicht fälschlich als dauerhaften Hardware-Defekt einzustufen.
+- **Filter für ungültige Boot-Temperaturen:**
+  - Sensorauslesungen unter 10.0 °C (wie typischerweise -1.0 °C während des ESP32-Reboots) werden ignoriert und nicht fälschlich als thermischer Headroom für Hochtaktung interpretiert.
+
+---
+
 ## [2.3.5] - 2026-10-29
 
 ### 🪟 Windows System-Tray Menü & Titel-Synchronisation

@@ -34,6 +34,49 @@ class MinerWorker:
         self._supported_freqs: List[int] = []
         self._supported_volts: List[int] = []
 
+        # Timed test mode state
+        self._test_mode: bool = False
+        self._test_end_time: Optional[float] = None
+        self._test_duration_minutes: int = 5
+        self._test_freq: Optional[int] = None
+        self._test_volt: Optional[int] = None
+
+    def start_manual_test(self, frequency: int, voltage: int, duration_minutes: int = 5) -> None:
+        """Start a timed manual tuning test."""
+        self._test_mode = True
+        self._test_duration_minutes = duration_minutes
+        self._test_freq = frequency
+        self._test_volt = voltage
+        if duration_minutes > 0:
+            self._test_end_time = time.time() + (duration_minutes * 60.0)
+        else:
+            self._test_end_time = None
+        self._last_applied_freq = frequency
+        self._last_applied_volt = voltage
+        self.telemetry.test_mode = True
+        self.telemetry.test_freq = frequency
+        self.telemetry.test_volt = voltage
+        self.telemetry.test_remaining_seconds = int(duration_minutes * 60) if duration_minutes > 0 else None
+        self.telemetry.governor_status = "TEST_MODE"
+        self.telemetry.governor_message = f"Test aktiv: {frequency} MHz @ {voltage} mV ({duration_minutes} Min)"
+        self.log(f"Test-Einstellung aktiviert: {frequency} MHz @ {voltage} mV für {duration_minutes} Min.", "info")
+
+    def stop_manual_test(self) -> None:
+        """Stop active manual test and return control to the autotuner governor."""
+        if self._test_mode:
+            self._test_mode = False
+            self._test_end_time = None
+            self._test_freq = None
+            self._test_volt = None
+            self.telemetry.test_mode = False
+            self.telemetry.test_remaining_seconds = None
+            self.telemetry.test_freq = None
+            self.telemetry.test_volt = None
+            self._last_tune_time = time.time()
+            self.telemetry.governor_status = "STABILIZING"
+            self.telemetry.governor_message = "Test-Einstellung beendet. Autotuning wieder aktiv."
+            self.log("Test-Einstellung beendet. Autotuner übernimmt wieder die Regelung.", "info")
+
     def start(self) -> None:
         """Start the worker's asynchronous loop."""
         if self._running and self._task and not self._task.done():
@@ -303,8 +346,8 @@ class MinerWorker:
                 return
 
         # 2. Hard Limits: Emergency Safety Throttle (Over-temp, VR over-temp, or Power limit exceeded)
-        is_over_temp = temp is not None and temp >= self.config.max_temp
-        is_over_vr = vr_temp is not None and vr_temp >= self.config.max_vr_temp
+        is_over_temp = temp is not None and temp > 10.0 and temp >= self.config.max_temp
+        is_over_vr = vr_temp is not None and vr_temp > 10.0 and vr_temp >= self.config.max_vr_temp
         is_over_power = power is not None and power >= self.config.max_watts
 
         if is_over_temp or is_over_vr:
@@ -317,21 +360,22 @@ class MinerWorker:
             self.telemetry.governor_status = "EMERGENCY_THROTTLE"
             self.telemetry.governor_message = f"Thermische Notdrosselung aktiv: {', '.join(reason)}"
 
-            # Step frequency down immediately
-            new_freq = self._get_next_lower_frequency(current_freq)
-            new_volt = self._get_safe_voltage(new_freq)
+            # Step frequency down with minimum stabilization cooldown (15s) to avoid crashing the ASIC PLL
+            if now - self._last_tune_time >= 15.0:
+                new_freq = self._get_next_lower_frequency(current_freq)
+                new_volt = self._get_safe_voltage(new_freq)
 
-            if new_freq < current_freq or new_volt < current_volt:
-                self.log(f"Thermische Notdrosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "warning")
-                ok, msg = await self.client.apply_tuning(new_freq, new_volt)
-                if ok:
-                    self._last_applied_freq = new_freq
-                    self._last_applied_volt = new_volt
-                    self.telemetry.frequency = new_freq
-                    self.telemetry.voltage = new_volt
-                self._last_tune_time = now
-            else:
-                self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Kühlung oder Lüfter prüfen!", "error")
+                if new_freq < current_freq or new_volt < current_volt:
+                    self.log(f"Thermische Notdrosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "warning")
+                    ok, msg = await self.client.apply_tuning(new_freq, new_volt)
+                    if ok:
+                        self._last_applied_freq = new_freq
+                        self._last_applied_volt = new_volt
+                        self.telemetry.frequency = new_freq
+                        self.telemetry.voltage = new_volt
+                    self._last_tune_time = now
+                else:
+                    self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Kühlung oder Lüfter prüfen!", "error")
             return
 
         if is_over_power:
@@ -339,27 +383,59 @@ class MinerWorker:
             self.telemetry.governor_status = "POWER_THROTTLE"
             self.telemetry.governor_message = f"Leistungs-Drosselung aktiv: {', '.join(reason)}"
 
-            # Step frequency down immediately
-            new_freq = self._get_next_lower_frequency(current_freq)
-            new_volt = self._get_safe_voltage(new_freq)
+            # Step frequency down with minimum stabilization cooldown (15s)
+            if now - self._last_tune_time >= 15.0:
+                new_freq = self._get_next_lower_frequency(current_freq)
+                new_volt = self._get_safe_voltage(new_freq)
 
-            if new_freq < current_freq or new_volt < current_volt:
-                self.log(f"Leistungs-Drosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "info")
-                ok, msg = await self.client.apply_tuning(new_freq, new_volt)
-                if ok:
-                    self._last_applied_freq = new_freq
-                    self._last_applied_volt = new_volt
-                    self.telemetry.frequency = new_freq
-                    self.telemetry.voltage = new_volt
-                self._last_tune_time = now
-            else:
-                self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Netzteil prüfen!", "error")
+                if new_freq < current_freq or new_volt < current_volt:
+                    self.log(f"Leistungs-Drosselung ({', '.join(reason)}): Reduziere Takt auf {new_freq} MHz @ {new_volt} mV", "info")
+                    ok, msg = await self.client.apply_tuning(new_freq, new_volt)
+                    if ok:
+                        self._last_applied_freq = new_freq
+                        self._last_applied_volt = new_volt
+                        self.telemetry.frequency = new_freq
+                        self.telemetry.voltage = new_volt
+                    self._last_tune_time = now
+                else:
+                    self.log(f"Bereits auf Minimaltakt ({new_freq} MHz). Netzteil prüfen!", "error")
             return
+
+        # 2b. Timed Manual Test Mode: hold test clock/voltage until expired or canceled
+        if self._test_mode:
+            if self._test_end_time and now >= self._test_end_time:
+                # Timer expired! Return control to autotuner
+                self._test_mode = False
+                self._test_end_time = None
+                self._test_freq = None
+                self._test_volt = None
+                self.telemetry.test_mode = False
+                self.telemetry.test_remaining_seconds = None
+                self.telemetry.test_freq = None
+                self.telemetry.test_volt = None
+                self._last_tune_time = now
+                self.telemetry.governor_status = "STABILIZING"
+                self.telemetry.governor_message = f"Test ({self._test_duration_minutes} Min) beendet. Autotuner übernimmt wieder."
+                self.log(f"Test-Einstellung nach {self._test_duration_minutes} Minuten abgelaufen. Autotuner übernimmt wieder die Regelung.", "info")
+            else:
+                remaining_sec = int(self._test_end_time - now) if self._test_end_time else 0
+                self.telemetry.test_mode = True
+                self.telemetry.test_remaining_seconds = remaining_sec
+                self.telemetry.test_freq = self._test_freq
+                self.telemetry.test_volt = self._test_volt
+                self.telemetry.governor_status = "TEST_MODE"
+                mins = remaining_sec // 60
+                secs = remaining_sec % 60
+                time_str = f"{mins}:{secs:02d} Min" if self._test_end_time else "unbegrenzt"
+                self.telemetry.governor_message = f"Test aktiv: {self._test_freq} MHz @ {self._test_volt} mV (noch {time_str})"
+                # Hold test parameters without autotuner override
+                return
 
         # 2b. Excessive ASIC error rate safeguard (overclock instability / runaway)
         err_pct = self.telemetry.error_percentage
         uptime_s = self.telemetry.uptime_seconds or 0
-        if uptime_s > 60 and err_pct is not None and err_pct > 15.0:
+        # Allow at least 300s (5 minutes) for startup work queue to dilute initial boot PLL errors
+        if uptime_s >= 300 and err_pct is not None and err_pct > 15.0:
             if now - self._last_tune_time >= self.config.tuning_cooldown:
                 new_freq = self._get_next_lower_frequency(current_freq)
                 new_volt = self._get_safe_voltage(new_freq)
@@ -389,13 +465,13 @@ class MinerWorker:
         upper_bound = self.config.target_temp + self.config.temp_tolerance
 
         # Optimal target equilibrium
-        if temp is not None and lower_bound <= temp <= upper_bound:
+        if temp is not None and temp > 10.0 and lower_bound <= temp <= upper_bound:
             self.telemetry.governor_status = "OPTIMAL"
             self.telemetry.governor_message = f"Optimal: {temp:.1f}°C liegt im Zielband ({lower_bound:.1f}°C - {upper_bound:.1f}°C)"
             return
 
         # 4. Over Target Band (Warm, but below hard emergency max_temp)
-        if temp is not None and temp > upper_bound:
+        if temp is not None and temp > 10.0 and temp > upper_bound:
             if now - self._last_tune_time < self.config.tuning_cooldown:
                 self.telemetry.governor_status = "STABILIZING"
                 remaining = int(self.config.tuning_cooldown - (now - self._last_tune_time))
@@ -421,7 +497,7 @@ class MinerWorker:
             return
 
         # 5. Under Target Band (Cool, thermal headroom available to ramp up)
-        if temp is not None and temp < lower_bound:
+        if temp is not None and temp > 10.0 and temp < lower_bound:
             # Check maximum configured clock limit
             if current_freq >= self.config.max_freq:
                 self.telemetry.governor_status = "MAX_CLOCK"
@@ -531,6 +607,22 @@ class TunerManager:
     def get_all_telemetry(self) -> List[MinerTelemetry]:
         """Collect current telemetry snapshots across all miners."""
         return [w.telemetry for w in self.workers.values()]
+
+    def start_manual_test(self, ip: str, frequency: int, voltage: int, duration_minutes: int = 5) -> bool:
+        """Activate timed manual test mode on a specific miner worker."""
+        worker = self.workers.get(ip)
+        if worker:
+            worker.start_manual_test(frequency, voltage, duration_minutes)
+            return True
+        return False
+
+    def stop_manual_test(self, ip: str) -> bool:
+        """Stop timed manual test mode and return control to the autotuner."""
+        worker = self.workers.get(ip)
+        if worker:
+            worker.stop_manual_test()
+            return True
+        return False
 
     def stop_all(self) -> None:
         """Stop all background workers cleanly."""
