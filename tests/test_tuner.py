@@ -47,12 +47,12 @@ def test_miner_config_defaults():
     assert cfg.ip == "192.168.1.100"
     assert cfg.nickname == "TestGamma"
     assert cfg.target_temp == 62.0
-    assert cfg.max_temp == 72.0
-    assert cfg.max_vr_temp == 88.0
-    assert cfg.min_freq == 450
-    assert cfg.max_freq == 950
+    assert cfg.max_temp == 95.0
+    assert cfg.max_vr_temp == 110.0
+    assert cfg.min_freq == 350
+    assert cfg.max_freq == 2500
     assert cfg.alarm_enabled is True
-    assert cfg.alarm_temp_threshold == 72.0
+    assert cfg.alarm_temp_threshold == 95.0
     assert cfg.alarm_offline is True
 
 

@@ -1040,6 +1040,9 @@ async function openEditModal(ip) {
     const applyCheckbox = document.getElementById("edit-apply-same-model");
     if (applyCheckbox) applyCheckbox.checked = false;
 
+    const applyFreqNowCheckbox = document.getElementById("edit-apply-freq-now");
+    if (applyFreqNowCheckbox) applyFreqNowCheckbox.checked = true;
+
     // Default / cached values for AxeOS fields
     document.getElementById("edit-stratum-url").value = miner.stratum_url || "";
     document.getElementById("edit-stratum-port").value = miner.stratum_port || "";
@@ -1155,6 +1158,7 @@ async function saveMinerSettings(e) {
 
         // Multi-miner broadcast option
         apply_to_same_model: document.getElementById("edit-apply-same-model") ? document.getElementById("edit-apply-same-model").checked : false,
+        apply_freq_now: document.getElementById("edit-apply-freq-now") ? document.getElementById("edit-apply-freq-now").checked : true,
 
         // AxeOS Stratum Pools
         stratumURL: document.getElementById("edit-stratum-url").value.trim(),
@@ -1301,18 +1305,28 @@ async function submitManualTune(e) {
     const freq = parseInt(document.getElementById("manual-tune-freq").value);
     const volt = parseInt(document.getElementById("manual-tune-volt").value);
     const durInput = document.getElementById("manual-tune-duration");
-    const duration = durInput ? (parseInt(durInput.value) || 5) : 5;
+    const rawDur = durInput ? parseInt(durInput.value) : 5;
+    const isPermanent = isNaN(rawDur) || rawDur <= 0;
+    const duration = isPermanent ? 0 : rawDur;
 
     try {
         const res = await fetch(`/api/miner/${activeEditingIp}/tune`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ frequency: freq, voltage: volt, duration_minutes: duration })
+            body: JSON.stringify({
+                frequency: freq,
+                voltage: volt,
+                duration_minutes: duration,
+                permanent: isPermanent
+            })
         });
         const data = await res.json();
         closeModal("modal-manual-tune");
         if (data.success) {
-            showToastBanner("Takt-Test gestartet", data.message || `Test aktiv für ${duration} Minuten.`);
+            const title = isPermanent ? "Taktung dauerhaft aktiv" : "Takt-Test gestartet";
+            const msg = data.message || (isPermanent ? `Dauerhaft ${freq} MHz / ${volt} mV gespeichert.` : `Test aktiv für ${duration} Minuten.`);
+            showToastBanner(title, msg);
+            await loadMiners();
         } else {
             alert(data.message || "Fehler beim Anwenden der Test-Einstellung.");
         }

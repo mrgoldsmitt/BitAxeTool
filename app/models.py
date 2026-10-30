@@ -15,16 +15,16 @@ class MinerConfig(BaseModel):
     # Thermal & Power Parameters (Calibrated for real-world safe headroom)
     target_temp: float = 62.0         # Balanced target temperature (°C)
     temp_tolerance: float = 2.0       # Symmetrical deadband (±2.0°C)
-    max_temp: float = 70.0            # Hard thermal limit before emergency throttle (°C)
-    max_vr_temp: float = 88.0         # Voltage regulator maximum safe temperature (°C)
-    max_watts: float = 26.0           # Maximum power draw (Watts)
+    max_temp: float = 75.0            # Hard thermal limit before emergency throttle (°C)
+    max_vr_temp: float = 95.0         # Voltage regulator maximum safe temperature (°C)
+    max_watts: float = 35.0           # Maximum power draw (Watts)
 
-    # Clock & Voltage Parameters
+    # Clock & Voltage Parameters (Unbounded upwards)
     min_freq: int = 450
-    max_freq: int = 750
+    max_freq: int = 1200
     freq_step: int = 25
     min_voltage: int = 1060
-    max_voltage: int = 1220
+    max_voltage: int = 1400
     voltage_step: int = 10
 
     # Stabilization & Watchdogs
@@ -112,7 +112,8 @@ class LogEntry(BaseModel):
 class ManualTuneRequest(BaseModel):
     frequency: int
     voltage: int
-    duration_minutes: Optional[int] = 5
+    duration_minutes: Optional[int] = 5  # Test duration in minutes (0 = permanent / unlimited)
+    permanent: Optional[bool] = False    # If True or duration_minutes == 0, saved permanently to config
 
 
 class ScanRequest(BaseModel):

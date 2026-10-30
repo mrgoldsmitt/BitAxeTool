@@ -24,7 +24,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.3.6"
+APP_VERSION = "2.3.7"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -444,6 +444,10 @@ async def update_miner_settings(ip: str, updated_fields: Dict[str, Any]):
         affected_miners = [target]
 
     # Separate AxeOS device settings from local BitAxeTool Governor config
+    apply_freq_now = bool(updated_fields.pop("apply_freq_now", False))
+    target_freq = updated_fields.pop("target_freq", None)
+    if not target_freq and apply_freq_now and "max_freq" in updated_fields:
+        target_freq = updated_fields["max_freq"]
     axeos_keys = {
         "stratumURL", "stratumPort", "stratumUser", "stratumPassword", "stratumSuggestedDifficulty",
         "fallbackStratumURL", "fallbackStratumPort", "fallbackStratumUser", "fallbackStratumPassword",
@@ -491,6 +495,26 @@ async def update_miner_settings(ip: str, updated_fields: Dict[str, Any]):
 
     save_config(config)
     tuner_mgr.sync_miners(config.miners)
+
+    # If immediate frequency application requested, apply directly to hardware
+    if apply_freq_now and target_freq:
+        for miner in affected_miners:
+            try:
+                worker = tuner_mgr.workers.get(miner.ip)
+                freq_val = int(target_freq)
+                volt_val = miner.max_voltage
+                if worker:
+                    volt_val = worker._get_safe_voltage(freq_val)
+                client = BitAxeClient(miner.ip)
+                ok_tune, msg_tune = await client.apply_tuning(freq_val, volt_val)
+                if ok_tune and worker:
+                    worker._last_applied_freq = freq_val
+                    worker._last_applied_volt = volt_val
+                    worker.telemetry.frequency = freq_val
+                    worker.telemetry.voltage = volt_val
+                    worker.telemetry.governor_message = f"Takt per Sofort-Einstellung auf {freq_val} MHz @ {volt_val} mV gesetzt."
+            except Exception as e:
+                logger.warning(f"Sofort-Taktung für {miner.ip} fehlgeschlagen: {e}")
 
     # If AxeOS hardware settings were changed, push to device(s) asynchronously
     axe_status_list = []
@@ -617,15 +641,46 @@ async def identify_miner(ip: str):
 async def manual_tune_miner(ip: str, req: ManualTuneRequest):
     client = BitAxeClient(ip)
     ok, msg = await client.apply_tuning(req.frequency, req.voltage)
-    if ok:
-        duration = req.duration_minutes if req.duration_minutes is not None and req.duration_minutes > 0 else 5
+    if not ok:
+        add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="error", miner_ip=ip, message=f"Takteinstellung fehlgeschlagen: {msg}"))
+        return {"success": False, "message": msg}
+
+    duration = req.duration_minutes
+    is_permanent = req.permanent or duration == 0
+
+    if is_permanent:
+        # Save permanently to config
+        config = load_config()
+        target = next((m for m in config.miners if m.ip == ip), None)
+        if target:
+            if req.frequency > target.max_freq:
+                target.max_freq = req.frequency
+            if req.voltage > target.max_voltage:
+                target.max_voltage = req.voltage
+            save_config(config)
+            tuner_mgr.sync_miners(config.miners)
+
+        tuner_mgr.stop_manual_test(ip)
+        worker = tuner_mgr.workers.get(ip)
+        if worker:
+            worker._last_applied_freq = req.frequency
+            worker._last_applied_volt = req.voltage
+            worker.telemetry.frequency = req.frequency
+            worker.telemetry.voltage = req.voltage
+            worker.telemetry.test_mode = False
+            worker.telemetry.test_remaining_seconds = None
+            worker.telemetry.governor_status = "OPTIMAL"
+            worker.telemetry.governor_message = f"Takt dauerhaft auf {req.frequency} MHz @ {req.voltage} mV gesetzt."
+
+        success_msg = f"Takt dauerhaft auf {req.frequency} MHz @ {req.voltage} mV gespeichert und angewendet."
+        add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="success", miner_ip=ip, message=success_msg))
+        return {"success": True, "message": success_msg, "duration_minutes": 0, "permanent": True}
+    else:
+        duration = duration if duration is not None and duration > 0 else 5
         tuner_mgr.start_manual_test(ip, req.frequency, req.voltage, duration)
         success_msg = f"Test-Einstellung aktiv: {req.frequency} MHz @ {req.voltage} mV ({duration} Min). Autotuner übernimmt danach wieder."
         add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="info", miner_ip=ip, message=success_msg))
-        return {"success": True, "message": success_msg, "duration_minutes": duration}
-    else:
-        add_log(LogEntry(timestamp=time.strftime("%H:%M:%S"), level="error", miner_ip=ip, message=f"Test-Einstellung fehlgeschlagen: {msg}"))
-        return {"success": False, "message": msg}
+        return {"success": True, "message": success_msg, "duration_minutes": duration, "permanent": False}
 
 
 @app.post("/api/miner/{ip}/tune/stop")

@@ -86,69 +86,69 @@ PROFILES: Dict[str, AsicProfile] = {
     "BM1370": AsicProfile(
         model_name="Bitaxe Gamma 601",
         asic_model="BM1370",
-        min_freq=450,
-        max_freq=950,
+        min_freq=350,
+        max_freq=2500,
         default_freq=525,
         freq_step=25,
         min_voltage=1140,
-        max_voltage=1300,
+        max_voltage=2500,
         default_voltage=1150,
         voltage_step=10,
         default_target_temp=62.0,
-        max_safe_temp=72.0,
-        max_safe_vr_temp=88.0,
-        default_max_watts=28.0,
+        max_safe_temp=95.0,
+        max_safe_vr_temp=110.0,
+        default_max_watts=150.0,
         scaling_tiers=BM1370_TIERS,
     ),
     "BM1366": AsicProfile(
         model_name="Bitaxe Ultra 204",
         asic_model="BM1366",
-        min_freq=400,
-        max_freq=575,
+        min_freq=300,
+        max_freq=2500,
         default_freq=475,
         freq_step=25,
-        min_voltage=1100,
-        max_voltage=1240,
+        min_voltage=1000,
+        max_voltage=2500,
         default_voltage=1160,
         voltage_step=15,
         default_target_temp=62.0,
-        max_safe_temp=70.0,
-        max_safe_vr_temp=85.0,
-        default_max_watts=18.0,
+        max_safe_temp=95.0,
+        max_safe_vr_temp=110.0,
+        default_max_watts=150.0,
         scaling_tiers=BM1366_TIERS,
     ),
     "BM1368": AsicProfile(
         model_name="Bitaxe Supra 401",
         asic_model="BM1368",
-        min_freq=450,
-        max_freq=650,
+        min_freq=350,
+        max_freq=2500,
         default_freq=525,
         freq_step=25,
-        min_voltage=1080,
-        max_voltage=1220,
+        min_voltage=1000,
+        max_voltage=2500,
         default_voltage=1125,
         voltage_step=10,
         default_target_temp=62.0,
-        max_safe_temp=70.0,
-        max_safe_vr_temp=88.0,
-        default_max_watts=22.0,
+        max_safe_temp=95.0,
+        max_safe_vr_temp=110.0,
+        default_max_watts=150.0,
         scaling_tiers=BM1368_TIERS,
     ),
     "BM1397": AsicProfile(
         model_name="Bitaxe Max / 1397",
         asic_model="BM1397",
-        min_freq=400,
-        max_freq=550,
+        min_freq=300,
+        max_freq=2500,
         default_freq=450,
         freq_step=25,
-        min_voltage=1100,
-        max_voltage=1250,
+        min_voltage=1000,
+        max_voltage=2500,
         default_voltage=1150,
         voltage_step=15,
         default_target_temp=62.0,
-        max_safe_temp=70.0,
-        max_safe_vr_temp=85.0,
-        default_max_watts=18.0,
+        max_safe_temp=95.0,
+        max_safe_vr_temp=110.0,
+        default_max_watts=150.0,
         scaling_tiers=[
             VoltageTier(frequency=400, voltage=1100, target_hashrate=350.0),
             VoltageTier(frequency=450, voltage=1150, target_hashrate=400.0),
@@ -161,18 +161,18 @@ PROFILES: Dict[str, AsicProfile] = {
 GENERIC_PROFILE = AsicProfile(
     model_name="Generic Bitaxe",
     asic_model="Generic",
-    min_freq=400,
-    max_freq=650,
+    min_freq=300,
+    max_freq=2500,
     default_freq=500,
     freq_step=25,
-    min_voltage=1060,
-    max_voltage=1220,
+    min_voltage=1000,
+    max_voltage=2500,
     default_voltage=1120,
     voltage_step=10,
     default_target_temp=62.0,
-    max_safe_temp=70.0,
-    max_safe_vr_temp=88.0,
-    default_max_watts=24.0,
+    max_safe_temp=95.0,
+    max_safe_vr_temp=110.0,
+    default_max_watts=150.0,
     scaling_tiers=BM1370_TIERS,
 )
 
@@ -198,14 +198,22 @@ def get_profile_for_model(model_str: Optional[str]) -> AsicProfile:
 
 
 def find_safe_voltage_for_freq(freq: int, tiers: List[VoltageTier], default_voltage: int = 1100) -> int:
-    """Look up interpolated safe voltage for a given frequency from the tier list."""
+    """Look up interpolated safe voltage for a given frequency from the tier list (smoothly extrapolated beyond top tier)."""
     if not tiers:
         return default_voltage
     sorted_tiers = sorted(tiers, key=lambda t: t.frequency)
     if freq <= sorted_tiers[0].frequency:
         return sorted_tiers[0].voltage
     if freq >= sorted_tiers[-1].frequency:
-        return sorted_tiers[-1].voltage
+        t_last = sorted_tiers[-1]
+        if len(sorted_tiers) >= 2:
+            t_prev = sorted_tiers[-2]
+            delta_f = max(1, t_last.frequency - t_prev.frequency)
+            delta_v = t_last.voltage - t_prev.voltage
+            slope = delta_v / delta_f
+            extrapolated = t_last.voltage + int((freq - t_last.frequency) * max(0.1, slope))
+            return extrapolated
+        return t_last.voltage
 
     # Find closest or interpolate
     for i in range(len(sorted_tiers) - 1):

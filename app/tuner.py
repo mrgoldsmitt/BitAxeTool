@@ -464,6 +464,31 @@ class MinerWorker:
         lower_bound = self.config.target_temp - self.config.temp_tolerance
         upper_bound = self.config.target_temp + self.config.temp_tolerance
 
+        # Check if below configured minimum frequency
+        if current_freq < self.config.min_freq:
+            if temp is not None and temp >= self.config.max_temp:
+                self.telemetry.governor_status = "EMERGENCY_THROTTLE"
+                self.telemetry.governor_message = f"Notfall-Temperatur ({temp:.1f}°C >= {self.config.max_temp:.1f}°C)! Takt kann nicht auf Mindesttakt gehoben werden."
+                return
+            if power is not None and power >= self.config.max_watts:
+                self.telemetry.governor_status = "POWER_THROTTLE"
+                self.telemetry.governor_message = f"Leistungsgrenze ({power:.1f}W >= {self.config.max_watts:.1f}W)! Takt kann nicht auf Mindesttakt gehoben werden."
+                return
+            if now - self._last_tune_time >= self.config.tuning_cooldown:
+                target_step = self._get_next_higher_frequency(current_freq)
+                target_volt = self._get_safe_voltage(target_step)
+                self.log(f"Takt ({current_freq} MHz) unter Mindesttakt ({self.config.min_freq} MHz). Hebe an auf {target_step} MHz @ {target_volt} mV", "info")
+                ok, msg = await self.client.apply_tuning(target_step, target_volt)
+                if ok:
+                    self._last_applied_freq = target_step
+                    self._last_applied_volt = target_volt
+                    self.telemetry.frequency = target_step
+                    self.telemetry.voltage = target_volt
+                self._last_tune_time = now
+                self.telemetry.governor_status = "RAMPING_UP"
+                self.telemetry.governor_message = f"Takt angehoben auf {target_step} MHz @ {target_volt} mV (Ziel: Mindesttakt {self.config.min_freq} MHz)."
+                return
+
         # Optimal target equilibrium
         if temp is not None and temp > 10.0 and lower_bound <= temp <= upper_bound:
             self.telemetry.governor_status = "OPTIMAL"
@@ -558,6 +583,9 @@ class MinerWorker:
         for f in freqs:
             if f > current_freq and f <= self.config.max_freq:
                 return f
+        if current_freq < self.config.max_freq:
+            step = max(5, self.config.freq_step or 25)
+            return min(self.config.max_freq, current_freq + step)
         return min(current_freq, self.config.max_freq)
 
     def _get_next_lower_frequency(self, current_freq: int) -> int:

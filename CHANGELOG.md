@@ -4,6 +4,25 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.7] - 2026-10-30
+
+### 🚀 Freie Wertebereiche nach oben & Unbeschränkte Taktung (z.B. 900 MHz+)
+- **Aufhebung künstlicher Obergrenzen:**
+  - Sämtliche künstliche Begrenzungen für Frequenz, Spannung, Leistung und Temperaturschwellen in Hardware-Profilen (`hardware_profiles.py`) und Validierungsmodellen (`models.py`) wurden freigegeben (Frequenzen bis 2500 MHz, Spannungen bis 2500 mV, Leistungsaufnahme bis 150 W, Grenztemperaturen bis 95 °C / 110 °C VR).
+  - Volle Flexibilität für Custom-Setups, stärkere Netzteile oder Spezialkühlungen (z.B. 3x Noctua Lüfter).
+- **Sofortige Hardware-Taktung beim Speichern („apply_freq_now“):**
+  - Beim Speichern von Miner-Einstellungen in den Optionen wird die gewünschte Taktfrequenz (`max_freq` / `target_freq`) ab sofort direkt an die AxeOS-Hardware übertragen und angewendet, anstatt nur passiv in der Konfigurationsdatei abgelegt zu werden.
+  - Neue Option „Takt sofort auf Miner anwenden (Sofort-Taktung)“ im Optionen-Dialog (standardmäßig aktiv).
+- **Dynamische Spannungs-Extrapolation für hohe Frequenzen:**
+  - Bei Frequenzen oberhalb der hinterlegten Profil-Tabellenstufen (z.B. > 800 MHz beim BM1370) wird die benötigte Spannung anhand der linearen Steigung der obersten Spannungsstufen dynamisch extrapoliert, anstatt auf die Maximalspannung der Standardtabelle geklammert zu werden.
+- **Aktives Hochtakten durch den Autotuner (`current_freq < min_freq`):**
+  - Läuft ein Miner unterhalb der eingestellten Minimalfrequenz, verharrt der Autotuner nicht mehr im Status `OPTIMAL`, sondern taktet die Frequenz aktiv in `freq_step`-Schritten hoch, bis der Zielbereich erreicht ist (unter Berücksichtigung von thermischem und elektrischem Headroom).
+- **Dauerhafte manuelle Taktung („∞ Dauerhaft“):**
+  - Im Takt-Dialog steht neben den zeitbegrenzten Tests (2m, 5m, 15m, 30m) nun der Modus **„∞ Dauerhaft“** (`duration_minutes: 0`) zur Verfügung.
+  - Speichert die gewählte Frequenz und Spannung direkt dauerhaft in die Miner-Konfiguration, ohne nach einer Testphase zurückzuspringen.
+
+---
+
 ## [2.3.6] - 2026-10-30
 
 ### ⏱️ Zeitgesteuerter Test-Modus für manuelle Einstellungen & Test-Beendigung

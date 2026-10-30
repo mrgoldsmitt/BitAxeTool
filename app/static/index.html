@@ -8,16 +8,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
-    <title>BitAxeTool v2.3.6 - Multi-AutoTuner & Safety Governor</title>
+    <title>BitAxeTool v2.3.7 - Multi-AutoTuner & Safety Governor</title>
     
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.6">
-    <script src="/static/js/chart.min.js?v=2.3.6"></script>
-    <script src="/static/js/app.js?v=2.3.6" defer></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.7">
+    <script src="/static/js/chart.min.js?v=2.3.7"></script>
+    <script src="/static/js/app.js?v=2.3.7" defer></script>
 </head>
 <body>
 
@@ -27,7 +27,7 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.6</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.7</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
@@ -263,7 +263,7 @@
         <!-- Bottom Page Footer with Author Copyright & CC License -->
         <footer class="ios-page-footer">
             <div class="ios-footer-content">
-                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.6</strong></span>
+                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.7</strong></span>
                 <span class="ios-footer-sep">&bull;</span>
                 <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
                 <span class="ios-footer-sep">&bull;</span>
@@ -526,7 +526,7 @@
                     </div>
                     <div class="ios-menu-text">
                         <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
-                        <div class="ios-menu-sub">Version 2.3.6 • Alle Neuerungen &amp; Updates</div>
+                        <div class="ios-menu-sub">Version 2.3.7 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
 
@@ -548,7 +548,7 @@
             <div class="ios-menu-footer-card">
                 <div class="footer-card-row">
                     <div class="footer-card-info">
-                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.6</span></div>
+                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.7</span></div>
                         <div class="footer-author-text">
                             &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
                         </div>
@@ -756,6 +756,15 @@
                         <div class="form-group">
                             <label>Spannungsschritt (mV)</label>
                             <input type="number" id="edit-volt-step">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 6px;">
+                            <label class="switch-label">
+                                <span>Takt sofort auf Miner anwenden (Sofort-Taktung)</span>
+                                <input type="checkbox" id="edit-apply-freq-now" class="switch-input" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                            <span class="helper-text">Überträgt den gewählten Maximaltakt beim Speichern direkt an den Miner.</span>
                         </div>
 
                         <div class="settings-group-title">Schutzfunktionen</div>
@@ -984,21 +993,23 @@
                     </div>
                 </div>
                 <div class="form-group" style="margin-top: 10px;">
-                    <label>Testdauer in Minuten (danach greift wieder der Autotuner)</label>
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <input type="number" id="manual-tune-duration" value="5" min="1" max="1440" step="1" required style="width: 100px;">
+                    <label>Testdauer in Minuten (0 = dauerhaft ohne Rückstellung)</label>
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <input type="number" id="manual-tune-duration" value="5" min="0" step="1" required style="width: 90px;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);">Minuten</span>
-                        <div style="margin-left: auto; display: flex; gap: 4px;">
+                        <div style="margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap;">
                             <button type="button" class="btn btn-secondary btn-xs" onclick="document.getElementById('manual-tune-duration').value = 2;">2m</button>
                             <button type="button" class="btn btn-secondary btn-xs" onclick="document.getElementById('manual-tune-duration').value = 5;">5m</button>
                             <button type="button" class="btn btn-secondary btn-xs" onclick="document.getElementById('manual-tune-duration').value = 15;">15m</button>
                             <button type="button" class="btn btn-secondary btn-xs" onclick="document.getElementById('manual-tune-duration').value = 30;">30m</button>
+                            <button type="button" class="btn btn-primary btn-xs" onclick="document.getElementById('manual-tune-duration').value = 0;" title="Dauerhaft als Frequenz speichern und regeln">∞ Dauerhaft</button>
                         </div>
                     </div>
+                    <span class="helper-text" style="margin-top: 4px; display: block;">Tipp: Mit 0 Minuten oder "∞ Dauerhaft" wird die Frequenz fest in die Konfiguration übernommen.</span>
                 </div>
                 <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-manual-tune')">Abbrechen</button>
-                    <button type="submit" class="btn btn-primary">Test starten</button>
+                    <button type="submit" class="btn btn-primary">Anwenden</button>
                 </div>
             </form>
         </div>
@@ -1122,7 +1133,7 @@
             <!-- Modal Footer -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Version 2.3.6 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
+                    Version 2.3.7 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
                 </span>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
             </div>

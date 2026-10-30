@@ -1,10 +1,25 @@
-# BitAxeTool v2.3.6 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.7 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
 Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.3.7
+
+- 🚀 **Freie Wertebereiche & Unbeschränkte Taktung (z.B. 900 MHz+):**
+  - Aufhebung aller künstlichen Obergrenzen für Frequenz, Kernspannung, Leistung und Schutztemperaturen in Hardware-Profilen und Validierungsmodellen. Ideal für Miner mit erweiterter Lüfterbestückung (z.B. 3x Noctua) oder Hochleistungs-Netzteilen.
+- ⚡ **Sofortige Hardware-Taktung beim Speichern („apply_freq_now“):**
+  - Beim Konfigurieren von Taktwerten im Optionen-Dialog wird die Zielfrequenz sofort an AxeOS übermittelt und angewendet, anstatt nur passiv in `config.json` hinterlegt zu werden.
+- 📈 **Dynamische Spannungs-Extrapolation:**
+  - Automatische lineare Hochrechnung der sicheren Spannung für Frequenzen oberhalb der vordefinierten Tabellen (z.B. > 800 MHz auf BM1370).
+- 🔄 **Aktives Hochtakten bei `current_freq < min_freq`:**
+  - Der Autotuner verharrt nicht mehr im Status `OPTIMAL`, wenn der Miner unterhalb der gewünschten Minimalfrequenz läuft, sondern taktet aktiv hoch, solange thermischer und elektrischer Headroom vorhanden ist.
+- ♾️ **Dauerhafte manuelle Taktung („∞ Dauerhaft“):**
+  - Schnellauswahl für permanente manuelle Taktung (`duration_minutes: 0`) im Takt-Dialog, die dauerhaft in der Gerätekonfiguration gespeichert wird, ohne nach einer Testphase zurückzuspringen.
 
 ---
 

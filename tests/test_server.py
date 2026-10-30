@@ -90,7 +90,7 @@ def test_api_version_and_changelog():
     ver_res = client.get("/api/version")
     assert ver_res.status_code == 200
     ver_data = ver_res.json()
-    assert ver_data["version"] == "2.3.6"
+    assert ver_data["version"] == "2.3.7"
     assert ver_data["appName"] == "BitAxeTool"
     assert ver_data["author"] == "mrgoldsmitt"
     assert ver_data["website"] == "https://mrgoldsmitt.work"
@@ -98,7 +98,7 @@ def test_api_version_and_changelog():
 
     cl_res = client.get("/api/changelog")
     assert cl_res.status_code == 200
-    assert "2.3.6" in cl_res.text
+    assert "2.3.7" in cl_res.text
     assert "mrgoldsmitt" in cl_res.text
 
     lic_res = client.get("/api/license")
