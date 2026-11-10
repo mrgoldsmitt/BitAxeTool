@@ -196,7 +196,7 @@ def run_web_server(host: str, port: int, server_holder: dict):
 
 
 def start_headless_tray(app_url: str, icon_path: str, server_holder: dict):
-    """Run a standalone Windows System Tray icon on a dedicated STA thread for headless/background mode."""
+    """Run a standalone Windows System Tray icon on the main thread for headless/background mode."""
     try:
         import clr
         clr.AddReference("System.Windows.Forms")
@@ -206,94 +206,76 @@ def start_headless_tray(app_url: str, icon_path: str, server_holder: dict):
             ToolTipIcon, MouseButtons
         )
         from System.Drawing import Icon, SystemIcons, Font, FontStyle
-        from System.Threading import Thread, ThreadStart, ApartmentState
 
-        stop_event = threading.Event()
-
-        def tray_worker():
-            tray = NotifyIcon()
-            try:
-                if icon_path and os.path.exists(icon_path):
-                    tray.Icon = Icon(icon_path)
-                else:
-                    tray.Icon = SystemIcons.Application
-            except Exception:
+        tray = NotifyIcon()
+        try:
+            if icon_path and os.path.exists(icon_path):
+                tray.Icon = Icon(icon_path)
+            else:
                 tray.Icon = SystemIcons.Application
+        except Exception:
+            tray.Icon = SystemIcons.Application
 
-            tray.Text = f"BitAxeTool v{APP_VERSION} (Aktiv)"
+        tray.Text = f"BitAxeTool v{APP_VERSION} (Aktiv)"
 
-            menu = ContextMenuStrip()
-            item_open = ToolStripMenuItem("BitAxeTool im Browser öffnen")
-            item_open.Font = Font(item_open.Font, FontStyle.Bold)
-            item_open.Click += lambda s, e: webbrowser.open(app_url)
+        menu = ContextMenuStrip()
+        item_open = ToolStripMenuItem("BitAxeTool im Browser öffnen")
+        item_open.Font = Font(item_open.Font, FontStyle.Bold)
+        item_open.Click += lambda s, e: webbrowser.open(app_url)
 
-            sep1 = ToolStripSeparator()
-            item_status = ToolStripMenuItem("AutoTuner: Aktiv")
-            item_status.Enabled = False
+        sep1 = ToolStripSeparator()
+        item_status = ToolStripMenuItem("AutoTuner: Aktiv")
+        item_status.Enabled = False
 
-            sep2 = ToolStripSeparator()
-            def on_exit(s, e):
-                try:
-                    tray.Visible = False
-                    tray.Dispose()
-                except Exception:
-                    pass
-                if "server" in server_holder and server_holder["server"]:
-                    server_holder["server"].should_exit = True
-                Application.Exit()
-                stop_event.set()
-                import os
-                os._exit(0)
-
-            item_exit = ToolStripMenuItem("Beenden")
-            item_exit.Click += on_exit
-
-            menu.Items.Add(item_open)
-            menu.Items.Add(sep1)
-            menu.Items.Add(item_status)
-            menu.Items.Add(sep2)
-            menu.Items.Add(item_exit)
-
-            tray.ContextMenuStrip = menu
-            tray.DoubleClick += lambda s, e: webbrowser.open(app_url)
-            tray.MouseClick += lambda s, e: webbrowser.open(app_url) if e.Button == MouseButtons.Left else None
-
-            tray.Visible = True
-
-            try:
-                tray.ShowBalloonTip(
-                    3000,
-                    "BitAxeTool Hintergrunddienst",
-                    "BitAxeTool läuft im System-Tray und überwacht deine Miner.",
-                    ToolTipIcon.Info
-                )
-            except Exception:
-                pass
-
-            Application.Run()
+        sep2 = ToolStripSeparator()
+        def on_exit(s, e):
             try:
                 tray.Visible = False
                 tray.Dispose()
             except Exception:
                 pass
-
-        tray_thread = Thread(ThreadStart(tray_worker))
-        tray_thread.SetApartmentState(ApartmentState.STA)
-        tray_thread.IsBackground = True
-        tray_thread.Start()
-
-        try:
-            while not stop_event.is_set():
-                time.sleep(1)
-        except (KeyboardInterrupt, SystemExit):
             if "server" in server_holder and server_holder["server"]:
                 server_holder["server"].should_exit = True
             try:
-                from System.Windows.Forms import Application
                 Application.Exit()
             except Exception:
                 pass
-            sys.exit(0)
+            import os
+            os._exit(0)
+
+        item_exit = ToolStripMenuItem("Beenden")
+        item_exit.Click += on_exit
+
+        menu.Items.Add(item_open)
+        menu.Items.Add(sep1)
+        menu.Items.Add(item_status)
+        menu.Items.Add(sep2)
+        menu.Items.Add(item_exit)
+
+        tray.ContextMenuStrip = menu
+        tray.DoubleClick += lambda s, e: webbrowser.open(app_url)
+        tray.MouseClick += lambda s, e: webbrowser.open(app_url) if e.Button == MouseButtons.Left else None
+
+        tray.Visible = True
+
+        try:
+            tray.ShowBalloonTip(
+                3000,
+                "BitAxeTool Hintergrunddienst",
+                "BitAxeTool läuft im System-Tray und überwacht deine Miner.",
+                ToolTipIcon.Info
+            )
+        except Exception:
+            pass
+
+        # Blocks on main thread running the WinForms message loop until Application.Exit()
+        Application.Run()
+
+        try:
+            tray.Visible = False
+            tray.Dispose()
+        except Exception:
+            pass
 
     except Exception as ex:
         logger.warning(f"Konnte Headless System-Tray nicht initialisieren ({ex}). Läuft ohne Tray.")
