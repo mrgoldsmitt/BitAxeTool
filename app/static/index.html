@@ -8,16 +8,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BitAxe">
-    <title>BitAxeTool v2.3.7 - Multi-AutoTuner & Safety Governor</title>
+    <title>BitAxeTool v2.3.9 - Multi-AutoTuner & Safety Governor</title>
     
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16.png">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="/static/css/style.css?v=2.3.8">
-    <script src="/static/js/chart.min.js?v=2.3.8"></script>
-    <script src="/static/js/app.js?v=2.3.8" defer></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=2.3.9">
+    <script src="/static/js/chart.min.js?v=2.3.9"></script>
+    <script src="/static/js/app.js?v=2.3.9" defer></script>
 </head>
 <body>
 
@@ -27,7 +27,7 @@
             <h1 class="ios-page-title" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">Dashboard</h1>
             <div class="ios-header-subtitle">
                 <span id="connection-badge" class="ios-status-pill live">LIVE</span>
-                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.7</span>
+                <span class="ios-header-ver" onclick="openAboutModal('changelog')" title="Changelog &amp; Lizenz ansehen">v2.3.9</span>
                 <span id="port-badge" class="ios-port-badge" style="display: none;">Port: --</span>
             </div>
         </div>
@@ -263,7 +263,10 @@
         <!-- Bottom Page Footer with Author Copyright & CC License -->
         <footer class="ios-page-footer">
             <div class="ios-footer-content">
-                <span class="ios-footer-brand-text">BitAxeTool <strong>v2.3.7</strong></span>
+                <button type="button" class="ios-footer-brand-btn" onclick="openAboutModal('changelog')" title="Changelog &amp; Versionshinweise anzeigen">
+                    <span class="ios-footer-brand-title">BitAxeTool</span>
+                    <span class="ios-footer-version-badge footer-version-badge" id="footer-version-badge">v2.3.9</span>
+                </button>
                 <span class="ios-footer-sep">&bull;</span>
                 <span class="ios-footer-copy">&copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt</a> (<a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" class="ios-link">mrgoldsmitt.work</a>)</span>
                 <span class="ios-footer-sep">&bull;</span>
@@ -455,9 +458,10 @@
     <!-- Modal: Settings & Action Sheet Menu -->
     <div class="modal-overlay" id="modal-menu">
         <div class="modal-box ios-glass-modal">
+            <div class="ios-modal-handle" onclick="closeModal('modal-menu')" title="Schließen"></div>
             <div class="modal-header">
                 <div class="modal-title">Einstellungen &amp; Werkzeuge</div>
-                <button class="modal-close" onclick="closeModal('modal-menu')">&times;</button>
+                <button class="modal-close" onclick="closeModal('modal-menu')" aria-label="Schließen" title="Schließen">&times;</button>
             </div>
             <div class="ios-menu-grid">
                 <button class="ios-menu-item" onclick="closeModal('modal-menu'); openOtaModal();">
@@ -526,7 +530,7 @@
                     </div>
                     <div class="ios-menu-text">
                         <div class="ios-menu-title">Changelog &amp; Versionshistorie</div>
-                        <div class="ios-menu-sub">Version 2.3.7 • Alle Neuerungen &amp; Updates</div>
+                        <div class="ios-menu-sub modal-version-sub">Version 2.3.9 • Alle Neuerungen &amp; Updates</div>
                     </div>
                 </button>
 
@@ -548,7 +552,7 @@
             <div class="ios-menu-footer-card">
                 <div class="footer-card-row">
                     <div class="footer-card-info">
-                        <div class="footer-app-name">BitAxeTool <span class="footer-badge">v2.3.7</span></div>
+                        <div class="footer-app-name" style="cursor: pointer;" onclick="closeModal('modal-menu'); openAboutModal('changelog');" title="Changelog &amp; Versionshinweise anzeigen">BitAxeTool <span class="footer-badge footer-version-badge">v2.3.9</span></div>
                         <div class="footer-author-text">
                             &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt</a> • <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer">mrgoldsmitt.work</a>
                         </div>
@@ -1018,6 +1022,7 @@
     <!-- Modal: Über BitAxeTool, Changelog & CC-Lizenz -->
     <div class="modal-overlay" id="modal-changelog">
         <div class="modal-box ios-glass-modal" style="max-width: 680px;">
+            <div class="ios-modal-handle" onclick="closeModal('modal-changelog')" title="Schließen"></div>
             <div class="modal-header">
                 <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
                     <svg class="ios-inline-icon accent-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1027,7 +1032,7 @@
                     </svg>
                     Über BitAxeTool &amp; Lizenz
                 </div>
-                <button class="modal-close" onclick="closeModal('modal-changelog')">&times;</button>
+                <button class="modal-close" onclick="closeModal('modal-changelog')" aria-label="Schließen" title="Schließen">&times;</button>
             </div>
 
             <!-- Tab Switcher Navigation -->
@@ -1132,8 +1137,8 @@
 
             <!-- Modal Footer -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid var(--border-color); padding-top: 12px; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 0.8rem; color: var(--text-muted);">
-                    Version 2.3.7 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
+                <span class="modal-version-text" style="font-size: 0.8rem; color: var(--text-muted);">
+                    Version 2.3.9 • &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> • <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>
                 </span>
                 <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('modal-changelog')">Schließen</button>
             </div>

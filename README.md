@@ -1,10 +1,38 @@
-# BitAxeTool v2.3.8 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
+# BitAxeTool v2.3.10 - Multi-AutoTuner & Safety Governor für Windows 10/11 & Web
 
 **BitAxeTool** ist eine moderne, hochgradig optimierte und stabile Steuerungs- und Überwachungssoftware für **Bitaxe Solo-Miner** (Gamma 601 / BM1370, Supra 401 / BM1368, Ultra 204 / BM1366, Max / BM1397, Hex etc.) unter **Windows 10 / 11**.
 
 Das Tool passt die Taktfrequenz (MHz) und Kernspannung (mV) der Bitaxe-Prozessoren kontinuierlich und vollautomatisch in Abhängigkeit von den gemessenen Temperaturen und Leistungsgrenzen an, um stets die maximale Hashrate bei optimaler Energieeffizienz und Hardware-Sicherheit zu erzielen.
 
 Zusätzlich bietet BitAxeTool eine reaktionsschnelle, mobile Web-Oberfläche für den LAN-Zugriff von jedem Smartphone (**iPhone**, **Android**) und Tablet (**iPad**).
+
+---
+
+## ⚡ Neu in Version 2.3.10
+
+- 📌 **Dauerhafter Verbleib im System-Tray (Infobereich):**
+  - Beim Klick auf das Schließen-Kreuz („X“) des Hauptfensters beendet sich BitAxeTool nicht mehr, sondern minimiert sich diskret in den Infobereich der Windows-Taskleiste.
+  - Der Webserver, die WebSocket-Telemetrie und der AutoTuner laufen im Hintergrund unterbrechungsfrei weiter.
+- ⚡ **Tray-Icon für den Hintergrunddienst (`--headless`):**
+  - Auch beim Start als Dienst über `Start_Hintergrunddienst.vbs` oder mit `--headless` steht nun ein interaktives Icon im System-Tray zur Verfügung.
+  - Ein Linksklick oder Doppelklick öffnet direkt das Dashboard im Browser; Rechtsklick ermöglicht das saubere Beenden.
+- 🖱️ **Optimierte Mausklick-Bedienung:**
+  - Linksklick toggelt/stellt das Fenster wieder her; Rechtsklick öffnet das native Menü (`Öffnen`, `Im Web-Browser öffnen`, `Status: AutoTuner aktiv`, `Beenden`).
+- 🛡️ **Zentraler Single-Instance-Schutz:**
+  - Verhindert Mehrfachstarts und aktiviert bei erneuter Ausführung automatisch die bestehende Instanz.
+
+---
+
+## ⚡ Neu in Version 2.3.9
+
+- 📱 **Interaktive Versionsanzeige im Webseiten-Fuß:**
+  - Die Webseiten-Fußzeile (`ios-page-footer`) zeigt stets die aktuelle Version (`v2.3.9`) und öffnet per Klick/Tipp direkt das Changelog- und Info-Modal der gesamten Anwendung.
+- 🚀 **Flüssige iOS Bottom-Sheet Slide-Up Animation:**
+  - Das Pop-up gleitet mit einer nativen iOS-Geste flüssig von unten nach oben in den Bildschirm (`translateY(100%)` $\rightarrow$ `translateY(0)`).
+  - Schließen über das kreisrunde **X** oben rechts, durch Klick auf das abgedunkelte Overlay oder durch Wischen nach unten (Swipe Down).
+  - Integrierter iOS-Ziehgriff (`.ios-modal-handle`) am Dialogkopf.
+- 🔄 **Zentrale dynamische Versions-Synchronisation:**
+  - Vollständiger Abgleich aller Header-, Footer- und Modal-Badges über die API (`/api/version`).
 
 ---
 
@@ -175,7 +203,7 @@ Das bestehende Referenzprogramm (`Hurllz/bitaxe-temp-monitor`) wurde von uns tie
 
 ### Option B: Windows-Installer (.exe) ausführen
 - Der fertige Windows-Installer liegt in:
-  `installer_output\BitAxeTool_Setup_v2.3.5.exe`
+  `installer_output\BitAxeTool_Setup_v2.3.10.exe`
 - Installiert das Tool mit Desktop-Verknüpfung und Deinstallationsfunktion.
 
 ### Option C: Aus dem Quellcode starten

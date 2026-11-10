@@ -4,6 +4,43 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 ---
 
+## [2.3.10] - 2026-11-10
+
+### 📌 Dauerhafter Verbleib im System-Tray & Headless Tray-Integration
+- **Minimieren in den System-Tray statt Schließen beim Klick auf „X“:**
+  - Beim Klick auf den Schließen-Button („X“) des Hauptfensters wird die Anwendung nicht mehr beendet, sondern minimiert sich automatisch in den Windows-Infobereich (System-Tray).
+  - Der Webserver, die WebSocket-Telemetrie und der AutoTuner-Governor laufen im Hintergrund unterbrechungsfrei weiter und steuern die Miner permanent.
+  - Ein dezenter Windows-Balloon-Hinweis informiert beim ersten Minimieren über den Verbleib im Infobereich.
+- **Vollwertiges Tray-Icon auch für den Headless-Hintergrunddienst:**
+  - Wird BitAxeTool über `Start_Hintergrunddienst.vbs` oder mit dem Parameter `--headless` gestartet, erzeugt die Anwendung nun ebenfalls ein interaktives Icon im Infobereich der Taskleiste.
+  - Per Doppelklick oder Klick auf das Symbol öffnet sich direkt das Web-Dashboard im Standard-Browser.
+- **Erweitertes Kontextmenü & intuitive Mausklick-Bedienung:**
+  - **Linksklick:** Holt das Anwendungsfenster sofort in den Vordergrund bzw. stellt es wieder her (oder minimiert es bei erneutem Klick).
+  - **Rechtsklick:** Öffnet das native Kontextmenü mit Schnellzugriffen:
+    - **BitAxeTool öffnen** (Fettschrift)
+    - **Im Web-Browser öffnen**
+    - **Status: AutoTuner aktiv**
+    - **Beenden** (beendet das Programm und den Hintergrunddienst vollständig).
+- **Zentraler Single-Instance-Schutz:**
+  - Ein Startversuch einer zweiten Instanz aktiviert das bereits im Hintergrund laufende Fenster bzw. ruft das Web-Dashboard auf.
+
+---
+
+## [2.3.9] - 2026-10-31
+
+### 📱 Interaktive Webseiten-Fuß-Version & iOS Bottom-Sheet Changelog Pop-up
+- **Interaktive Versionsanzeige im Webseiten-Fuß:**
+  - Die Fußzeile der Webseite (`ios-page-footer`) zeigt nun immer die aktuelle Versionsnummer (`v2.3.9`) in einem interaktiven Badge-Button (`.ios-footer-brand-btn`).
+  - Ein Klick oder Fingertipp auf den Versions-Badge öffnet unmittelbar das Changelog- und Info-Pop-up der gesamten Webseite.
+- **Flüssige iOS Bottom-Sheet Slide-Up Animation:**
+  - Das Pop-up öffnet sich mit einer flüssigen iOS-Geste von unten nach oben (`translateY(100%)` $\rightarrow$ `translateY(0)`).
+  - Schließen lässt sich der Dialog über ein klares, kreisrundes **X** oben rechts, durch Antippen des abgedunkelten Hintergrunds oder durch intuitives Wischen nach unten (Swipe Down).
+  - Integrierter iOS-Ziehgriff (`.ios-modal-handle`) am oberen Dialogrand sorgt für ein natives App-Feeling auf iPhones, iPads und Touch-Geräten.
+- **Zentrale Versions-Synchronisation (`/api/version`):**
+  - Alle Versionsanzeigen (Header, Fußzeile, Menü-Karten, Modal-Copyright) werden beim Seitenaufruf dynamisch über `/api/version` synchronisiert, sodass keine veralteten Versionsangaben mehr im Cache verbleiben.
+
+---
+
 ## [2.3.8] - 2026-10-31
 
 ### 🔧 Fix: Zuverlässiges Speichern von Watt- und Takt-Grenzen & Aktives Overclocking

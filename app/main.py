@@ -195,6 +195,117 @@ def run_web_server(host: str, port: int, server_holder: dict):
         logger.error(f"Fehler beim Starten des Uvicorn-Webservers: {e}", exc_info=True)
 
 
+def start_headless_tray(app_url: str, icon_path: str, server_holder: dict):
+    """Run a standalone Windows System Tray icon on a dedicated STA thread for headless/background mode."""
+    try:
+        import clr
+        clr.AddReference("System.Windows.Forms")
+        clr.AddReference("System.Drawing")
+        from System.Windows.Forms import (
+            Application, NotifyIcon, ContextMenuStrip, ToolStripMenuItem, ToolStripSeparator,
+            ToolTipIcon, MouseButtons
+        )
+        from System.Drawing import Icon, SystemIcons, Font, FontStyle
+        from System.Threading import Thread, ThreadStart, ApartmentState
+
+        stop_event = threading.Event()
+
+        def tray_worker():
+            tray = NotifyIcon()
+            try:
+                if icon_path and os.path.exists(icon_path):
+                    tray.Icon = Icon(icon_path)
+                else:
+                    tray.Icon = SystemIcons.Application
+            except Exception:
+                tray.Icon = SystemIcons.Application
+
+            tray.Text = f"BitAxeTool v{APP_VERSION} (Aktiv)"
+
+            menu = ContextMenuStrip()
+            item_open = ToolStripMenuItem("BitAxeTool im Browser öffnen")
+            item_open.Font = Font(item_open.Font, FontStyle.Bold)
+            item_open.Click += lambda s, e: webbrowser.open(app_url)
+
+            sep1 = ToolStripSeparator()
+            item_status = ToolStripMenuItem("AutoTuner: Aktiv")
+            item_status.Enabled = False
+
+            sep2 = ToolStripSeparator()
+            def on_exit(s, e):
+                try:
+                    tray.Visible = False
+                    tray.Dispose()
+                except Exception:
+                    pass
+                if "server" in server_holder and server_holder["server"]:
+                    server_holder["server"].should_exit = True
+                Application.Exit()
+                stop_event.set()
+                import os
+                os._exit(0)
+
+            item_exit = ToolStripMenuItem("Beenden")
+            item_exit.Click += on_exit
+
+            menu.Items.Add(item_open)
+            menu.Items.Add(sep1)
+            menu.Items.Add(item_status)
+            menu.Items.Add(sep2)
+            menu.Items.Add(item_exit)
+
+            tray.ContextMenuStrip = menu
+            tray.DoubleClick += lambda s, e: webbrowser.open(app_url)
+            tray.MouseClick += lambda s, e: webbrowser.open(app_url) if e.Button == MouseButtons.Left else None
+
+            tray.Visible = True
+
+            try:
+                tray.ShowBalloonTip(
+                    3000,
+                    "BitAxeTool Hintergrunddienst",
+                    "BitAxeTool läuft im System-Tray und überwacht deine Miner.",
+                    ToolTipIcon.Info
+                )
+            except Exception:
+                pass
+
+            Application.Run()
+            try:
+                tray.Visible = False
+                tray.Dispose()
+            except Exception:
+                pass
+
+        tray_thread = Thread(ThreadStart(tray_worker))
+        tray_thread.SetApartmentState(ApartmentState.STA)
+        tray_thread.IsBackground = True
+        tray_thread.Start()
+
+        try:
+            while not stop_event.is_set():
+                time.sleep(1)
+        except (KeyboardInterrupt, SystemExit):
+            if "server" in server_holder and server_holder["server"]:
+                server_holder["server"].should_exit = True
+            try:
+                from System.Windows.Forms import Application
+                Application.Exit()
+            except Exception:
+                pass
+            sys.exit(0)
+
+    except Exception as ex:
+        logger.warning(f"Konnte Headless System-Tray nicht initialisieren ({ex}). Läuft ohne Tray.")
+        try:
+            while True:
+                time.sleep(1)
+        except (KeyboardInterrupt, SystemExit):
+            if "server" in server_holder and server_holder["server"]:
+                server_holder["server"].should_exit = True
+            sys.exit(0)
+
+
 def main():
     multiprocessing.freeze_support()
     parser = argparse.ArgumentParser(description=f"BitAxeTool v{APP_VERSION} - Multi-AutoTuner for Bitaxe Solo Miners")
@@ -208,24 +319,27 @@ def main():
     host = args.host or cfg.host or "0.0.0.0"
     requested_port = args.port or cfg.web_port or 21420
 
-    # Single-instance check for desktop GUI mode (Windows)
+    # Single-instance check (Windows): ensure only one instance of BitAxeTool runs at a time
     single_instance_mutex = None
-    if sys.platform.startswith("win") and not args.headless:
+    if sys.platform.startswith("win"):
         try:
             import ctypes
             ERROR_ALREADY_EXISTS = 183
             kernel32 = ctypes.windll.kernel32
             single_instance_mutex = kernel32.CreateMutexW(None, False, "Global\\BitAxeTool_SingleInstance_Mutex")
             if kernel32.GetLastError() == ERROR_ALREADY_EXISTS:
-                logger.info("BitAxeTool läuft bereits im Hintergrund. Aktiviere vorhandenes Fenster...")
-                try:
-                    import urllib.request
-                    urllib.request.urlopen(f"http://127.0.0.1:{requested_port}/api/restore-window", timeout=2)
-                except Exception:
+                if not args.headless:
+                    logger.info("BitAxeTool läuft bereits im Hintergrund. Aktiviere vorhandenes Fenster...")
                     try:
-                        webbrowser.open(f"http://127.0.0.1:{requested_port}")
+                        import urllib.request
+                        urllib.request.urlopen(f"http://127.0.0.1:{requested_port}/api/restore-window", timeout=2)
                     except Exception:
-                        pass
+                        try:
+                            webbrowser.open(f"http://127.0.0.1:{requested_port}")
+                        except Exception:
+                            pass
+                else:
+                    logger.info("BitAxeTool läuft bereits im Hintergrund. Beende zweite Headless-Instanz...")
                 sys.exit(0)
         except Exception as ex:
             logger.debug(f"Single instance check exception: {ex}")
@@ -262,15 +376,23 @@ def main():
     app_url = f"http://127.0.0.1:{port}"
 
     if headless:
-        logger.info("Server läuft im Headless-Modus. Beenden mit Strg+C.")
-        try:
-            while True:
-                time.sleep(1)
-        except (KeyboardInterrupt, SystemExit):
-            logger.info("Beende Server...")
-            if "server" in server_holder and server_holder["server"]:
-                server_holder["server"].should_exit = True
-            sys.exit(0)
+        logger.info("Server läuft im Headless-Modus. Beenden über System-Tray oder Strg+C.")
+        if sys.platform.startswith("win"):
+            icon_path = os.path.abspath(os.path.join(PROJECT_ROOT, "assets", "bitaxe_icon.ico"))
+            if not os.path.exists(icon_path):
+                icon_path = os.path.abspath(os.path.join(INTERNAL_DIR, "assets", "bitaxe_icon.ico"))
+                if not os.path.exists(icon_path):
+                    icon_path = None
+            start_headless_tray(app_url, icon_path, server_holder)
+        else:
+            try:
+                while True:
+                    time.sleep(1)
+            except (KeyboardInterrupt, SystemExit):
+                logger.info("Beende Server...")
+                if "server" in server_holder and server_holder["server"]:
+                    server_holder["server"].should_exit = True
+                sys.exit(0)
 
     # Try PyWebView for a native Windows 10/11 desktop window
     if not args.browser:
@@ -319,6 +441,8 @@ def main():
                     from System.Reflection import BindingFlags
                     from System import Action
 
+                    state = {"is_exiting": False}
+
                     def init_tray_on_ui():
                         tray = NotifyIcon()
                         tray_holder["tray"] = tray
@@ -341,14 +465,17 @@ def main():
                             except Exception:
                                 pass
 
-                        tray.Text = f"BitAxeTool v{APP_VERSION}"
+                        tray.Text = f"BitAxeTool v{APP_VERSION} (Aktiv)"
 
                         menu = ContextMenuStrip()
                         item_open = ToolStripMenuItem("BitAxeTool öffnen")
                         item_open.Font = Font(item_open.Font, FontStyle.Bold)
                         item_browser = ToolStripMenuItem("Im Web-Browser öffnen")
                         sep1 = ToolStripSeparator()
-                        item_exit = ToolStripMenuItem("Komplett schließen")
+                        item_status = ToolStripMenuItem("AutoTuner: Aktiv")
+                        item_status.Enabled = False
+                        sep2 = ToolStripSeparator()
+                        item_exit = ToolStripMenuItem("Beenden")
 
                         show_context_menu_method = clr.GetClrType(NotifyIcon).GetMethod(
                             "ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic
@@ -379,6 +506,7 @@ def main():
                                 logger.debug(f"Open browser error: {ex}")
 
                         def on_exit_clicked(sender=None, e=None):
+                            state["is_exiting"] = True
                             try:
                                 tray.Visible = False
                                 tray.Dispose()
@@ -394,8 +522,15 @@ def main():
                             os._exit(0)
 
                         def on_tray_mouse_click(sender, e):
-                            # Bei Linksklick oder Rechtsklick das Auswahlmenü (Öffnen / Komplett schließen) anzeigen
-                            if e.Button == MouseButtons.Left or e.Button == MouseButtons.Right:
+                            if e.Button == MouseButtons.Left:
+                                # Bei Linksklick Fenster toggeln oder in den Vordergrund holen
+                                if form.Visible and form.WindowState != FormWindowState.Minimized:
+                                    form.WindowState = FormWindowState.Minimized
+                                    form.ShowInTaskbar = False
+                                    form.Hide()
+                                else:
+                                    do_restore()
+                            elif e.Button == MouseButtons.Right:
                                 try:
                                     if show_context_menu_method:
                                         show_context_menu_method.Invoke(tray, None)
@@ -405,7 +540,7 @@ def main():
                                     try:
                                         menu.Show(Cursor.Position)
                                     except Exception:
-                                        do_restore()
+                                        pass
 
                         item_open.Click += do_restore
                         item_browser.Click += on_browser_clicked
@@ -417,6 +552,8 @@ def main():
                         menu.Items.Add(item_open)
                         menu.Items.Add(item_browser)
                         menu.Items.Add(sep1)
+                        menu.Items.Add(item_status)
+                        menu.Items.Add(sep2)
                         menu.Items.Add(item_exit)
                         tray.ContextMenuStrip = menu
                         tray.Visible = True
@@ -429,16 +566,33 @@ def main():
                                     tray.ShowBalloonTip(
                                         3000,
                                         "BitAxeTool im Infobereich",
-                                        "BitAxeTool läuft im System-Tray (ggf. im '∧'-Menü der Taskleiste). Klicke auf das Symbol oder starte die App erneut zum Öffnen.",
+                                        "BitAxeTool läuft im System-Tray (ggf. im '∧'-Menü der Taskleiste). Klicke auf das Symbol zum Wiederherstellen.",
                                         ToolTipIcon.Info
                                     )
 
                         def on_form_closing(sender, e):
-                            try:
-                                tray.Visible = False
-                                tray.Dispose()
-                            except Exception:
-                                pass
+                            if not state["is_exiting"]:
+                                # Klick auf 'X' beendet nicht, sondern minimiert in den Infobereich
+                                e.Cancel = True
+                                try:
+                                    form.WindowState = FormWindowState.Minimized
+                                    form.ShowInTaskbar = False
+                                    form.Hide()
+                                    if tray.Visible:
+                                        tray.ShowBalloonTip(
+                                            3000,
+                                            "BitAxeTool im Infobereich",
+                                            "BitAxeTool läuft im System-Tray weiter und überwacht deine Miner.\nZum Schließen Rechtsklick auf das Symbol -> Beenden wählen.",
+                                            ToolTipIcon.Info
+                                        )
+                                except Exception as ex:
+                                    logger.debug(f"Hide to tray error: {ex}")
+                            else:
+                                try:
+                                    tray.Visible = False
+                                    tray.Dispose()
+                                except Exception:
+                                    pass
 
                         form.Resize += on_form_resize
                         form.FormClosing += on_form_closing

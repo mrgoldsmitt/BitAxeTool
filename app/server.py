@@ -24,7 +24,7 @@ from app.tuner import TunerManager
 from app.scanner import scan_network, get_local_ip_and_subnet
 from app.bitaxe_client import BitAxeClient
 
-APP_VERSION = "2.3.8"
+APP_VERSION = "2.3.10"
 logger = logging.getLogger("BitAxeTool.server")
 
 # Active Port tracking
@@ -316,7 +316,12 @@ async def api_restore_window():
             return {"status": "ok", "message": "Window restore requested"}
         except Exception as e:
             return {"status": "error", "message": str(e)}
-    return {"status": "noop", "message": "No window callback registered"}
+    try:
+        import webbrowser
+        webbrowser.open(f"http://127.0.0.1:{ACTIVE_PORT}")
+        return {"status": "ok", "message": "Opened dashboard in browser"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @app.get("/api/version")

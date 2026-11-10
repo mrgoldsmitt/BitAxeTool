@@ -1035,6 +1035,55 @@ body.modal-open {
   /* Note: NEVER put touch-action: none here, as WebKit on iOS blocks scrolling back up */
 }
 
+/* --- Modal Animations & Bottom Sheet Physics --- */
+@keyframes modalSlideUp {
+  0% {
+    transform: translateY(100%);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes modalBackdropFadeIn {
+  from {
+    background-color: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+@keyframes modalBackdropFadeOut {
+  from {
+    background-color: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  to {
+    background-color: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1051,13 +1100,44 @@ body.modal-open {
 
 .modal-overlay.active {
   display: flex;
+  animation: modalBackdropFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-overlay.active .modal-box {
+  animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.modal-overlay.closing {
+  display: flex;
+  animation: modalBackdropFadeOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.modal-overlay.closing .modal-box {
+  animation: modalSlideDown 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.ios-modal-handle {
+  width: 40px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  margin: 2px auto 10px auto;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.ios-modal-handle:hover {
+  background: rgba(255, 255, 255, 0.55);
+  transform: scaleY(1.2);
 }
 
 .modal-box.ios-glass-modal {
   background: rgba(28, 28, 30, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-xl);
-  padding: 18px 14px calc(24px + env(safe-area-inset-bottom, 16px)) 14px;
+  padding: 14px 14px calc(24px + env(safe-area-inset-bottom, 16px)) 14px;
   width: 100%;
   max-width: 500px;
   max-height: calc(88dvh - env(safe-area-inset-bottom, 0px));
@@ -1254,18 +1334,35 @@ body.modal-open {
 }
 
 .modal-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.6rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 300;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
   transition: var(--transition-smooth);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .modal-close:hover {
+  background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
+  transform: scale(1.08);
+}
+
+.modal-close:active {
+  background: rgba(255, 255, 255, 0.32);
+  transform: scale(0.92);
 }
 
 /* Form Controls */
@@ -1350,20 +1447,34 @@ body.modal-open {
   min-height: 180px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .modal-overlay {
-    padding: 6px 4px;
+    align-items: flex-end;
+    padding: 0;
   }
   .modal-box.ios-glass-modal {
-    padding: 14px 10px calc(24px + env(safe-area-inset-bottom, 16px)) 10px;
-    border-radius: var(--radius-lg);
+    width: 100% !important;
+    max-width: 100% !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-bottom: none !important;
+    max-height: calc(90dvh - env(safe-area-inset-bottom, 0px)) !important;
+    padding: 12px 14px calc(24px + env(safe-area-inset-bottom, 16px)) 14px;
   }
   .modal-box.modal-sheet-layout {
-    width: calc(100% - 8px) !important;
+    width: 100% !important;
     max-width: 100% !important;
-    max-height: calc(88dvh - env(safe-area-inset-bottom, 0px)) !important;
-    height: calc(88dvh - env(safe-area-inset-bottom, 0px)) !important;
-    border-radius: var(--radius-lg);
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-bottom: none !important;
+    max-height: calc(90dvh - env(safe-area-inset-bottom, 0px)) !important;
+    height: calc(90dvh - env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-box.ios-glass-modal {
+    padding: 12px 10px calc(24px + env(safe-area-inset-bottom, 16px)) 10px;
   }
   .miner-tab-nav {
     padding: 4px 6px;
@@ -1922,6 +2033,51 @@ body.modal-open {
   color: var(--text-muted);
 }
 
+.ios-footer-brand-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 3px 10px 3px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-normal, #e0e0e0);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ios-footer-brand-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ios-footer-brand-btn:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ios-footer-brand-title {
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.ios-footer-version-badge {
+  background: var(--accent-blue, #0a84ff);
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 6px rgba(10, 132, 255, 0.35);
+}
+
 .ios-footer-brand-text strong {
   color: #ffffff;
 }
@@ -2264,4 +2420,57 @@ body.modal-open {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+/* Changelog Body Typography & Layout */
+.changelog-body {
+  padding: 8px 4px;
+  color: var(--text-normal, #e0e0e0);
+  line-height: 1.6;
+  font-size: 0.88rem;
+  max-height: 60dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.changelog-body h1 {
+  font-size: 1.35rem;
+  color: #ffffff;
+  margin: 8px 0 12px 0;
+  font-weight: 700;
+}
+
+.changelog-body h2 {
+  font-size: 1.15rem;
+  color: var(--accent-cyan, #64d2ff);
+  margin: 20px 0 10px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+.changelog-body h3 {
+  font-size: 0.98rem;
+  color: var(--accent-blue, #0a84ff);
+  margin: 14px 0 6px 0;
+  font-weight: 600;
+}
+
+.changelog-body ul {
+  padding-left: 20px;
+  margin: 6px 0 12px 0;
+}
+
+.changelog-body li {
+  margin-bottom: 5px;
+}
+
+.changelog-body code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.84em;
+  color: #ff9f0a;
 }

@@ -942,6 +942,12 @@ function refreshDashboard() {
 function openModal(id) {
     const el = document.getElementById(id);
     if (el) {
+        el.classList.remove("closing");
+        const box = el.querySelector(".modal-box");
+        if (box) {
+            box.style.transform = "";
+            box.style.transition = "";
+        }
         el.classList.add("active");
         document.body.classList.add("modal-open");
     }
@@ -949,12 +955,21 @@ function openModal(id) {
 
 function closeModal(id) {
     const el = document.getElementById(id);
-    if (el) {
-        el.classList.remove("active");
-        const anyActive = document.querySelector(".modal-overlay.active");
-        if (!anyActive) {
-            document.body.classList.remove("modal-open");
+    if (el && el.classList.contains("active")) {
+        el.classList.add("closing");
+        const box = el.querySelector(".modal-box");
+        if (box) {
+            box.style.transform = "";
+            box.style.transition = "";
         }
+        setTimeout(() => {
+            el.classList.remove("active");
+            el.classList.remove("closing");
+            const anyActive = document.querySelector(".modal-overlay.active");
+            if (!anyActive) {
+                document.body.classList.remove("modal-open");
+            }
+        }, 240);
     }
 }
 
@@ -1482,6 +1497,18 @@ async function loadNetworkInfo() {
                 document.querySelectorAll(".ios-header-ver").forEach(el => {
                     el.textContent = `v${verData.version}`;
                 });
+                document.querySelectorAll(".footer-version-badge, .footer-badge, #footer-version-badge").forEach(el => {
+                    el.textContent = `v${verData.version}`;
+                });
+                document.querySelectorAll(".ios-footer-brand-text strong").forEach(el => {
+                    el.textContent = `v${verData.version}`;
+                });
+                document.querySelectorAll(".modal-version-sub").forEach(el => {
+                    el.textContent = `Version ${verData.version} • Alle Neuerungen & Updates`;
+                });
+                document.querySelectorAll(".modal-version-text").forEach(el => {
+                    el.innerHTML = `Version ${verData.version} &bull; &copy; 2026 <a href="https://mrgoldsmitt.work" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">mrgoldsmitt</a> &bull; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer" style="color: var(--text-muted); text-decoration: underline;">CC BY-NC 4.0</a>`;
+                });
             }
         }
     } catch (e) {
@@ -1562,17 +1589,46 @@ async function loadLicenseText() {
 }
 
 function parseSimpleMarkdown(md) {
-    let html = escapeHtml(md);
-    html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>");
-    html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>");
-    html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>");
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
-    html = html.replace(/^\- (.*$)/gim, "<li>$1</li>");
-    html = html.replace(/(<li>.*<\/li>)/gim, "<ul>$1</ul>");
-    html = html.replace(/\n\n/g, "<br><br>");
-    return html;
+    if (!md) return "";
+    const lines = md.split("\n");
+    const out = [];
+    let inList = false;
+
+    for (let rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line || line === "---") {
+            if (inList) { out.push("</ul>"); inList = false; }
+            if (line === "---") out.push("<hr style='border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 16px 0;'>");
+            continue;
+        }
+
+        if (line.startsWith("### ")) {
+            if (inList) { out.push("</ul>"); inList = false; }
+            out.push(`<h3>${escapeHtml(line.substring(4))}</h3>`);
+        } else if (line.startsWith("## ")) {
+            if (inList) { out.push("</ul>"); inList = false; }
+            out.push(`<h2>${escapeHtml(line.substring(3))}</h2>`);
+        } else if (line.startsWith("# ")) {
+            if (inList) { out.push("</ul>"); inList = false; }
+            out.push(`<h1>${escapeHtml(line.substring(2))}</h1>`);
+        } else if (line.startsWith("- ")) {
+            if (!inList) { out.push("<ul>"); inList = true; }
+            let item = escapeHtml(line.substring(2));
+            item = item.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            item = item.replace(/`([^`]+)`/g, "<code>$1</code>");
+            item = item.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
+            out.push(`<li>${item}</li>`);
+        } else {
+            if (inList) { out.push("</ul>"); inList = false; }
+            let p = escapeHtml(line);
+            p = p.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            p = p.replace(/`([^`]+)`/g, "<code>$1</code>");
+            p = p.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
+            out.push(`<p style="margin: 4px 0;">${p}</p>`);
+        }
+    }
+    if (inList) out.push("</ul>");
+    return out.join("");
 }
 
 // --- Utilities & Listeners ---
@@ -1624,6 +1680,70 @@ function setupEventListeners() {
         logWin.addEventListener("mouseenter", () => { isMouseOverLogs = true; });
         logWin.addEventListener("mouseleave", () => { isMouseOverLogs = false; });
     }
+
+    initModalGestures();
+}
+
+function initModalGestures() {
+    document.querySelectorAll(".modal-overlay").forEach(overlay => {
+        // Dismiss on clicking overlay backdrop
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) {
+                closeModal(overlay.id);
+            }
+        });
+
+        // Touch drag-down dismissal on handle or header
+        const box = overlay.querySelector(".modal-box");
+        if (!box) return;
+
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        const dragHandle = box.querySelector(".ios-modal-handle") || box.querySelector(".modal-header");
+        if (dragHandle) {
+            dragHandle.addEventListener("touchstart", (e) => {
+                if (e.touches.length === 1 && box.scrollTop <= 0) {
+                    startY = e.touches[0].clientY;
+                    currentY = startY;
+                    isDragging = true;
+                }
+            }, { passive: true });
+
+            dragHandle.addEventListener("touchmove", (e) => {
+                if (!isDragging) return;
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+                if (diff > 0) {
+                    box.style.transform = `translateY(${diff}px)`;
+                    box.style.transition = "none";
+                }
+            }, { passive: true });
+
+            dragHandle.addEventListener("touchend", () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const diff = currentY - startY;
+                box.style.transition = "";
+                if (diff > 75) {
+                    closeModal(overlay.id);
+                } else {
+                    box.style.transform = "";
+                }
+            });
+        }
+    });
+
+    // Dismiss active modal on ESC key
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const activeModal = document.querySelector(".modal-overlay.active");
+            if (activeModal) {
+                closeModal(activeModal.id);
+            }
+        }
+    });
 }
 
 // --- Progressive Web App & Smartphone Notification Engine ---
